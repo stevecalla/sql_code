@@ -1,6 +1,6 @@
 USE vapor;
 
---  ANNUAL = actual_membership_fee_6 CALCULATION
+-- ONE DAY = actual_membership_fee_6 CALCULATION
 -- { fixed [Id (Membership Periods)] : max([Membership Fee 6])}
 
 SET @year = 2021;
@@ -133,7 +133,7 @@ koz_acception AS (
 -- LIMIT 10  
 -- ;
 
--- SECTION: STEP #3 - `Actual Membership Fee 6`
+-- SECTION: STEP #3 - 'Actual Membership Fee 6'
 -- { fixed [Id (Membership Periods)] : max([Membership Fee 6])}
 actual_membership_fee_6 AS (
     SELECT 
@@ -174,7 +174,7 @@ actual_membership_fee_6 AS (
                 -- elseif [Source] = "Membership System/RTAV Classic" then [MS or Classic Fee 2] // essentially does it have an Order ID
                 -- [Source] 
                     -- has a rule such that if not isnull([Cart Label]) then "Membership System/RTAV Classic"
-                -- `MS or Classic Fee 2` = if [Amount Per] - [Discount] - [Amount Refunded] > 0 then [Amount Per] - [Discount] - [Amount Refunded] else 0 END
+                -- 'MS or Classic Fee 2' = if [Amount Per] - [Discount] - [Amount Refunded] > 0 then [Amount Per] - [Discount] - [Amount Refunded] else 0 END
                     -- amount per = order_products.amount_per 
                     -- Discount = order_products.discount
                     -- Amount Refunded = order_products.amount_refunded   
@@ -185,7 +185,7 @@ actual_membership_fee_6 AS (
                 WHEN ra.registration_company_id IN (1) THEN 0 -- "Designsensory"
                 WHEN ra.registration_company_id IN (23) THEN 0 -- "Acme-Usat"
 
-                -- `RTAV Batch Fee`
+                -- 'RTAV Batch Fee'
                 -- elseif [Source] = "RTAV Batch" then [RTAV Batch Fee] //essentially does it have an Audit ID
                 -- [Source] is elseif not isnull([Price Paid]) then "RTAV Batch"
                 -- WHEN rama.price_paid IS NOT NULL THEN 1
@@ -205,19 +205,19 @@ actual_membership_fee_6 AS (
 
                 WHEN mp.origin_flag = "ADMIN_BULK_UPLOADER" AND ma.payment_type = "ironman-ticketsocket" THEN 23
 
-                -- `KOZ Acception`
-                WHEN mp.origin_flag = "ADMIN_BULK_UPLOADER" AND ma.payment_type != "Chronotrack" AND ka.is_koz_acception IN (0) THEN 0 -- ISNULL(`KOZ Acception`)
+                -- 'KOZ Acception'
+                WHEN mp.origin_flag = "ADMIN_BULK_UPLOADER" AND ma.payment_type != "Chronotrack" AND ka.is_koz_acception IN (0) THEN 0 -- ISNULL('KOZ Acception')
                 WHEN mp.origin_flag = "RTAV_CLASSIC" THEN 0
                 WHEN ma.payment_type = "comped" THEN 0
-                WHEN ma.payment_type = "normal" AND mp.membership_type_id IN (74, 103) THEN 0 -- `No Home Member ID` = "Lifetime"
-                -- `KOZ Acception` & coach recert
+                WHEN ma.payment_type = "normal" AND mp.membership_type_id IN (74, 103) THEN 0 -- 'No Home Member ID' = "Lifetime"
+                -- 'KOZ Acception' & coach recert
                 WHEN
                     ma.confirmation_code IS NULL        AND 
                     ma.payment_type != "Chronotrack"    AND 
                     ma.payment_type != "stripe"         AND 
-                    -- ISNULL(`KOZ Acception`)
+                    -- ISNULL('KOZ Acception')
                     ka.is_koz_acception IN (0)          AND 
-                    -- ISNULL(`Coach Recert`)
+                    -- ISNULL('Coach Recert')
                     CASE        
                         WHEN ma.payment_explanation LIKE '%recert%' THEN 'coach_recert'
                         WHEN ma.payment_explanation LIKE '%cert%' THEN 'coach_recert'
@@ -230,9 +230,9 @@ actual_membership_fee_6 AS (
                 WHEN mp.membership_type_id IN (3, 66, 68, 85, 89, 99) THEN 180 -- 3year
                 WHEN mp.membership_type_id IN (74, 103) THEN 1000 -- lifetime
                 WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND ma.event_id IN (30785, 30768, 30770) THEN 0 -- one-day; //these events were comped
-                -- `KOZ Acception`
-                WHEN ka.is_koz_acception IN (1) AND mp.membership_type_id IN (4, 51, 54, 61, 94) THEN 10 -- youth = youth annual; `KOZ Acception` = "KOZ"
-                WHEN ka.is_koz_acception THEN 15 -- `KOZ Acception` = "KOZ"
+                -- 'KOZ Acception'
+                WHEN ka.is_koz_acception IN (1) AND mp.membership_type_id IN (4, 51, 54, 61, 94) THEN 10 -- youth = youth annual; 'KOZ Acception' = "KOZ"
+                WHEN ka.is_koz_acception THEN 15 -- 'KOZ Acception' = "KOZ"
                 WHEN mp.membership_type_id IN (4, 51, 54, 61, 94) THEN 10 -- youth = youth annual
                 WHEN mp.membership_type_id IN (112) THEN 60 -- silver
                 WHEN mp.membership_type_id IN (113) THEN 99 -- gold
@@ -303,7 +303,7 @@ actual_membership_fee_6 AS (
 -- GROUP BY mf.id_membership_periods
 -- HAVING COUNT(*) = 1
 
--- -- todo: SECTION: STEP #4 - new_member_category_6
+-- SECTION: STEP #4 - new_member_category_6
 new_member_category_6 AS (
     SELECT 
         mf.id_membership_periods AS id_membership_periods,
@@ -321,10 +321,10 @@ new_member_category_6 AS (
             WHEN mp.membership_type_id IN (113) THEN 'Gold'
             WHEN mp.membership_type_id IN (114) THEN 'Platinum - Team USA'
             WHEN mp.membership_type_id IN (117) THEN 'Platinum - Foundation'
-            WHEN mp.membership_type_id IN (1, 60, 62, 64, 67, 71, 75, 104) AND mf.max_membership_fee_6 = 60 THEN 'Silver' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (1, 60, 62, 64, 67, 71, 75, 104) AND mf.max_membership_fee_6 = 60 THEN 'Silver' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (107) AND mf.max_membership_fee_6 = 30 THEN 'Youth Premier - $30' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (55) AND mf.max_membership_fee_6 = 40 THEN 'Young Adult - $40' -- `Actual Membership Fee 6`
+            WHEN mp.membership_type_id IN (1, 60, 62, 64, 67, 71, 75, 104) AND mf.max_membership_fee_6 = 60 THEN 'Silver' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (1, 60, 62, 64, 67, 71, 75, 104) AND mf.max_membership_fee_6 = 60 THEN 'Silver' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (107) AND mf.max_membership_fee_6 = 30 THEN 'Youth Premier - $30' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (55) AND mf.max_membership_fee_6 = 40 THEN 'Young Adult - $40' -- 'Actual Membership Fee 6'
             WHEN mp.membership_type_id IN (107) AND mp.purchased_on < '2024-01-16 09:00:00' THEN 'Youth Premier - $25'
             WHEN mp.membership_type_id IN (55) AND mp.purchased_on < '2024-01-16 09:00:00' THEN 'Young Adult - $36'
             WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mp.purchased_on < '2024-01-16 09:00:00' THEN 'One Day - $15'
@@ -339,27 +339,27 @@ new_member_category_6 AS (
             WHEN mp.membership_type_id IN (1, 60, 62, 64, 67, 71, 75, 104) THEN 'Silver'
             WHEN mp.membership_type_id IN (118) AND ma.membership_type_id = 118 THEN 'Bronze - AO'
             WHEN mp.membership_type_id IN (115) AND ma.membership_type_id = 118 THEN 'Bronze - AO'
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 6 THEN 'Bronze - $6' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 13 THEN 'Bronze - $13' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 15 THEN 'One Day - $15' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 18 THEN 'Bronze - $18' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 23 THEN 'Bronze - $23' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 0 THEN 'Bronze - $0' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 17 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 5 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 7 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 10 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 12 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 6 THEN 'Bronze - $6' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 13 THEN 'Bronze - $13' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 15 THEN 'One Day - $15' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 18 THEN 'Bronze - $18' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 23 THEN 'Bronze - $23' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 0 THEN 'Bronze - $0' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 17 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 5 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 7 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
-            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 10 THEN 'Bronze - Distance Upgrade' -- `Actual Membership Fee 6`
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 6 THEN 'Bronze - $6' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 13 THEN 'Bronze - $13' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 15 THEN 'One Day - $15' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 18 THEN 'Bronze - $18' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 23 THEN 'Bronze - $23' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 0 THEN 'Bronze - $0' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 17 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 5 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 7 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 10 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 12 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 6 THEN 'Bronze - $6' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 13 THEN 'Bronze - $13' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 15 THEN 'One Day - $15' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 18 THEN 'Bronze - $18' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 23 THEN 'Bronze - $23' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 0 THEN 'Bronze - $0' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 17 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 5 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 7 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
+            WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mf.max_membership_fee_6 = 10 THEN 'Bronze - Distance Upgrade' -- 'Actual Membership Fee 6'
             WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) THEN 'Club'
             ELSE 'Unknown'
         END AS new_member_category_6,
@@ -383,8 +383,8 @@ new_member_category_6 AS (
 
 , -- COMMA IS NECESSARY FOR CTE BUT NOT DIRECT SQL AS ABOVE
 
--- ANNUAL SALES ACTUAL MEMBER FEE
-annual_sales_actual_member_fee AS (
+-- ONE DAY SALES ACTUAL MEMBER FEE
+one_day_sales_actual_member_fee AS (
     SELECT 
         members.member_number AS member_number_members,
         MAX(membership_periods.id) as max_membership_period_id,
@@ -399,7 +399,7 @@ annual_sales_actual_member_fee AS (
         
         mc.max_membership_fee_6 AS max_membership_fee_6,
         mc.new_member_category_6,
-        
+
         DATE(membership_periods.created_at) AS created_at_membership_periods,
 
         YEAR(membership_periods.purchased_on) as purchased_on_year_membership_periods,
@@ -408,31 +408,13 @@ annual_sales_actual_member_fee AS (
         membership_periods.ends AS ends,
         membership_periods.membership_type_id AS membership_type_id_membership_periods,
         events.sanctioning_event_id AS sanctioning_event_id,
-        membership_applications.payment_type AS payment_type,
         membership_periods.origin_flag AS origin_flag_membership_periods,
+        membership_applications.payment_type AS payment_type,
         membership_applications.race_type_id AS race_type_id,
         membership_applications.distance_type_id AS distance_type_id,
         order_products.order_id AS order_id,
         membership_applications.confirmation_code AS confirmation_code,
         membership_periods.membership_type_id
-        -- ,
-        -- coach recert
-        -- if contains([Payment Explanation],"recert") or contains([Payment Explanation],"coach") or [Payment Type] = "stripe" then "Coach Recert" END
-        -- membership_applications.payment_explanation,
-        -- membership_applications.payment_explanation LIKE '%recert%',
-        -- membership_applications.payment_explanation LIKE '%cert%',
-        -- membership_applications.payment_explanation LIKE '%coach%', 
-        -- membership_applications.payment_type LIKE '%stripe%',       
-        -- (
-        --     CASE        
-        --         WHEN membership_applications.payment_explanation LIKE '%recert%' THEN 'coach_recert'
-        --         WHEN membership_applications.payment_explanation LIKE '%cert%' THEN 'coach_recert'
-        --         WHEN membership_applications.payment_explanation LIKE '%coach%' THEN 'coach_recert'
-        --         WHEN membership_applications.payment_type LIKE '%stripe%' THEN 'coach_recert' -- 2024 forward
-        --         ELSE NULL
-        --     END 
-        -- ) IS NULL AS coach_recert,
-        -- membership_applications.payment_type LIKE '%stripe%' AS is_stripe_payment_type
         
     FROM membership_applications
         LEFT JOIN order_products ON (membership_applications.id = order_products.purchasable_id)
@@ -446,63 +428,54 @@ annual_sales_actual_member_fee AS (
         LEFT JOIN users ON (profiles.user_id = users.id)
         LEFT JOIN events ON (membership_applications.event_id = events.id)
         LEFT JOIN transactions ON (orders.id = transactions.order_id)
-
-        LEFT JOIN new_member_category_6 AS mc ON membership_periods.id = mc.id_membership_periods
         
-    WHERE 
-        -- #1 = TBD records for = 2021
+        LEFT JOIN new_member_category_6 AS mc ON membership_periods.id = mc.id_membership_periods   
+    WHERE
+        -- #1 = ~80,947 records for = 2021
         -- year(membership_periods.purchased_on) = @year
         year(membership_periods.purchased_on) >= @year
-        -- #2 = TBD is allowable below; where purchased = 2021
-        -- #3 = TBD; where purchased = 2021
+        -- #2 = 78,027 is allowable below; where purchased = 2021
+        -- #3 = 78,071; where purchased = 2021
         AND membership_periods.id NOT IN (4652554) 
-        -- #4 = tbd; where purchased = 2021
+        -- #4 = 78,071; where purchased = 2021
         AND membership_periods.membership_type_id NOT IN (56, 58, 81, 105) 
-        -- #5 = tbd; where purchased = 2021
+        -- #5 = 78,071; where purchased = 2021
         AND membership_periods.membership_type_id > 0
-        -- #6 = tbd; where purchased = 2021
+        -- #6 = 78,024; where purchased = 2021
         AND membership_periods.terminated_on IS NULL
-        -- #7 = tbd; where purchased = 2021
+        -- #7 = 40,735; where purchased = 2021
         AND membership_periods.ends >= '2022-01-01'
 
+        -- todo: use case for bronze 6 relay being priced at $23; added rule above if rama.price_paid = 6 then price at 6
+        -- AND membership_periods.id IN (4698020, 4636868) 
+
+        -- todo: revenue is off at 46 but should be 13 + 13 or 26; i think it's 23 for each?
+        -- AND members.member_number IN (3281)
+
+        -- todo: SHOULD HAVE 2 UNIQUE member_period_id but consolidates to the max?
+        -- AND members.member_number IN (3281)
+
         -- GENERAL DATA CHECKS
-        -- one day = 21, 521, 572, 3281
-        -- annual = 9, 21, 24, 386, 406, 477, 521, 572
+        -- one day = 21, 521, 572, 3281 = ALL MATCH IN TABLEAU
         -- AND members.member_number IN (2, 7, 9, 21, 24, 386, 406, 477, 521, 572, 3281)
 
-        -- not a one_day membership
-        AND 
-        (
-            CASE
-                WHEN membership_periods.membership_type_id IN (5, 46, 47, 72, 97, 100, 115, 118) THEN 1 -- 'one_day'
-                ELSE 0 
-            END
-        ) = 0
-        
-        -- coach_recert is null
-        AND 
-        (
-            CASE        
-                WHEN membership_applications.payment_explanation LIKE '%recert%' THEN 'coach_recert'
-                WHEN membership_applications.payment_explanation LIKE '%cert%' THEN 'coach_recert'
-                WHEN membership_applications.payment_explanation LIKE '%coach%' THEN 'coach_recert'
-                WHEN membership_applications.payment_type LIKE '%stripe%' THEN 'coach_recert' -- 2024 forward
-                ELSE NULL
-            END 
-        ) IS NULL
+        -- #2 = 78,072; where purchased = 2021
+        AND (CASE 
+            WHEN membership_periods.membership_type_id IN (5, 46, 47, 72, 97, 100, 115, 118) THEN 1
+            ELSE 0 END ) = 1 -- one_day only
         -- is allowable
         AND 
         (CASE
-            -- WHEN `Created At (Membership Periods)` <= TIMESTAMP('2021-12-16 06:25:14') 
+            -- WHEN 'Created At (Membership Periods)' <= TIMESTAMP('2021-12-16 06:25:14') 
             WHEN membership_periods.created_at <= '2021-12-16 06:25:14'
-                -- AND `Source` = 'Membership System/RTAV Classic' 
+                -- AND 'Source' = 'Membership System/RTAV Classic' 
                 AND CASE
                         WHEN order_products.cart_label IS NOT NULL THEN 'Membership System/RTAV Classic'
                         WHEN registration_audit_membership_application.price_paid IS NOT NULL THEN 'RTAV Batch'
                         WHEN membership_types.name IS NOT NULL THEN 'Other'
                         -- ELSE 'null' -- Optional, for cases where none of the conditions are met
                     END = 'Membership System/RTAV Classic'
-                -- AND `Deleted` IS NULL 
+                -- AND 'Deleted' IS NULL 
                 AND CASE
                         WHEN 
                             members.deleted_at IS NOT NULL OR 
@@ -511,26 +484,26 @@ annual_sales_actual_member_fee AS (
                             users.deleted_at IS NOT NULL THEN 'deleted'
                         ELSE 'active'  -- You can use 'active' or another label based on your preference
                     END = 'active'
-                -- AND `Captured and Processed` = 'C&P'            
+                -- AND 'Captured and Processed' = 'C&P'            
                 AND CASE
                         WHEN transactions.captured = 1 AND transactions.processed = 1 THEN 'C&P'
                         ELSE 'Other'  -- You can use 'Other' or another label based on your preference
                     END = 'C&P'
-                -- AND `Deleted At (Order Products)` IS NULL 
+                -- AND 'Deleted At (Order Products)' IS NULL 
                 AND order_products.deleted_at IS NULL
-                -- AND `Purchasable Type` = 'membership-application' 
+                -- AND 'Purchasable Type' = 'membership-application' 
                 AND order_products.purchasable_type IN ('membership-application')
             THEN 'Allowable'
 
             WHEN 
-                -- `Source` = 'Membership System/RTAV Classic' 
+                -- 'Source' = 'Membership System/RTAV Classic' 
                 CASE
                     WHEN order_products.cart_label IS NOT NULL THEN 'Membership System/RTAV Classic'
                     WHEN registration_audit_membership_application.price_paid IS NOT NULL THEN 'RTAV Batch'
                     WHEN membership_types.name IS NOT NULL THEN 'Other'
                     -- ELSE 'null' -- Optional, for cases where none of the conditions are met
                 END = 'Membership System/RTAV Classic'
-            --     AND `Deleted` IS NULL 
+            --     AND 'Deleted' IS NULL 
                 AND CASE
                         WHEN members.deleted_at IS NOT NULL OR 
                             membership_periods.deleted_at IS NOT NULL OR 
@@ -538,28 +511,28 @@ annual_sales_actual_member_fee AS (
                             users.deleted_at IS NOT NULL THEN 'deleted'
                         ELSE 'active'  -- You can use 'active' or another label based on your preference
                     END = 'active'
-            --     AND `Captured and Processed` = 'C&P'           
+            --     AND 'Captured and Processed' = 'C&P'           
                 AND CASE
                         WHEN transactions.captured = 1 AND transactions.processed = 1 THEN 'C&P'
                         ELSE 'Other'  -- You can use 'Other' or another label based on your preference
                     END = 'C&P'
-            --     AND `Deleted At (Order Products)` IS NULL  
+            --     AND 'Deleted At (Order Products)' IS NULL  
                 AND order_products.deleted_at IS NULL
-            --     AND `Purchasable Processed At` IS NOT NULL 
+            --     AND 'Purchasable Processed At' IS NOT NULL 
                 AND order_products.purchasable_processed_at IS NOT NULL
-            --     AND `Purchasable Type` = 'membership-application'
+            --     AND 'Purchasable Type' = 'membership-application'
                 AND order_products.purchasable_type IN ('membership-application')
             THEN 'Allowable'
 
             WHEN 
-                -- `Source` = 'RTAV Batch'
+                -- 'Source' = 'RTAV Batch'
                 CASE
                     WHEN order_products.cart_label IS NOT NULL THEN 'Membership System/RTAV Classic'
                     WHEN registration_audit_membership_application.price_paid IS NOT NULL THEN 'RTAV Batch'
                     WHEN membership_types.name IS NOT NULL THEN 'Other'
                     -- ELSE 'null' -- Optional, for cases where none of the conditions are met
                 END = 'RTAV Batch'
-                --     AND `Deleted` IS NULL
+                --     AND 'Deleted' IS NULL
                 AND CASE
                         WHEN members.deleted_at IS NOT NULL OR 
                             membership_periods.deleted_at IS NOT NULL OR 
@@ -570,14 +543,14 @@ annual_sales_actual_member_fee AS (
             THEN 'Allowable'
 
             WHEN 
-                -- `Source` = 'Other' 
+                -- 'Source' = 'Other' 
                 CASE
                     WHEN order_products.cart_label IS NOT NULL THEN 'Membership System/RTAV Classic'
                     WHEN registration_audit_membership_application.price_paid IS NOT NULL THEN 'RTAV Batch'
                     WHEN membership_types.name IS NOT NULL THEN 'Other'
                     -- ELSE 'null' -- Optional, for cases where none of the conditions are met
                 END = 'Other'
-            --     AND `Deleted` IS NULL
+            --     AND 'Deleted' IS NULL
                 AND CASE
                         WHEN members.deleted_at IS NOT NULL OR 
                             membership_periods.deleted_at IS NOT NULL OR 
@@ -588,14 +561,14 @@ annual_sales_actual_member_fee AS (
             THEN 'Allowable'
 
             WHEN 
-                -- `Source` IS NULL
+                -- 'Source' IS NULL
                 CASE
                     WHEN order_products.cart_label IS NOT NULL THEN 'Membership System/RTAV Classic'
                     WHEN registration_audit_membership_application.price_paid IS NOT NULL THEN 'RTAV Batch'
                     WHEN membership_types.name IS NOT NULL THEN 'Other'
                     -- ELSE 'null' -- Optional, for cases where none of the conditions are met
                 END IS NULL
-                --     AND `Deleted` IS NULL
+                --     AND 'Deleted' IS NULL
                 AND CASE
                         WHEN members.deleted_at IS NOT NULL OR 
                             membership_periods.deleted_at IS NOT NULL OR 
@@ -607,7 +580,6 @@ annual_sales_actual_member_fee AS (
 
             ELSE 'Not Allowable'
         END) = "Allowable"
-
     GROUP BY 
         members.member_number,
         Date(membership_periods.created_at),
@@ -630,17 +602,17 @@ annual_sales_actual_member_fee AS (
             WHEN membership_periods.membership_type_id IN (83, 84, 86, 87, 88, 90, 102) THEN 'elite'
             ELSE "other"
         END
-    -- LIMIT 10        
+    -- LIMIT 10
 )
 
--- GET ALL DETAILED RECORDS = ? for 2021
+-- GET ALL DETAILED RECORDS = 46K for 2021
 -- SELECT * FROM one_day_sales_actual_member_fee
--- SELECT * FROM annual_sales_actual_member_fee ORDER BY member_number_members
+-- SELECT * FROM one_day_sales_actual_member_fee ORDER BY member_number_members
 
--- GET COUNT = ? for 2021
+-- GET COUNT = 46K for 2021
 -- SELECT
 --     COUNT(DISTINCT max_membership_period_id) as purchases
--- FROM annual_sales_actual_member_fee
+-- FROM one_day_sales_actual_member_fee
 
 -- PROVIDES MEMBER & MEMBER PERIOD GRANULAR LEVEL PRICE
 -- SELECT
@@ -650,15 +622,15 @@ annual_sales_actual_member_fee AS (
 --     max_membership_period_id,
 --     new_member_category_6,
 --     FORMAT(max_membership_fee_6, 0)
--- FROM annual_sales_actual_member_fee
+-- FROM one_day_sales_actual_member_fee
 -- ORDER BY purchased_on_year_membership_periods
 
--- THIS COUNT MATCH TABLEAU PURCHASE COUNTS FOR ONE DAY SALES UNITS
+-- GET COUNT BY YEAR = 
 SELECT
     purchased_on_year_membership_periods,
     FORMAT(COUNT(*), 0) AS total_count,
     FORMAT(SUM(max_membership_fee_6), 0)
-FROM annual_sales_actual_member_fee
+FROM one_day_sales_actual_member_fee
 GROUP BY purchased_on_year_membership_periods WITH ROLLUP
 ORDER BY purchased_on_year_membership_periods     
 

@@ -624,12 +624,12 @@ SELECT
     membership_types.id > 0 AS membership_types_id_greater_than_zero,
     membership_types.id
 
-FROM membership_applications
+FROM membership_applications -- DONE
     LEFT JOIN order_products ON (membership_applications.id = order_products.purchasable_id)
     LEFT JOIN orders ON (order_products.order_id = orders.id)
     LEFT JOIN registration_audit ON (membership_applications.membership_period_id = registration_audit.membership_period_id)
     LEFT JOIN registration_audit_membership_application ON (registration_audit.id = registration_audit_membership_application.audit_id)
-    RIGHT JOIN membership_periods ON (membership_applications.membership_period_id = membership_periods.id)
+    RIGHT JOIN membership_periods ON (membership_applications.membership_period_id = membership_periods.id) -- DONE
     LEFT JOIN membership_types ON (membership_applications.membership_type_id = membership_types.id)
     RIGHT JOIN members ON (membership_periods.member_id = members.id)
     RIGHT JOIN profiles ON (members.memberable_id = profiles.id)

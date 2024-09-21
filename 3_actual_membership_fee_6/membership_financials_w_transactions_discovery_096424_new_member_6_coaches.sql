@@ -479,7 +479,7 @@ coaches_sales_actual_member_fee AS (
             END
         ) = 0
         
-        -- coach_recert is null
+        -- coach_recert is equal to 'coach_recert'
         AND 
         (
             CASE        

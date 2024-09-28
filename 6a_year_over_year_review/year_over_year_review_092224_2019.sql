@@ -7,7 +7,7 @@ USE usat_sales_db;
     SELECT
         COUNT(DISTINCT(member_number_members_sa)),
         COUNT(member_number_members_sa)
-    FROM all_membership_sales_data;
+    FROM all_membership_sales_data_2019;	
 -- =================================================
 
 -- #1) SECTION: STATS = TOTAL BY YEAR
@@ -19,7 +19,7 @@ USE usat_sales_db;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data
+    FROM all_membership_sales_data_2019
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_mp WITH ROLLUP;
 -- =================================================
@@ -34,7 +34,7 @@ USE usat_sales_db;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data
+    FROM all_membership_sales_data_2019
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_mp, purchase_on_month_mp WITH ROLLUP
     ORDER BY purchased_on_year_mp, purchase_on_month_mp;
@@ -51,7 +51,7 @@ USE usat_sales_db;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data
+    FROM all_membership_sales_data_2019
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_mp, real_membership_types_sa WITH ROLLUP; 
 -- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -66,7 +66,7 @@ USE usat_sales_db;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data
+    FROM all_membership_sales_data_2019
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_mp, new_member_category_6_sa WITH ROLLUP; 
 
@@ -141,7 +141,7 @@ USE usat_sales_db;
             ) AS first_purchase_by_year_month,
 
             COUNT(*) OVER (PARTITION BY member_number_members_sa) AS total_purchases  -- Total purchases for each member
-        FROM all_membership_sales_data  -- Source table containing membership sales data
+        FROM all_membership_sales_data_2019  -- Source table containing membership sales data
     ) AS member_data  -- Alias for the derived table
     GROUP BY 
         member_number_members_sa,  -- Grouping by member number
@@ -239,7 +239,7 @@ USE usat_sales_db;
                 ) AS first_purchase_by_year_month,
 
                 COUNT(*) OVER (PARTITION BY member_number_members_sa) AS total_purchases  -- Total purchases for each member
-            FROM all_membership_sales_data  -- Source table containing membership sales data
+            FROM all_membership_sales_data_2019  -- Source table containing membership sales data
         ) AS member_data  -- Alias for the derived table
         GROUP BY 
             member_number_members_sa,  -- Grouping by member number
@@ -266,103 +266,103 @@ USE usat_sales_db;
 -- ??????????????????????????????????????????????????
 
 -- #7) SECTION: STATS = PIVOT BY MONTH
-        -- SELECT
-        --     purchased_on_year_mp AS year,
-        --     'Member Count' AS metric,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Jan,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Feb,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Mar,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Apr,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS May,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Jun,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Jul,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Aug,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Sep,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Oct,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Nov,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS 'Dec'
-        -- FROM all_membership_sales_data
-        -- GROUP BY purchased_on_year_mp
+        SELECT
+            purchased_on_year_mp AS year,
+            'Member Count' AS metric,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Jan,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Feb,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Mar,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Apr,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS May,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Jun,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Jul,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Aug,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Sep,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Oct,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS Nov,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN COUNT(DISTINCT member_number_members_sa) END), 0) AS 'Dec'
+        FROM all_membership_sales_data_2019
+        GROUP BY purchased_on_year_mp
 
-        -- UNION ALL
+        UNION ALL
 
-        -- SELECT
-        --     purchased_on_year_mp AS year,
-        --     'Sales Units' AS metric,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN COUNT(*) END), 0) AS Jan,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN COUNT(*) END), 0) AS Feb,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN COUNT(*) END), 0) AS Mar,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN COUNT(*) END), 0) AS Apr,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN COUNT(*) END), 0) AS May,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN COUNT(*) END), 0) AS Jun,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN COUNT(*) END), 0) AS Jul,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN COUNT(*) END), 0) AS Aug,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN COUNT(*) END), 0) AS Sep,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN COUNT(*) END), 0) AS Oct,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN COUNT(*) END), 0) AS Nov,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN COUNT(*) END), 0) AS 'Dec'
-        -- FROM all_membership_sales_data
-        -- GROUP BY purchased_on_year_mp
+        SELECT
+            purchased_on_year_mp AS year,
+            'Sales Units' AS metric,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN COUNT(*) END), 0) AS Jan,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN COUNT(*) END), 0) AS Feb,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN COUNT(*) END), 0) AS Mar,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN COUNT(*) END), 0) AS Apr,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN COUNT(*) END), 0) AS May,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN COUNT(*) END), 0) AS Jun,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN COUNT(*) END), 0) AS Jul,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN COUNT(*) END), 0) AS Aug,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN COUNT(*) END), 0) AS Sep,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN COUNT(*) END), 0) AS Oct,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN COUNT(*) END), 0) AS Nov,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN COUNT(*) END), 0) AS 'Dec'
+        FROM all_membership_sales_data_2019
+        GROUP BY purchased_on_year_mp
 
-        -- UNION ALL
+        UNION ALL
 
-        -- SELECT
-        --     purchased_on_year_mp AS year,
-        --     'Sales Revenue' AS metric,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN actual_membership_fee_6_sa END), 0) AS Jan,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN actual_membership_fee_6_sa END), 0) AS Feb,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN actual_membership_fee_6_sa END), 0) AS Mar,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN actual_membership_fee_6_sa END), 0) AS Apr,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN actual_membership_fee_6_sa END), 0) AS May,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN actual_membership_fee_6_sa END), 0) AS Jun,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN actual_membership_fee_6_sa END), 0) AS Jul,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN actual_membership_fee_6_sa END), 0) AS Aug,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN actual_membership_fee_6_sa END), 0) AS Sep,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN actual_membership_fee_6_sa END), 0) AS Oct,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN actual_membership_fee_6_sa END), 0) AS Nov,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN actual_membership_fee_6_sa END), 0) AS 'Dec'
-        -- FROM all_membership_sales_data
-        -- GROUP BY purchased_on_year_mp
+        SELECT
+            purchased_on_year_mp AS year,
+            'Sales Revenue' AS metric,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN actual_membership_fee_6_sa END), 0) AS Jan,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN actual_membership_fee_6_sa END), 0) AS Feb,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN actual_membership_fee_6_sa END), 0) AS Mar,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN actual_membership_fee_6_sa END), 0) AS Apr,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN actual_membership_fee_6_sa END), 0) AS May,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN actual_membership_fee_6_sa END), 0) AS Jun,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN actual_membership_fee_6_sa END), 0) AS Jul,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN actual_membership_fee_6_sa END), 0) AS Aug,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN actual_membership_fee_6_sa END), 0) AS Sep,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN actual_membership_fee_6_sa END), 0) AS Oct,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN actual_membership_fee_6_sa END), 0) AS Nov,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN actual_membership_fee_6_sa END), 0) AS 'Dec'
+        FROM all_membership_sales_data_2019
+        GROUP BY purchased_on_year_mp
 
-        -- UNION ALL
+        UNION ALL
 
-        -- SELECT
-        --     purchased_on_year_mp AS year,
-        --     'Revenue Per Member' AS metric,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 1 THEN member_number_members_sa END), 0), 2) AS Jan,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 2 THEN member_number_members_sa END), 0), 2) AS Feb,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 3 THEN member_number_members_sa END), 0), 2) AS Mar,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 4 THEN member_number_members_sa END), 0), 2) AS Apr,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 5 THEN member_number_members_sa END), 0), 2) AS May,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 6 THEN member_number_members_sa END), 0), 2) AS Jun,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 7 THEN member_number_members_sa END), 0), 2) AS Jul,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 8 THEN member_number_members_sa END), 0), 2) AS Aug,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 9 THEN member_number_members_sa END), 0), 2) AS Sep,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 10 THEN member_number_members_sa END), 0), 2) AS Oct,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 11 THEN member_number_members_sa END), 0), 2) AS Nov,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 12 THEN member_number_members_sa END), 0), 2) AS 'Dec'
-        -- FROM all_membership_sales_data
-        -- GROUP BY purchased_on_year_mp
+        SELECT
+            purchased_on_year_mp AS year,
+            'Revenue Per Member' AS metric,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 1 THEN member_number_members_sa END), 0), 2) AS Jan,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 2 THEN member_number_members_sa END), 0), 2) AS Feb,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 3 THEN member_number_members_sa END), 0), 2) AS Mar,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 4 THEN member_number_members_sa END), 0), 2) AS Apr,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 5 THEN member_number_members_sa END), 0), 2) AS May,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 6 THEN member_number_members_sa END), 0), 2) AS Jun,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 7 THEN member_number_members_sa END), 0), 2) AS Jul,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 8 THEN member_number_members_sa END), 0), 2) AS Aug,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 9 THEN member_number_members_sa END), 0), 2) AS Sep,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 10 THEN member_number_members_sa END), 0), 2) AS Oct,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 11 THEN member_number_members_sa END), 0), 2) AS Nov,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(DISTINCT CASE WHEN MONTH(purchased_on_mp) = 12 THEN member_number_members_sa END), 0), 2) AS 'Dec'
+        FROM all_membership_sales_data_2019
+        GROUP BY purchased_on_year_mp
 
-        -- UNION ALL
+        UNION ALL
 
-        -- SELECT
-        --     purchased_on_year_mp AS year,
-        --     'Revenue Per Sale' AS metric,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 1 THEN 1 END), 0), 2) AS Jan,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 2 THEN 1 END), 0), 2) AS Feb,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 3 THEN 1 END), 0), 2) AS Mar,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 4 THEN 1 END), 0), 2) AS Apr,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 5 THEN 1 END), 0), 2) AS May,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 6 THEN 1 END), 0), 2) AS Jun,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 7 THEN 1 END), 0), 2) AS Jul,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 8 THEN 1 END), 0), 2) AS Aug,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 9 THEN 1 END), 0), 2) AS Sep,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 10 THEN 1 END), 0), 2) AS Oct,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 11 THEN 1 END), 0), 2) AS Nov,
-        --     FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 12 THEN 1 END), 0), 2) AS 'Dec'
-        -- FROM all_membership_sales_data
-        -- GROUP BY purchased_on_year_mp;
+        SELECT
+            purchased_on_year_mp AS year,
+            'Revenue Per Sale' AS metric,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 1 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 1 THEN 1 END), 0), 2) AS Jan,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 2 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 2 THEN 1 END), 0), 2) AS Feb,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 3 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 3 THEN 1 END), 0), 2) AS Mar,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 4 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 4 THEN 1 END), 0), 2) AS Apr,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 5 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 5 THEN 1 END), 0), 2) AS May,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 6 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 6 THEN 1 END), 0), 2) AS Jun,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 7 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 7 THEN 1 END), 0), 2) AS Jul,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 8 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 8 THEN 1 END), 0), 2) AS Aug,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 9 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 9 THEN 1 END), 0), 2) AS Sep,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 10 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 10 THEN 1 END), 0), 2) AS Oct,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 11 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 11 THEN 1 END), 0), 2) AS Nov,
+            FORMAT(SUM(CASE WHEN MONTH(purchased_on_mp) = 12 THEN actual_membership_fee_6_sa END) / NULLIF(COUNT(CASE WHEN MONTH(purchased_on_mp) = 12 THEN 1 END), 0), 2) AS 'Dec'
+        FROM all_membership_sales_data_2019
+        GROUP BY purchased_on_year_mp;
 
 
 -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

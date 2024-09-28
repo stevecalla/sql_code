@@ -1,5 +1,9 @@
 USE usat_sales_db;
-SET @member_category = '3-year';
+
+SET @member_category_1year = '1-Year $50';
+SET @member_category_silver = 'Silver';
+SET @member_category_gold = 'Gold';
+
 SET @year_1 = 2023;
 SET @year_2 = 2024;
 SET @year_2024 = 2024;   
@@ -10,7 +14,7 @@ SET @year_2024 = 2024;
         FORMAT(COUNT(member_number_members_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data
-    WHERE new_member_category_6_sa IN (@member_category);
+    WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_silver, @member_category_gold);
 -- ==================================================
 
 -- #2) SECTION: STATS = BY MEMBER
@@ -20,7 +24,7 @@ SET @year_2024 = 2024;
         FORMAT(COUNT(member_number_members_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data
-    WHERE new_member_category_6_sa IN (@member_category)
+    WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_silver, @member_category_gold)
     GROUP BY member_number_members_sa
     ORDER BY CAST(member_number_members_sa AS UNSIGNED);
 -- ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -32,7 +36,7 @@ SET @year_2024 = 2024;
         FORMAT(COUNT(member_number_members_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data
-    WHERE new_member_category_6_sa IN (@member_category)
+    WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_silver, @member_category_gold)
     GROUP BY YEAR(ends_mp) WITH ROLLUP
     ORDER BY YEAR(ends_mp);
 -- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,7 +50,7 @@ SET @year_2024 = 2024;
         FORMAT(COUNT(member_number_members_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data
-    WHERE new_member_category_6_sa IN (@member_category)
+    WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_silver, @member_category_gold)
     GROUP BY YEAR(ends_mp), QUARTER(ends_mp), MONTH(ends_mp) WITH ROLLUP
     ORDER BY YEAR(ends_mp), QUARTER(ends_mp), MONTH(ends_mp);
 -- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -66,7 +70,7 @@ SET @year_2024 = 2024;
     ORDER BY CAST(member_number_members_sa AS UNSIGNED);
 -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
--- #6) SECTION: STATS = BY MEMBERS, END DATE IN 2024 = 4,540 UNIQUE
+-- #6) SECTION: STATS = BY MEMBERS, END DATE IN 2024 = 69,320 UNIQUE
     -- CTE to select members with an end date in 2024
     WITH members_with_ends_in_2024 AS (
         SELECT 
@@ -87,7 +91,7 @@ SET @year_2024 = 2024;
         LEFT JOIN all_membership_sales_data AS sa 
             ON mw.member_number_members_sa = sa.member_number_members_sa
             -- AND YEAR(sa.purchased_on_mp) IN (@year_2024)         -- Filter for purchases made in 2024
-            AND YEAR(sa.purchased_on_mp) IN (@year_1, @year_2)       -- Filter for purchases made in 2023 & 2024
+            AND YEAR(sa.purchased_on_mp) IN (@year_2024)       -- Filter for purchases made in 2    023 & 2024
         GROUP BY mw.member_number_members_sa                         -- Group by member number
     )
 
@@ -129,7 +133,7 @@ SET @year_2024 = 2024;
 			ON mw.member_number_members_sa = sa.member_number_members_sa
 			-- AND YEAR(sa.purchased_on_mp) IN (@year_2023)         -- Filter for purchases made in 2024
 			-- AND YEAR(sa.purchased_on_mp) IN (@year_2024)         -- Filter for purchases made in 2024
-			AND YEAR(sa.purchased_on_mp) IN (@year_1, @year_2)       -- Filter for purchases made in 2023 & 2024
+			AND YEAR(sa.purchased_on_mp) IN (@year_2024)       -- Filter for purchases made in 2023 & 2024
 		GROUP BY mw.member_number_members_sa, mw.ends_mp            -- Group by member number and ends_mp
 	)
 
@@ -203,7 +207,7 @@ SET @year_2024 = 2024;
 		LEFT JOIN all_membership_sales_data AS sa 
             ON mw.member_number_members_sa = sa.member_number_members_sa
 			-- AND YEAR(sa.purchased_on_mp) IN (@year_2024)         -- Filter for purchases made in 2024
-			AND YEAR(sa.purchased_on_mp) IN (@year_1, @year_2)       -- Filter for purchases made in 2023 & 2024
+			AND YEAR(sa.purchased_on_mp) IN (@year_2024)       -- Filter for purchases made in 2023 & 2024
 		-- 1003056983 = 0, 31444 = 0, 102401766 = 2, '123516892' = 1, '128065' = 1, '135463408' = 0
 		-- WHERE mw.member_number_members_sa IN (31444, 102401766, 123516892, 128065, 135463408, 1003056983)
 	)
@@ -234,7 +238,7 @@ SET @year_2024 = 2024;
         LEFT JOIN all_membership_sales_data AS sa 
             ON mw.member_number_members_sa = sa.member_number_members_sa
             -- AND YEAR(sa.purchased_on_mp) IN (@year_2024)         -- Filter for purchases made in 2024
-            AND YEAR(sa.purchased_on_mp) IN (@year_1, @year_2)       -- Filter for purchases made in 2023 & 2024
+            AND YEAR(sa.purchased_on_mp) IN (@year_2024)       -- Filter for purchases made in 2023 & 2024
         GROUP BY mw.member_number_members_sa, sa.new_member_category_6_sa, mw.ends_mp  -- Group by member number, category, and ends_mp
     )
     
@@ -261,7 +265,7 @@ SET @year_2024 = 2024;
     -- ORDER BY member_count DESC;  -- Order by category and then purchase count
 -- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
--- #11) SECTION: ROLLUP = MEMBERS BY 2023/2024 PURCHASE VS 3-YEAR END
+-- #11) SECTION: ROLLUP = MEMBERS BY 2023/2024 PURCHASE VS 1-Year END
     WITH members_with_ends_in_2024 AS (
         SELECT 
             DISTINCT member_number_members_sa,
@@ -285,7 +289,7 @@ SET @year_2024 = 2024;
         LEFT JOIN all_membership_sales_data AS sa 
             ON mw.member_number_members_sa = sa.member_number_members_sa
             -- AND YEAR(sa.purchased_on_mp) IN (@year_2024)         -- Filter for purchases made in 2024
-            AND YEAR(sa.purchased_on_mp) IN (@year_1, @year_2)       -- Filter for purchases made in 2023 & 2024
+            AND YEAR(sa.purchased_on_mp) IN (@year_2024)       -- Filter for purchases made in 2023 & 2024
         GROUP BY mw.member_number_members_sa, sa.new_member_category_6_sa, mw.ends_mp, sa.purchased_on_mp  -- Group by member number, category, ends_mp, and purchased_on_mp
     )
 
@@ -312,7 +316,7 @@ SET @year_2024 = 2024;
     ORDER BY month_difference;  -- Order by category and then purchase count
 -- ##################################################
 
--- #12) SECTION: VERIFY = SAMPLE 2023/2024 PURCHASE VS 2024 3-YEAR END
+-- #12) SECTION: VERIFY = SAMPLE 2023/2024 PURCHASE VS 2024 1-Year END
     WITH members_with_ends_in_2024 AS (
         SELECT 
             DISTINCT member_number_members_sa,
@@ -335,7 +339,7 @@ SET @year_2024 = 2024;
         LEFT JOIN all_membership_sales_data AS sa 
             ON mw.member_number_members_sa = sa.member_number_members_sa
             -- AND YEAR(sa.purchased_on_mp) IN (@year_2024)         -- Filter for purchases made in 2024
-            AND YEAR(sa.purchased_on_mp) IN (@year_1, @year_2)       -- Filter for purchases made in 2023 & 2024
+            AND YEAR(sa.purchased_on_mp) IN (@year_2024)       -- Filter for purchases made in 2023 & 2024
         GROUP BY mw.member_number_members_sa, mw.ends_mp           -- Group by member number and ends_mp
     )
 
@@ -356,7 +360,7 @@ SET @year_2024 = 2024;
     ORDER BY CAST(mw.member_number_members_sa AS UNSIGNED);                             -- Order by member number
 -- ##################################################
 
--- #14) SECTION: ROLLUP = MEMBERS BY MAX END PERIOD BY 2024 3-YEAR END
+-- #14) SECTION: ROLLUP = MEMBERS BY MAX END PERIOD BY 2024 1-Year END
     WITH members_with_ends_in_2024 AS (
         SELECT 
             DISTINCT member_number_members_sa,
@@ -411,7 +415,7 @@ SET @year_2024 = 2024;
     ORDER BY max_year_ends_mp;  -- Order by YEAR
 -- ##################################################
 
--- #15) SECTION: VERIFY = SAMPLE 2023/2024 PURCHASE VS 2024 3-YEAR END
+-- #15) SECTION: VERIFY = SAMPLE 2023/2024 PURCHASE VS 2024 1-Year END
     SELECT 
         member_number_members_sa,
         id_membership_periods_sa,
@@ -434,7 +438,7 @@ SET @year_2024 = 2024;
     -- 1910266010	1-Year $50	2024-12-10	2022-01-21	1	50.00
 -- ##################################################
 
--- #16) SECTION: ROLLUP = MEMBERS BY MAX END PERIOD YEAR MONTH BY 2024 3-YEAR END
+-- #16) SECTION: ROLLUP = MEMBERS BY MAX END PERIOD YEAR MONTH BY 2024 1-Year END
     WITH members_with_ends_in_2024 AS (
         SELECT 
             DISTINCT member_number_members_sa,
@@ -551,7 +555,7 @@ SET @year_2024 = 2024;
     ORDER BY new_member_category_6_sa;  -- Order by new member category
 -- ##################################################
 
--- #18) SECTION: VERIFY = MEMBERS BY MAX END PERIOD YEAR MONTH BY 2024 3-YEAR END
+-- #18) SECTION: VERIFY = MEMBERS BY MAX END PERIOD YEAR MONTH BY 2024 1-Year END
     SELECT 
         member_number_members_sa,
         id_membership_periods_sa,

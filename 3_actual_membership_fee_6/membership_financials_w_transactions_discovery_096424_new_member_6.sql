@@ -4,6 +4,11 @@ USE vapor;
 -- { fixed [Id (Membership Periods)] : max([Membership Fee 6])}
 
 SET @year = 2021;
+SET @membership_periods.ends = '2022-01-01';
+
+SET @year = 2019;
+SET @membership_periods_ends = '2019-01-01';
+
 -- SET @start_date = '2023-01-01 09:00:00';
 -- SET @end_date = '2023-01-10 12:00:00';
 
@@ -447,7 +452,8 @@ one_day_sales_actual_member_fee AS (
         -- #6 = 78,024; where purchased = 2021
         AND membership_periods.terminated_on IS NULL
         -- #7 = 40,735; where purchased = 2021
-        AND membership_periods.ends >= '2022-01-01'
+        -- AND membership_periods.ends >= '2022-01-01'
+        AND membership_periods.ends >= @membership_periods_ends
 
         -- todo: use case for bronze 6 relay being priced at $23; added rule above if rama.price_paid = 6 then price at 6
         -- AND membership_periods.id IN (4698020, 4636868) 

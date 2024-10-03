@@ -8,7 +8,7 @@ USE usat_sales_db;
     SELECT
         COUNT(DISTINCT(member_number_members_sa)),
         COUNT(member_number_members_sa)
-    FROM all_membership_sales_data;
+    FROM all_membership_sales_data_2015_left;
 -- =================================================
 
 -- #2) SECTION: STATS = TOTAL BY YEAR
@@ -20,10 +20,11 @@ USE usat_sales_db;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data
+    FROM all_membership_sales_data_2015_left
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_adjusted_mp WITH ROLLUP;
 -- =================================================
+
 
 -- #3) SECTION: STATS = TOTAL BY YEAR BY MONTH
     SELECT
@@ -35,7 +36,7 @@ USE usat_sales_db;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data
+    FROM all_membership_sales_data_2015_left
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp WITH ROLLUP
     ORDER BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp;
@@ -52,7 +53,7 @@ USE usat_sales_db;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data
+    FROM all_membership_sales_data_2015_left
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_adjusted_mp, real_membership_types_sa WITH ROLLUP; 
 -- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -67,7 +68,7 @@ USE usat_sales_db;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data
+    FROM all_membership_sales_data_2015_left
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_adjusted_mp, new_member_category_6_sa WITH ROLLUP; 
 
@@ -108,12 +109,12 @@ USE usat_sales_db;
         created_at_users,
 
         -- Calculate the first purchase date for each member using a window function
-        first_purchased_on_mp,
-        first_purchased_on_adjusted_mp,
         first_created_at_members,
         first_created_at_mp,
         first_created_at_profiles,
         first_created_at_users,
+        first_purchased_on_mp,
+        first_purchased_on_adjusted_mp,
         first_starts_mp,
         
         SUM(CASE WHEN first_occurrence_any_purchase = 1 THEN 1 ELSE 0 END) AS first_occurrence_any_purchase,  -- Count unique members (1 for first occurrence, 0 otherwise)
@@ -191,7 +192,8 @@ USE usat_sales_db;
 
             COUNT(*) OVER (PARTITION BY member_number_members_sa) AS total_purchases  -- Total purchases for each member
 
-        FROM all_membership_sales_data  -- Source table containing membership sales data
+        FROM all_membership_sales_data_2015_left  -- Source table containing membership sales data
+        LIMIT 100
 
     ) AS member_data  -- Alias for the derived table
 
@@ -220,11 +222,12 @@ USE usat_sales_db;
         ends_mp,
         purchased_on_year_mp,       -- Grouping by year of purchase
         purchased_on_quarter_mp,    -- Grouping by quarter of purchase
-        purchased_on_month_mp;       -- Grouping by month of purchase
+        purchased_on_month_mp       -- Grouping by month of purchase
+    LIMIT 100;
 -- ##################################################
 
 -- #6) SECTION: CREATE TABLE
-    --  SEE create_key_stats_093024.sql
+    --  SEE create_2015_key_stats_093024.sql
 -- ??????????????????????????????????????????????????
 
 -- #7) SECTION: TBD

@@ -1,5 +1,5 @@
 USE usat_sales_db;
-SET @member_category = '3-year';
+SET @member_category = 'Gold';
 SET @year_2023 = 2023;   
 SET @year_2024 = 2024;   
 
@@ -41,7 +41,7 @@ SET @year_2024 = 2024;
         FROM all_membership_sales_data_2015_left
         WHERE   
             new_member_category_6_sa IN (@member_category)  -- Filter by member category
-            AND purchased_on_year_adjusted_mp IN (@year_2023) -- purchased in 2023
+            AND purchased_on_year_adjusted_mp IN (@year_2024) -- purchased in 2023
         )
         
         -- SELECT COUNT(DISTINCT(member_number_members_sa)) AS unique_member_count, COUNT(member_number_members_sa) AS sales_units FROM members_with_purchase_in_2023;
@@ -107,9 +107,9 @@ SET @year_2024 = 2024;
         SELECT 
             new_member_category_6_sa,
             
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) < @year_2023 THEN member_number_members_sa END) AS 'sale_<2003',
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) = @year_2023 THEN member_number_members_sa END) AS 'sale_2023',
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) > @year_2023 THEN member_number_members_sa END) AS 'Other',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) < @year_2024 THEN member_number_members_sa END) AS 'sale_<2003',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) = @year_2024 THEN member_number_members_sa END) AS 'sale_2023',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) > @year_2024 THEN member_number_members_sa END) AS 'Other',
 
             COUNT(DISTINCT CASE WHEN MONTH(purchased_on_adjusted_mp_mw) = 1 THEN member_number_members_sa END) AS January,
             COUNT(DISTINCT CASE WHEN MONTH(purchased_on_adjusted_mp_mw) = 2 THEN member_number_members_sa END) AS February,
@@ -147,7 +147,7 @@ SET @year_2024 = 2024;
         FROM all_membership_sales_data_2015_left
         WHERE   
             new_member_category_6_sa IN (@member_category)  -- Filter by member category
-            AND purchased_on_year_adjusted_mp IN (@year_2023)                    -- Only include members with end date in 2024
+            AND purchased_on_year_adjusted_mp IN (@year_2024)                    -- Only include members with end date in 2024
         )
 
         -- CTE to purchase history prior to the 3-year expiration date only; not a complete history
@@ -185,9 +185,9 @@ SET @year_2024 = 2024;
             member_purchase_count,
             new_member_category_6_sa,
             
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) < @year_2023 THEN member_number_members_sa END) AS 'sale_<2003',
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) = @year_2023 THEN member_number_members_sa END) AS 'sale_2023',
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) > @year_2023 THEN member_number_members_sa END) AS 'Other',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) < @year_2024 THEN member_number_members_sa END) AS 'sale_<2003',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) = @year_2024 THEN member_number_members_sa END) AS 'sale_2023',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) > @year_2024 THEN member_number_members_sa END) AS 'Other',
 
             COUNT(DISTINCT CASE WHEN MONTH(purchased_on_adjusted_mp_mw) = 1 THEN member_number_members_sa END) AS January,
             COUNT(DISTINCT CASE WHEN MONTH(purchased_on_adjusted_mp_mw) = 2 THEN member_number_members_sa END) AS February,
@@ -206,7 +206,7 @@ SET @year_2024 = 2024;
             SUM(member_purchase_count)
         FROM purchase_history 
         WHERE is_previous_to_last_purchase = 1
-        GROUP BY member_purchase_count, new_member_category_6_sa
+        GROUP BY member_purchase_count, new_member_category_6_sa WITH ROLLUP
         ORDER BY member_purchase_count; -- total 6,040
 ;
 -- ##################################################

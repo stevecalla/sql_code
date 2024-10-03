@@ -103,7 +103,7 @@ SELECT DISTINCT(new_member_category_6_sa) FROM all_membership_sales_data;
         ends_mp
     FROM all_membership_sales_data
     WHERE 
-        new_member_category_6_sa IN (@member_category)
+        new_member_category_6_sa IN (@member_category_1year, @member_category_silver, @member_category_gold)
         AND
         -- purchased_on_year_mp IN (2022)
         purchased_on_year_mp IN (2023)

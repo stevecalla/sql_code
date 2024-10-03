@@ -1,5 +1,15 @@
 USE usat_sales_db;
-SET @member_category = '3-year';
+
+SET @member_bronze_a = 'Bronze - $0';
+SET @member_bronze_b = 'Bronze - $13';
+SET @member_bronze_c = 'Bronze - $18';
+SET @member_bronze_d = 'Bronze - $23';
+SET @member_bronze_e = 'Bronze - $6';
+SET @member_bronze_ao = 'Bronze - AO';
+SET @member_bronze_distance_upgrade = 'Bronze - Distance Upgrade';
+SET @member_club = 'Club';
+SET @member_one_day_a = 'One Day - $15';
+
 SET @year_1 = 2023;
 SET @year_2 = 2024;
 SET @year_2023 = 2023;   
@@ -12,7 +22,7 @@ SET @year_2025 = 2025;
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_category);
+    WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a);
 -- ==================================================
 
 -- #2) SECTION: STATS = BY MEMBER
@@ -22,7 +32,7 @@ SET @year_2025 = 2025;
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_category)
+    WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
     GROUP BY member_number_members_sa
     ORDER BY CAST(member_number_members_sa AS UNSIGNED);
 -- ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -34,7 +44,7 @@ SET @year_2025 = 2025;
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_category)
+    WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
     GROUP BY YEAR(ends_mp) WITH ROLLUP
     ORDER BY YEAR(ends_mp);
 -- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -48,7 +58,7 @@ SET @year_2025 = 2025;
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_category)
+    WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
     GROUP BY YEAR(ends_mp), QUARTER(ends_mp), MONTH(ends_mp) WITH ROLLUP
     ORDER BY YEAR(ends_mp), QUARTER(ends_mp), MONTH(ends_mp);
 -- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -61,7 +71,7 @@ SET @year_2025 = 2025;
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
     WHERE   
-        new_member_category_6_sa IN (@member_category)
+        new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
         AND YEAR(ends_mp) IN (@year_2024)
         AND MONTH(ends_mp) IN (1)
 	GROUP BY member_number_members_sa
@@ -75,7 +85,7 @@ SET @year_2025 = 2025;
             DISTINCT member_number_members_sa
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2024                         -- Only include members with end date in 2024
     ),
 
@@ -115,7 +125,7 @@ SET @year_2025 = 2025;
 			ends_mp  -- Include     ends_mp for pivoting later
 		FROM all_membership_sales_data_2015_left
 		WHERE   
-			new_member_category_6_sa IN (@member_category)  -- Filter by member category
+			new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
 			AND YEAR(ends_mp) = @year_2024                         -- Only include members with end date in 2024
 	),
 
@@ -187,7 +197,7 @@ SET @year_2025 = 2025;
             new_member_category_6_sa
 		FROM all_membership_sales_data_2015_left
 		WHERE   
-			new_member_category_6_sa IN (@member_category)  -- Filter by member category
+			new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
 			AND YEAR(ends_mp) = @year_2024                         -- Only include members with end date in 2024
 	),
 
@@ -220,7 +230,7 @@ SET @year_2025 = 2025;
             ends_mp  -- Include ends_mp for pivoting later
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2024                         -- Only include members with end date in 2024
     ),
 
@@ -270,7 +280,7 @@ SET @year_2025 = 2025;
             ends_mp  -- Include ends_mp for pivoting later
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2024                         -- Only include members with end date in 2024
     ),
 
@@ -321,7 +331,7 @@ SET @year_2025 = 2025;
             ends_mp  -- Include ends_mp for month difference calculation
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2024                         -- Only include members with end date in 2024
     ),
 
@@ -370,7 +380,7 @@ SET @year_2025 = 2025;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2024 -- ends in 2024
         )
 
@@ -449,7 +459,7 @@ SET @year_2025 = 2025;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2024 -- ends in 2024
         )
 
@@ -528,7 +538,7 @@ SET @year_2025 = 2025;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2024 -- ends in 2024
         )
 
@@ -623,7 +633,7 @@ SET @year_2025 = 2025;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2023 -- ends in 2023
         )
 
@@ -704,7 +714,7 @@ SET @year_2025 = 2025;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2023 -- ends in 2023
         )
 
@@ -789,7 +799,7 @@ SET @year_2025 = 2025;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND YEAR(ends_mp) = @year_2023 -- ends in 2023
         )
 

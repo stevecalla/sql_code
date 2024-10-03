@@ -5,18 +5,18 @@ SET @member_category_silver = 'Silver';
 SET @member_category_gold = 'Gold';
 
 -- #1) SALES BY PURCHASE ON YEAR 2023
-        SELECT 
-            purchased_on_year_mp,
-            FORMAT(COUNT(DISTINCT(member_number_members_sa)), 0) AS members_count,
-            FORMAT(COUNT(*), 0) AS sales_units,
-            FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
-        FROM all_membership_sales_data
-        WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_silver, @member_category_gold)
-        GROUP BY purchased_on_year_mp WITH ROLLUP 
-        ORDER BY purchased_on_year_mp;
-    -- *******************************************
+    SELECT 
+        purchased_on_year_mp,
+        FORMAT(COUNT(DISTINCT(member_number_members_sa)), 0) AS members_count,
+        FORMAT(COUNT(*), 0) AS sales_units,
+        FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
+    FROM all_membership_sales_data
+    WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_silver, @member_category_gold)
+    GROUP BY purchased_on_year_mp WITH ROLLUP 
+    ORDER BY purchased_on_year_mp;
+-- *******************************************
 
-    -- CTE = DETERMINE PRODUCT PURCHASED FOR 2023 PURCHASE ON DATE
+-- #2 CTE = DETERMINE PRODUCT PURCHASED FOR 2023 PURCHASE ON DATE
     WITH members_purchase_on AS (
         SELECT    
             DISTINCT member_number_members_sa
@@ -126,19 +126,7 @@ SET @member_category_gold = 'Gold';
 
 -- UNIQUE PURCHASES BY MEMBER NUMBER
 
--- #2) SALES BY PURCHASE ON YEAR 2024
-        SELECT 
-            purchased_on_year_mp,
-            FORMAT(COUNT(DISTINCT(member_number_members_sa)), 0) AS members_count,
-            FORMAT(COUNT(*), 0) AS sales_units,
-            FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
-        FROM all_membership_sales_data
-        WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_silver, @member_category_gold)
-        GROUP BY purchased_on_year_mp WITH ROLLUP 
-        ORDER BY purchased_on_year_mp;
-    -- *******************************************
-
-    -- CTE = DETERMINE PRODUCT PURCHASED FOR 2023 PURCHASE ON DATE
+-- #3) CTE = DETERMINE PRODUCT PURCHASED FOR 2023 PURCHASE ON DATE
     WITH members_purchase_on AS (
         SELECT    
             DISTINCT member_number_members_sa

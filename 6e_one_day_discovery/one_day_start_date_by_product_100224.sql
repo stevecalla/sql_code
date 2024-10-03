@@ -1,5 +1,15 @@
 USE usat_sales_db;
-SET @member_category = '3-year';
+
+SET @member_bronze_a = 'Bronze - $0';
+SET @member_bronze_b = 'Bronze - $13';
+SET @member_bronze_c = 'Bronze - $18';
+SET @member_bronze_d = 'Bronze - $23';
+SET @member_bronze_e = 'Bronze - $6';
+SET @member_bronze_ao = 'Bronze - AO';
+SET @member_bronze_distance_upgrade = 'Bronze - Distance Upgrade';
+SET @member_club = 'Club';
+SET @member_one_day_a = 'One Day - $15';
+
 SET @year_2023 = 2023;   
 SET @year_2024 = 2024;   
 
@@ -10,7 +20,7 @@ SET @year_2024 = 2024;
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_category)
+    WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
     GROUP BY purchased_on_year_adjusted_mp WITH ROLLUP 
     ORDER BY purchased_on_year_adjusted_mp;
 -- ##################################################
@@ -23,7 +33,7 @@ SET @year_2024 = 2024;
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_category)
+    WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
     GROUP BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp WITH ROLLUP 
     ORDER BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp;
 -- ##################################################
@@ -40,7 +50,7 @@ SET @year_2024 = 2024;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
             AND purchased_on_year_adjusted_mp IN (@year_2023) -- purchased in 2023
         )
         
@@ -146,7 +156,7 @@ SET @year_2024 = 2024;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a) -- Filter by member category
             AND purchased_on_year_adjusted_mp IN (@year_2023)                    -- Only include members with end date in 2024
         )
 
@@ -206,7 +216,7 @@ SET @year_2024 = 2024;
             SUM(member_purchase_count)
         FROM purchase_history 
         WHERE is_previous_to_last_purchase = 1
-        GROUP BY member_purchase_count, new_member_category_6_sa
+        GROUP BY member_purchase_count, new_member_category_6_sa WITH ROLLUP
         ORDER BY member_purchase_count; -- total 6,040
 ;
 -- ##################################################

@@ -1,14 +1,10 @@
 USE usat_sales_db;
 
-SET @member_bronze_a = 'Bronze - $0';
-SET @member_bronze_b = 'Bronze - $13';
-SET @member_bronze_c = 'Bronze - $18';
-SET @member_bronze_d = 'Bronze - $23';
-SET @member_bronze_e = 'Bronze - $6';
-SET @member_bronze_ao = 'Bronze - AO';
-SET @member_bronze_distance_upgrade = 'Bronze - Distance Upgrade';
-SET @member_club = 'Club';
-SET @member_one_day_a = 'One Day - $15';
+SET @member_category_1year = '1-Year $50';
+SET @member_category_silver = 'Silver';
+SET @member_category_gold = 'Gold';
+
+-- @member_category_1year, @member_category_gold, @member_category_silver
 
 SELECT * FROM all_membership_sales_data_2015_left LIMIT 100;
 
@@ -23,7 +19,7 @@ SELECT
     FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
     FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
 FROM all_membership_sales_data_2015_left
-WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_gold, @member_category_silver)
 GROUP BY purchased_on_year_adjusted_mp WITH ROLLUP 
 ORDER BY purchased_on_year_adjusted_mp;
 
@@ -35,7 +31,7 @@ SELECT
     FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
     FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
 FROM all_membership_sales_data_2015_left
-WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_gold, @member_category_silver)
 GROUP BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp WITH ROLLUP 
 ORDER BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp;
 
@@ -49,7 +45,7 @@ SELECT
     FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
     FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
 FROM all_membership_sales_data_2015_left
-WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_gold, @member_category_silver)
 GROUP BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp, YEAR(starts_mp), QUARTER(starts_mp) WITH ROLLUP
 ORDER BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp;
 
@@ -60,7 +56,7 @@ SELECT
     FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
     FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
 FROM all_membership_sales_data_2015_left
-WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_gold, @member_category_silver)
 GROUP BY YEAR(starts_mp) WITH ROLLUP
 ORDER BY yEAR(starts_mp);
 
@@ -72,7 +68,7 @@ SELECT
     FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
     FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
 FROM all_membership_sales_data_2015_left
-WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_gold, @member_category_silver)
 GROUP BY YEAR(starts_mp), YEAR(ends_mp) WITH ROLLUP
 ORDER BY yEAR(starts_mp), YEAR(ends_mp);
 
@@ -83,7 +79,7 @@ SELECT
     FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
     FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
 FROM all_membership_sales_data_2015_left
-WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_gold, @member_category_silver)
 GROUP BY YEAR(ends_mp) WITH ROLLUP
 ORDER BY YEAR(ends_mp);
 
@@ -96,7 +92,7 @@ SELECT
     FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
     FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
 FROM all_membership_sales_data_2015_left
-WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+WHERE new_member_category_6_sa IN (@member_category_1year, @member_category_gold, @member_category_silver)
 GROUP BY YEAR(ends_mp), QUARTER(ends_mp), MONTH(ends_mp) WITH ROLLUP
 ORDER BY YEAR(ends_mp), QUARTER(ends_mp), MONTH(ends_mp);
 
@@ -109,7 +105,7 @@ SELECT
     ends_mp
 FROM all_membership_sales_data_2015_left
 WHERE 
-    new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+    new_member_category_6_sa IN (@member_category_1year, @member_category_gold, @member_category_silver)
     AND
     -- purchased_on_year_adjusted_mp IN (2022)
     purchased_on_year_adjusted_mp IN (2023)

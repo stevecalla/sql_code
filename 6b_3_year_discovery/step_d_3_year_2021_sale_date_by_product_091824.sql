@@ -1,15 +1,6 @@
 USE usat_sales_db;
-
-SET @member_bronze_a = 'Bronze - $0';
-SET @member_bronze_b = 'Bronze - $13';
-SET @member_bronze_c = 'Bronze - $18';
-SET @member_bronze_d = 'Bronze - $23';
-SET @member_bronze_e = 'Bronze - $6';
-SET @member_bronze_ao = 'Bronze - AO';
-SET @member_bronze_distance_upgrade = 'Bronze - Distance Upgrade';
-SET @member_club = 'Club';
-SET @member_one_day_a = 'One Day - $15';
-
+SET @member_category = '3-year';
+SET @year_2021 = 2021;   
 SET @year_2023 = 2023;   
 SET @year_2024 = 2024;   
 
@@ -20,7 +11,7 @@ SET @year_2024 = 2024;
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+    WHERE new_member_category_6_sa IN (@member_category)
     GROUP BY purchased_on_year_adjusted_mp WITH ROLLUP 
     ORDER BY purchased_on_year_adjusted_mp;
 -- ##################################################
@@ -33,7 +24,7 @@ SET @year_2024 = 2024;
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)
+    WHERE new_member_category_6_sa IN (@member_category)
     GROUP BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp WITH ROLLUP 
     ORDER BY purchased_on_year_adjusted_mp, purchased_on_month_adjusted_mp;
 -- ##################################################
@@ -50,8 +41,8 @@ SET @year_2024 = 2024;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a)  -- Filter by member category
-            AND purchased_on_year_adjusted_mp IN (@year_2023) -- purchased in 2023
+            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            AND purchased_on_year_adjusted_mp IN (@year_2021) -- purchased in 2023
         )
         
         -- SELECT COUNT(DISTINCT(member_number_members_sa)) AS unique_member_count, COUNT(member_number_members_sa) AS sales_units FROM members_with_purchase_in_2023;
@@ -117,9 +108,9 @@ SET @year_2024 = 2024;
         SELECT 
             new_member_category_6_sa,
             
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) < @year_2023 THEN member_number_members_sa END) AS 'sale_<2003',
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) = @year_2023 THEN member_number_members_sa END) AS 'sale_2023',
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) > @year_2023 THEN member_number_members_sa END) AS 'Other',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) < @year_2021 THEN member_number_members_sa END) AS 'sale_<2021',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) = @year_2021 THEN member_number_members_sa END) AS 'sale_2021',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) > @year_2021 THEN member_number_members_sa END) AS 'Other',
 
             COUNT(DISTINCT CASE WHEN MONTH(purchased_on_adjusted_mp_mw) = 1 THEN member_number_members_sa END) AS January,
             COUNT(DISTINCT CASE WHEN MONTH(purchased_on_adjusted_mp_mw) = 2 THEN member_number_members_sa END) AS February,
@@ -156,8 +147,8 @@ SET @year_2024 = 2024;
             -- starts_mp,
         FROM all_membership_sales_data_2015_left
         WHERE   
-            new_member_category_6_sa IN (@member_bronze_a, @member_bronze_b, @member_bronze_c, @member_bronze_d, @member_bronze_e, @member_bronze_distance_upgrade, @member_bronze_ao, @member_club, @member_one_day_a) -- Filter by member category
-            AND purchased_on_year_adjusted_mp IN (@year_2023)                    -- Only include members with end date in 2024
+            new_member_category_6_sa IN (@member_category)  -- Filter by member category
+            AND purchased_on_year_adjusted_mp IN (@year_2021)                    -- Only include members with end date in 2024
         )
 
         -- CTE to purchase history prior to the 3-year expiration date only; not a complete history
@@ -195,9 +186,9 @@ SET @year_2024 = 2024;
             member_purchase_count,
             new_member_category_6_sa,
             
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) < @year_2023 THEN member_number_members_sa END) AS 'sale_<2003',
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) = @year_2023 THEN member_number_members_sa END) AS 'sale_2023',
-            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) > @year_2023 THEN member_number_members_sa END) AS 'Other',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) < @year_2021 THEN member_number_members_sa END) AS 'sale_<2021',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) = @year_2021 THEN member_number_members_sa END) AS 'sale_2021',
+            COUNT(DISTINCT CASE WHEN YEAR(purchased_on_adjusted_mp_sa) > @year_2021 THEN member_number_members_sa END) AS 'Other',
 
             COUNT(DISTINCT CASE WHEN MONTH(purchased_on_adjusted_mp_mw) = 1 THEN member_number_members_sa END) AS January,
             COUNT(DISTINCT CASE WHEN MONTH(purchased_on_adjusted_mp_mw) = 2 THEN member_number_members_sa END) AS February,
@@ -216,7 +207,7 @@ SET @year_2024 = 2024;
             SUM(member_purchase_count)
         FROM purchase_history 
         WHERE is_previous_to_last_purchase = 1
-        GROUP BY member_purchase_count, new_member_category_6_sa WITH ROLLUP
+        GROUP BY member_purchase_count, new_member_category_6_sa
         ORDER BY member_purchase_count; -- total 6,040
 ;
 -- ##################################################

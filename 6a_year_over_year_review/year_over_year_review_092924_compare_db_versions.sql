@@ -70,7 +70,7 @@ GROUP BY b.id_membership_periods_sa;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data_2015_right
+    FROM all_membership_sales_data_2015_left
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_mp WITH ROLLUP;
 -- =================================================
@@ -84,7 +84,7 @@ GROUP BY b.id_membership_periods_sa;
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(DISTINCT(member_number_members_sa))), 2) AS revenue_per_member,
         FORMAT((SUM(actual_membership_fee_6_sa) / COUNT(*)), 2) AS revenue_per_sale,
         FORMAT((COUNT(*) / COUNT(DISTINCT(member_number_members_sa))), 2) AS sales_per_member
-    FROM all_membership_sales_data_2015_left
+    FROM all_membership_sales_data_2015_right
     -- WHERE new_member_category_6_sa IN (@member_category);
     GROUP BY purchased_on_year_adjusted_mp WITH ROLLUP;
 -- =================================================

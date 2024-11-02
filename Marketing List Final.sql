@@ -63,7 +63,7 @@ SELECT
         mp.ends as membership_start_date,
         CASE
                 WHEN CURDATE() between mp.starts AND mp.ends THEN "Active Today"
-                ElSE NULL END AS active_today
+                ELSE NULL END AS active_today
 FROM profiles as p 
 LEFT JOIN members as m ON p.id = m.memberable_id
 LEFT JOIN users as u ON p.user_id = u.id

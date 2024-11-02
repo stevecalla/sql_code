@@ -226,7 +226,7 @@ actual_membership_fee_6 AS (
                         ELSE NULL
                     END IS NULL THEN 0
                 WHEN mp.membership_type_id IN (2, 52, 65, 70, 73, 91, 93, 96, 98) THEN 100 -- 2year
-                WHEN mp.membership_type_id IN (3, 66, 68, 85, 89, 99) AND mp.purchased_on < '2024-06-04 12:00:00' THEN 135 -- 3year
+                WHEN mp.membership_type_id IN (3, 66, 68, 85, 89, 99, 119) AND mp.purchased_on < '2024-06-04 12:00:00' THEN 135 -- 3year
                 WHEN mp.membership_type_id IN (3, 66, 68, 85, 89, 99, 119) THEN 180 -- 3year
                 WHEN mp.membership_type_id IN (74, 103) THEN 1000 -- lifetime
                 WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND ma.event_id IN (30785, 30768, 30770) THEN 0 -- one-day; //these events were comped

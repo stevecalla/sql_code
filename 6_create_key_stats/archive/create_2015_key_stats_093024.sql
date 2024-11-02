@@ -1,8 +1,8 @@
 USE usat_sales_db;
 
-DROP TABLE IF EXISTS sales_member_summary;
+DROP TABLE IF EXISTS sales_member_summary_2015;
 
-CREATE TABLE sales_member_summary AS
+CREATE TABLE sales_member_summary_2015 AS
     SELECT 
         member_number_members_sa,  -- Unique member number from original data
         id_membership_periods_sa,  -- Membership period ID from original data
@@ -29,7 +29,6 @@ CREATE TABLE sales_member_summary AS
         created_at_users,
 
         -- Calculate the first purchase date for each member using a window function
-        MIN(purchased_on_mp) OVER (PARTITION BY member_number_members_sa) AS first_purchased_on_mp,
         MIN(purchased_on_adjusted_mp) OVER (PARTITION BY member_number_members_sa) AS first_purchased_on_adjusted_mp,
         MIN(created_at_members) OVER (PARTITION BY member_number_members_sa) AS first_created_at_members,
         MIN(created_at_mp) OVER (PARTITION BY member_number_members_sa) AS first_created_at_mp,
@@ -57,15 +56,22 @@ CREATE TABLE sales_member_summary AS
             ORDER BY purchased_on_mp
         ) AS first_purchase_by_year_month,
 
-        COUNT(*) OVER (PARTITION BY member_number_members_sa) AS total_purchases  -- Total purchases for each member
+        MIN(YEAR(purchased_on_adjusted_mp)) OVER (PARTITION BY member_number_members_sa) AS first_purchase_year, -- year of first purchase
 
-    FROM all_membership_sales_data -- Source table containing membership sales data
-    -- LIMIT 1
+        COUNT(*) OVER (PARTITION BY member_number_members_sa) AS total_purchases,  -- Total purchases for each member
+        
+        DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -6 HOUR), '%Y-%m-%d') AS created_at_mtn,
+        DATE_FORMAT(NOW(), '%Y-%m-%d') AS created_at_utc
+
+    FROM all_membership_sales_data_2015_left -- Source table containing membership sales data
+-- LIMIT 1
 ;
 
-DROP TABLE IF EXISTS sales_key_stats;
+-- DROP TABLE IF EXISTS sales_key_stats_2015_v2;
+DROP TABLE IF EXISTS sales_key_stats_2015;
 
-CREATE TABLE sales_key_stats AS
+-- CREATE TABLE sales_key_stats_2015_v2 AS
+CREATE TABLE sales_key_stats_2015 AS
     SELECT
         member_number_members_sa,
         id_membership_periods_sa,
@@ -98,20 +104,21 @@ CREATE TABLE sales_key_stats AS
         created_at_profiles,
         created_at_users,
 
-        first_created_at_members,
-        first_created_at_mp,
-        first_created_at_profiles,
-        first_created_at_users,
-        first_purchased_on_mp,
-        first_purchased_on_adjusted_mp,
-        first_starts_mp,
+        -- first_created_at_members,
+        -- first_created_at_mp,
+        -- first_created_at_profiles,
+        -- first_created_at_users,
+        -- first_purchased_on_mp,
+        -- first_purchased_on_adjusted_mp,
+        -- first_starts_mp,
 
         total_purchases,
+        first_purchase_year, -- year of first purchase based on purchased_on_adjusted_mp
 
-        CASE   
-            WHEN starts_mp < DATE_FORMAT(purchased_on_mp, '%Y-%m-%d') THEN starts_mp
-            ELSE purchased_on_mp
-        END AS start_mp_purchase_mp_adjusted_check,
+        -- CASE   
+        --     WHEN starts_mp < DATE_FORMAT(purchased_on_mp, '%Y-%m-%d') THEN starts_mp
+        --     ELSE purchased_on_mp
+        -- END AS start_mp_purchase_mp_adjusted_check,
 
         -- Calculate the minimum date from the first created at fields, considering nulls
         LEAST(
@@ -119,7 +126,6 @@ CREATE TABLE sales_key_stats AS
             COALESCE(first_created_at_mp, '9999-12-31'),
             COALESCE(first_created_at_profiles, '9999-12-31'),
             COALESCE(first_created_at_users, '9999-12-31'),
-            COALESCE(first_purchased_on_mp, '9999-12-31'),
             COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
             COALESCE(first_starts_mp, '9999-12-31')
         ) AS min_created_at,
@@ -130,7 +136,6 @@ CREATE TABLE sales_key_stats AS
             COALESCE(first_created_at_mp, '9999-12-31'),
             COALESCE(first_created_at_profiles, '9999-12-31'),
             COALESCE(first_created_at_users, '9999-12-31'),
-            COALESCE(first_purchased_on_mp, '9999-12-31'),
             COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
             COALESCE(first_starts_mp, '9999-12-31')
         )) AS min_created_at_month,
@@ -140,7 +145,6 @@ CREATE TABLE sales_key_stats AS
             COALESCE(first_created_at_mp, '9999-12-31'),
             COALESCE(first_created_at_profiles, '9999-12-31'),
             COALESCE(first_created_at_users, '9999-12-31'),
-            COALESCE(first_purchased_on_mp, '9999-12-31'),
             COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
             COALESCE(first_starts_mp, '9999-12-31')
         )) AS min_created_at_quarter,
@@ -150,95 +154,87 @@ CREATE TABLE sales_key_stats AS
             COALESCE(first_created_at_mp, '9999-12-31'),
             COALESCE(first_created_at_profiles, '9999-12-31'),
             COALESCE(first_created_at_users, '9999-12-31'),
-            COALESCE(first_purchased_on_mp, '9999-12-31'),
             COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
             COALESCE(first_starts_mp, '9999-12-31')
         )) AS min_created_at_year,
 
         -- Determine which date field contains the minimum date
-        CASE 
-            WHEN first_created_at_members = LEAST(
-                COALESCE(first_created_at_members, '9999-12-31'),
-                COALESCE(first_created_at_mp, '9999-12-31'),
-                COALESCE(first_created_at_profiles, '9999-12-31'),
-                COALESCE(first_created_at_users, '9999-12-31'),
-                COALESCE(first_purchased_on_mp, '9999-12-31'),
-                COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
-                COALESCE(first_starts_mp, '9999-12-31')
-            ) THEN 'first_created_at_members'
-            WHEN first_created_at_mp = LEAST(
-                COALESCE(first_created_at_members, '9999-12-31'),
-                COALESCE(first_created_at_mp, '9999-12-31'),
-                COALESCE(first_created_at_profiles, '9999-12-31'),
-                COALESCE(first_created_at_users, '9999-12-31'),
-                COALESCE(first_purchased_on_mp, '9999-12-31'),
-                COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
-                COALESCE(first_starts_mp, '9999-12-31')
-            ) THEN 'first_created_at_mp'
-            WHEN first_created_at_profiles = LEAST(
-                COALESCE(first_created_at_members, '9999-12-31'),
-                COALESCE(first_created_at_mp, '9999-12-31'),
-                COALESCE(first_created_at_profiles, '9999-12-31'),
-                COALESCE(first_created_at_users, '9999-12-31'),
-                COALESCE(first_purchased_on_mp, '9999-12-31'),
-                COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
-                COALESCE(first_starts_mp, '9999-12-31')
-            ) THEN 'first_created_at_profiles'
-            WHEN first_created_at_users = LEAST(
-                COALESCE(first_created_at_members, '9999-12-31'),
-                COALESCE(first_created_at_mp, '9999-12-31'),
-                COALESCE(first_created_at_profiles, '9999-12-31'),
-                COALESCE(first_created_at_users, '9999-12-31'),
-                COALESCE(first_purchased_on_mp, '9999-12-31'),
-                COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
-                COALESCE(first_starts_mp, '9999-12-31')
-            ) THEN 'first_created_at_users'
-            WHEN first_purchased_on_mp = LEAST(
-                COALESCE(first_created_at_members, '9999-12-31'),
-                COALESCE(first_created_at_mp, '9999-12-31'),
-                COALESCE(first_created_at_profiles, '9999-12-31'),
-                COALESCE(first_created_at_users, '9999-12-31'),
-                COALESCE(first_purchased_on_mp, '9999-12-31'),
-                COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
-                COALESCE(first_starts_mp, '9999-12-31')
-            ) THEN 'first_purchased_on_mp'
-            WHEN first_purchased_on_adjusted_mp = LEAST(
-                COALESCE(first_created_at_members, '9999-12-31'),
-                COALESCE(first_created_at_mp, '9999-12-31'),
-                COALESCE(first_created_at_profiles, '9999-12-31'),
-                COALESCE(first_created_at_users, '9999-12-31'),
-                COALESCE(first_purchased_on_mp, '9999-12-31'),
-                COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
-                COALESCE(first_starts_mp, '9999-12-31')
-            ) THEN 'first_purchased_on_adjusted_mp'
-            WHEN first_starts_mp = LEAST(
-                COALESCE(first_created_at_members, '9999-12-31'),
-                COALESCE(first_created_at_mp, '9999-12-31'),
-                COALESCE(first_created_at_profiles, '9999-12-31'),
-                COALESCE(first_created_at_users, '9999-12-31'),
-                COALESCE(first_purchased_on_mp, '9999-12-31'),
-                COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
-                COALESCE(first_starts_mp, '9999-12-31')
-            ) THEN 'first_starts_mp'
-            ELSE 'No valid date'
-        END AS min_created_at_source,
+            CASE 
+                WHEN first_created_at_members = LEAST(
+                    COALESCE(first_created_at_members, '9999-12-31'),
+                    COALESCE(first_created_at_mp, '9999-12-31'),
+                    COALESCE(first_created_at_profiles, '9999-12-31'),
+                    COALESCE(first_created_at_users, '9999-12-31'),
+                    COALESCE(first_purchased_on_mp, '9999-12-31'),
+                    COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
+                    COALESCE(first_starts_mp, '9999-12-31')
+                ) THEN 'first_created_at_members'
+                WHEN first_created_at_mp = LEAST(
+                    COALESCE(first_created_at_members, '9999-12-31'),
+                    COALESCE(first_created_at_mp, '9999-12-31'),
+                    COALESCE(first_created_at_profiles, '9999-12-31'),
+                    COALESCE(first_created_at_users, '9999-12-31'),
+                    COALESCE(first_purchased_on_mp, '9999-12-31'),
+                    COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
+                    COALESCE(first_starts_mp, '9999-12-31')
+                ) THEN 'first_created_at_mp'
+                WHEN first_created_at_profiles = LEAST(
+                    COALESCE(first_created_at_members, '9999-12-31'),
+                    COALESCE(first_created_at_mp, '9999-12-31'),
+                    COALESCE(first_created_at_profiles, '9999-12-31'),
+                    COALESCE(first_created_at_users, '9999-12-31'),
+                    COALESCE(first_purchased_on_mp, '9999-12-31'),
+                    COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
+                    COALESCE(first_starts_mp, '9999-12-31')
+                ) THEN 'first_created_at_profiles'
+                WHEN first_created_at_users = LEAST(
+                    COALESCE(first_created_at_members, '9999-12-31'),
+                    COALESCE(first_created_at_mp, '9999-12-31'),
+                    COALESCE(first_created_at_profiles, '9999-12-31'),
+                    COALESCE(first_created_at_users, '9999-12-31'),
+                    COALESCE(first_purchased_on_mp, '9999-12-31'),
+                    COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
+                    COALESCE(first_starts_mp, '9999-12-31')
+                ) THEN 'first_created_at_users'
+                WHEN first_purchased_on_adjusted_mp = LEAST(
+                    COALESCE(first_created_at_members, '9999-12-31'),
+                    COALESCE(first_created_at_mp, '9999-12-31'),
+                    COALESCE(first_created_at_profiles, '9999-12-31'),
+                    COALESCE(first_created_at_users, '9999-12-31'),
+                    COALESCE(first_purchased_on_mp, '9999-12-31'),
+                    COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
+                    COALESCE(first_starts_mp, '9999-12-31')
+                ) THEN 'first_purchased_on_adjusted_mp'
+                WHEN first_starts_mp = LEAST(
+                    COALESCE(first_created_at_members, '9999-12-31'),
+                    COALESCE(first_created_at_mp, '9999-12-31'),
+                    COALESCE(first_created_at_profiles, '9999-12-31'),
+                    COALESCE(first_created_at_users, '9999-12-31'),
+                    COALESCE(first_purchased_on_adjusted_mp, '9999-12-31'),
+                    COALESCE(first_starts_mp, '9999-12-31')
+                ) THEN 'first_starts_mp'
+                ELSE 'No valid date'
+            END AS min_created_at_source,
+        -- **************************************************
 
         SUM(CASE WHEN first_occurrence_any_purchase = 1 THEN 1 ELSE 0 END) AS first_occurrence_any_purchase,
         SUM(CASE WHEN first_purchase_by_year = 1 THEN 1 ELSE 0 END) AS first_purchase_by_year,
         SUM(CASE WHEN first_purchase_by_year_month = 1 THEN 1 ELSE 0 END) AS first_purchase_by_year_month,
 
-        COUNT(member_number_members_sa) AS sales_units,
+        COUNT(id_membership_periods_sa) AS sales_units,
         SUM(actual_membership_fee_6_sa) AS sales_revenue,
 
+        -- CREATE MEMBER FREQUENCY
         CASE 
             WHEN total_purchases = 1 THEN 'one_purchase'
             ELSE 'more_than_one_purchase'
         END AS member_frequency,
+        -- ********************************************
 
         DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -6 HOUR), '%Y-%m-%d') AS created_at_mtn,
         DATE_FORMAT(NOW(), '%Y-%m-%d') AS created_at_utc
 
-    FROM sales_member_summary
+    FROM sales_member_summary_2015
 
     GROUP BY 
         member_number_members_sa,
@@ -259,14 +255,15 @@ CREATE TABLE sales_key_stats AS
         created_at_mp,
         created_at_profiles,
         created_at_users,
-        first_created_at_members,
-        first_created_at_mp,
-        first_created_at_profiles,
-        first_created_at_users,
-        first_purchased_on_mp,
-        first_purchased_on_adjusted_mp,
-        first_starts_mp,
-        total_purchases
+        -- first_created_at_members,
+        -- first_created_at_mp,
+        -- first_created_at_profiles,
+        -- first_created_at_users,
+        -- first_purchased_on_mp,
+        -- first_purchased_on_adjusted_mp,
+        -- first_starts_mp,
+        total_purchases,
+        first_purchase_year
 
     ORDER BY 
         member_number_members_sa,
@@ -280,5 +277,5 @@ CREATE TABLE sales_key_stats AS
         purchased_on_year_mp,
         purchased_on_quarter_mp,
         purchased_on_month_mp
--- LIMIT 1
-;
+    -- LIMIT 1
+    ;

@@ -676,27 +676,27 @@ SET @year = 2021;
                 events.created_at AS created_at_events,
                 events.deleted_at AS deleted_at_events,
                 events.distance AS distance_events,
-                events.ends AS ends_events,
+                events.ends AS ends_events, -- todo:
                 events.event_type_id AS type_id_events,
                 events.event_website_url AS website_url_events,
                 events.facebook_url AS facebook_url_events,
                 events.featured_at AS featured_at_events,
-                events.id AS id_events,
+                events.id AS id_events, -- todo:
                 events.instagram_url AS instagram_url_events,
-                events.last_season_event_id AS last_season_event_id,
-                events.name AS name_events,
+                events.last_season_event_id AS last_season_event_id, -- todo:
+                events.name AS name_events, -- todo:
                 events.qualification_deadline AS qualification_deadline_events,
                 events.qualification_url AS qualification_url_events,
-                events.race_director_id AS race_director_id_events,
+                events.race_director_id AS race_director_id_events, -- todo:
                 events.registration_company_event_id AS registration_company_event_id,
                 events.registration_policy_url AS registration_policy_url_events,
                 events.remote_id AS remote_id_events,
                 events.sanctioning_event_id AS id_sanctioning_event,
-                events.starts AS starts_events,
+                events.starts AS starts_events, -- todo:
                 events.state_code AS state_code_events,
                 events.state_id AS state_id_events,
                 events.state_name AS state_name_events,
-                events.state AS state_events,
+                events.state AS state_events, -- todo:
                 events.status AS status_events,
                 events.twitter_url AS twitter_url_events,
                 events.updated_at AS updated_at_events,

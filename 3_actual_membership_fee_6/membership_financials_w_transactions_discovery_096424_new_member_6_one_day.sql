@@ -143,7 +143,7 @@ actual_membership_fee_6 AS (
         mp.membership_type_id AS membership_type_id_membership_periods,
         -- real_membership_types
         CASE
-            WHEN mp.membership_type_id IN (1, 2, 3, 52, 55, 60, 62, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 85, 89, 91, 93, 96, 98, 99, 101, 103, 104, 112, 113, 114, 117) THEN 'adult_annual'
+            WHEN mp.membership_type_id IN (1, 2, 3, 52, 55, 60, 62, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 85, 89, 91, 93, 96, 98, 99, 101, 103, 104, 112, 113, 114, 117, 119) THEN 'adult_annual'
             WHEN mp.membership_type_id IN (4, 51, 54, 61, 94, 107) THEN 'youth_annual'
             WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100, 115, 118) THEN 'one_day'
             WHEN mp.membership_type_id IN (56, 58, 81, 105) THEN 'club'
@@ -314,7 +314,7 @@ new_member_category_6 AS (
         -- new_member_category_6
         CASE
             WHEN mp.membership_type_id IN (2, 52, 65, 70, 73, 91, 93, 96, 98) THEN '2-Year'
-            WHEN mp.membership_type_id IN (3, 66, 68, 85, 89, 99) THEN '3-Year'
+            WHEN mp.membership_type_id IN (3, 66, 68, 85, 89, 99, 119) THEN '3-Year'
             WHEN mp.membership_type_id IN (74, 103) THEN 'Lifetime'
             WHEN mp.membership_type_id IN (4, 51, 54, 61, 94) THEN 'Youth Annual'
             WHEN mp.membership_type_id IN (112) THEN 'Silver'
@@ -389,7 +389,7 @@ one_day_sales_actual_member_fee AS (
         members.member_number AS member_number_members,
         MAX(membership_periods.id) as max_membership_period_id,
         CASE
-            WHEN membership_periods.membership_type_id IN (1, 2, 3, 52, 55, 60, 62, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 85, 89, 91, 93, 96, 98, 99, 101, 103, 104, 112, 113, 114, 117) THEN 'adult_annual'
+            WHEN membership_periods.membership_type_id IN (1, 2, 3, 52, 55, 60, 62, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 85, 89, 91, 93, 96, 98, 99, 101, 103, 104, 112, 113, 114, 117, 119) THEN 'adult_annual'
             WHEN membership_periods.membership_type_id IN (4, 51, 54, 61, 94, 107) THEN 'youth_annual'
             WHEN membership_periods.membership_type_id IN (5, 46, 47, 72, 97, 100, 115, 118) THEN 'one_day'
             WHEN membership_periods.membership_type_id IN (56, 58, 81, 105) THEN 'club'
@@ -595,7 +595,7 @@ one_day_sales_actual_member_fee AS (
         membership_applications.confirmation_code,
         membership_periods.membership_type_id,
         CASE
-            WHEN membership_periods.membership_type_id IN (1, 2, 3, 52, 55, 60, 62, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 85, 89, 91, 93, 96, 98, 99, 101, 103, 104, 112, 113, 114, 117) THEN 'adult_annual'
+            WHEN membership_periods.membership_type_id IN (1, 2, 3, 52, 55, 60, 62, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 85, 89, 91, 93, 96, 98, 99, 101, 103, 104, 112, 113, 114, 117, 119) THEN 'adult_annual'
             WHEN membership_periods.membership_type_id IN (4, 51, 54, 61, 94, 107) THEN 'youth_annual'
             WHEN membership_periods.membership_type_id IN (5, 46, 47, 72, 97, 100, 115, 118) THEN 'one_day'
             WHEN membership_periods.membership_type_id IN (56, 58, 81, 105) THEN 'club'

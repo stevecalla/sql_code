@@ -111,7 +111,7 @@ DROP TABLE IF EXISTS step_6_membership_period_stats;
 -- STEP #7 = CREATE MIN CREATED AT DATE TABLE
 DROP TABLE IF EXISTS sales_key_stats_2015;
 
-    CREATE TABLE sales_key_stats_2015_v2 AS
+    CREATE TABLE sales_key_stats_2015 AS
         SELECT 
             am.member_number_members_sa, 
             am.id_profiles,
@@ -318,7 +318,7 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
         LIMIT 10    
         ;
     
-    SELECT * FROM sales_key_stats_2015_v2;
+    -- SELECT * FROM sales_key_stats_2015_v2;
 -- *********************************************
 
 -- Step 2: Create indexes on the new table

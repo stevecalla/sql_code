@@ -122,16 +122,14 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
             -- purchase on dates
             am.purchased_on_mp,
-            -- DATE_FORMAT(STR_TO_DATE(am.purchased_on_mp, '%Y-%m-%d %H:%i:%s'), '%Y-%m-%d') AS purchased_on_date_mp,
-            -- am.purchased_on_date_mp,
+            am.purchased_on_date_mp,
             am.purchased_on_year_mp,       
             am.purchased_on_quarter_mp,  
             am.purchased_on_month_mp,       
 
             -- adjust purchase on dates
             am.purchased_on_adjusted_mp,
-            -- DATE_FORMAT(STR_TO_DATE(am.purchased_on_adjusted_mp, '%Y-%m-%d %H:%i:%s'), '%Y-%m-%d') AS purchased_on_date_adjusted_mp,
-            -- am.purchased_on_date_adjusted_mp,
+            am.purchased_on_date_adjusted_mp,
             am.purchased_on_year_adjusted_mp,
             am.purchased_on_quarter_adjusted_mp,
             am.purchased_on_month_adjusted_mp,

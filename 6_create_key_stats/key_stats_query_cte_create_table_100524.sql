@@ -114,6 +114,7 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
     CREATE TABLE sales_key_stats_2015_v2 AS
         SELECT 
             am.member_number_members_sa, 
+            am.id_profiles,
 
             -- membership periods, types, category
             am.id_membership_periods_sa, 

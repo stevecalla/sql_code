@@ -111,8 +111,8 @@ DROP TABLE IF EXISTS step_6_membership_period_stats;
 -- STEP #7 = CREATE MIN CREATED AT DATE TABLE
 DROP TABLE IF EXISTS sales_key_stats_2015;
 
-    CREATE TABLE sales_key_stats_2015 AS
-    SELECT 
+    CREATE TABLE sales_key_stats_2015_v2 AS
+        SELECT 
             am.member_number_members_sa, 
 
             -- membership periods, types, category
@@ -122,12 +122,16 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
             -- purchase on dates
             am.purchased_on_mp,
+            -- DATE_FORMAT(STR_TO_DATE(am.purchased_on_mp, '%Y-%m-%d %H:%i:%s'), '%Y-%m-%d') AS purchased_on_date_mp,
+            -- am.purchased_on_date_mp,
             am.purchased_on_year_mp,       
-            am.purchased_on_month_mp,       
             am.purchased_on_quarter_mp,  
+            am.purchased_on_month_mp,       
 
             -- adjust purchase on dates
             am.purchased_on_adjusted_mp,
+            -- DATE_FORMAT(STR_TO_DATE(am.purchased_on_adjusted_mp, '%Y-%m-%d %H:%i:%s'), '%Y-%m-%d') AS purchased_on_date_adjusted_mp,
+            -- am.purchased_on_date_adjusted_mp,
             am.purchased_on_year_adjusted_mp,
             am.purchased_on_quarter_adjusted_mp,
             am.purchased_on_month_adjusted_mp,
@@ -292,28 +296,30 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
         FROM all_membership_sales_data_2015_left am
 
-        LEFT JOIN step_1_member_minimum_first_created_at_dates AS fd
-        ON am.member_number_members_sa = fd.member_number_members_sa
+            LEFT JOIN step_1_member_minimum_first_created_at_dates AS fd
+            ON am.member_number_members_sa = fd.member_number_members_sa
 
-        LEFT JOIN step_2_member_min_created_at_date AS mc
-        ON am.member_number_members_sa = mc.member_number_members_sa
-        
-        LEFT JOIN step_3_member_total_life_time_purchases AS lp
-        ON am.member_number_members_sa = lp.member_number_members_sa
+            LEFT JOIN step_2_member_min_created_at_date AS mc
+            ON am.member_number_members_sa = mc.member_number_members_sa
+            
+            LEFT JOIN step_3_member_total_life_time_purchases AS lp
+            ON am.member_number_members_sa = lp.member_number_members_sa
 
-        LEFT JOIN step_4_member_age_dimensions AS ad
-        ON am.member_number_members_sa = ad.member_number_members_sa
+            LEFT JOIN step_4_member_age_dimensions AS ad
+            ON am.member_number_members_sa = ad.member_number_members_sa
 
-        LEFT JOIN step_5_member_age_at_sale_date AS sd
-        ON am.id_membership_periods_sa = sd.id_membership_periods_sa
+            LEFT JOIN step_5_member_age_at_sale_date AS sd
+            ON am.id_membership_periods_sa = sd.id_membership_periods_sa
 
-        LEFT JOIN step_5a_member_age_at_end_of_year_of_sale AS ye
-        ON am.id_membership_periods_sa = ye.id_membership_periods_sa
+            LEFT JOIN step_5a_member_age_at_end_of_year_of_sale AS ye
+            ON am.id_membership_periods_sa = ye.id_membership_periods_sa
 
-        LEFT JOIN step_6_membership_period_stats AS st
-        ON am.id_membership_periods_sa = st.id_membership_periods_sa
-        -- LIMIT 10    
+            LEFT JOIN step_6_membership_period_stats AS st
+            ON am.id_membership_periods_sa = st.id_membership_periods_sa
+        LIMIT 10    
         ;
+    
+    SELECT * FROM sales_key_stats_2015_v2;
 -- *********************************************
 
 -- Step 2: Create indexes on the new table

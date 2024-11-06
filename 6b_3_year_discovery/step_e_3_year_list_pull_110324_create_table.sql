@@ -74,8 +74,8 @@ INSERT INTO relaunch_3_year_110324 (
     test_group, 
     list_pull, 
     max_end_mp_sa, 
-    purchase_count, 
-    member_categories
+    purchase_count
+    -- member_categories
 )
      WITH members_with_ends_in_2023 AS (
         SELECT 

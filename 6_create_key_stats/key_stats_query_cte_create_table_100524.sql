@@ -315,10 +315,10 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
             LEFT JOIN step_6_membership_period_stats AS st
             ON am.id_membership_periods_sa = st.id_membership_periods_sa
-        LIMIT 10    
+        -- LIMIT 10    
         ;
     
-    -- SELECT * FROM sales_key_stats_2015_v2;
+    -- SELECT * FROM sales_key_stats_2015;
 -- *********************************************
 
 -- Step 2: Create indexes on the new table

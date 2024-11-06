@@ -290,8 +290,8 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             st.sales_revenue,    
 
             -- data created at dates
-            DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -6 HOUR), '%Y-%m-%d %H:%i:%s') AS created_at_mtn,
-            DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') AS created_at_utc
+            DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -6 HOUR), '%Y-%m-%d') AS created_at_mtn,
+            DATE_FORMAT(NOW(), '%Y-%m-%d') AS created_at_utc
 
         FROM all_membership_sales_data_2015_left am
 
@@ -315,7 +315,7 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
             LEFT JOIN step_6_membership_period_stats AS st
             ON am.id_membership_periods_sa = st.id_membership_periods_sa
-        -- LIMIT 10    
+        LIMIT 10    
         ;
     
     -- SELECT * FROM sales_key_stats_2015_v2;

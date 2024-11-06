@@ -1,5 +1,5 @@
 USE usat_sales_db;
-SET @member_category = '3-Year';
+SET @member_category = '1-Year $50';
 
 SET @year_1 = 2023;
 SET @year_2 = 2024;
@@ -81,32 +81,34 @@ SET @year_2025 = 2025;
 
         -- SELECT * FROM purchase_history;
 
-        -- SELECT
-        --     member_number_members_sa
-        --     , id_profiles
-        --     , new_member_category_6_sa
-        --     , ends_mp_sa
-        --     , COUNT(id_profiles)
-        --     -- , MAX(ends_mp_sa) AS max_end_mp_sa
-        -- FROM purchase_history
-        -- GROUP BY 1, 2, 3, 4
-        -- -- HAVING YEAR(max_end_mp_sa) < 2025
-        -- ORDER BY CAST(member_number_members_sa AS UNSIGNED), id_profiles, ends_mp_sa;
+--         SELECT
+--             member_number_members_sa
+--             , id_profiles
+--             , new_member_category_6_sa
+--             , ends_mp_sa
+--             , COUNT(id_profiles)
+--             -- , MAX(ends_mp_sa) AS max_end_mp_sa
+--         FROM purchase_history
+--         GROUP BY 1, 2, 3, 4
+--         -- HAVING YEAR(max_end_mp_sa) < 2025
+--         ORDER BY CAST(member_number_members_sa AS UNSIGNED), id_profiles, ends_mp_sa;
         
 		, list_pull AS (
             SELECT
-                member_number_members_sa
-                , id_profiles
+                ph.member_number_members_sa
+                , ph.id_profiles
                 , CASE WHEN RAND() < 0.2 THEN 'Control' ELSE 'Experiment' END AS test_group
-                , '3_Year_2024_End' AS list_pull
+                , '1_Year_2024_End' AS list_pull
                 -- , new_member_category_6_sa
-                , MAX(ends_mp_sa) AS max_end_mp_sa
-                , COUNT(id_profiles)
-                , GROUP_CONCAT(new_member_category_6_sa)
-            FROM purchase_history
+                , MAX(ph.ends_mp_sa) AS max_end_mp_sa
+                , COUNT(ph.id_profiles)
+                , GROUP_CONCAT(ph.new_member_category_6_sa)
+            FROM purchase_history AS ph
+                LEFT JOIN sales_key_stats_2015 AS sa ON ph.member_number_members_sa = sa.member_number_members_sa
+            WHERE sa.age_as_year_end_bin IN ('40-49', '50-59')
             GROUP BY 1, 2
             HAVING YEAR(max_end_mp_sa) < 2025
-            ORDER BY CAST(member_number_members_sa AS UNSIGNED), id_profiles
+            ORDER BY CAST(ph.member_number_members_sa AS UNSIGNED), ph.id_profiles
         )
 
         SELECT * FROM list_pull
@@ -136,7 +138,7 @@ SET @year_2025 = 2025;
         -- FROM purchase_history
         -- WHERE is_max_end_after_2024_end = 1
         -- GROUP BY YEAR(max_ends_mp) WITH ROLLUP
-        -- ORDER BY YEAR(max_ends_mp);  -- 4847
+        -- ORDER BY YEAR(max_ends_mp);
     ;
 -- ##################################################
 
@@ -169,6 +171,7 @@ SET @year_2025 = 2025;
                 sa.purchased_on_adjusted_mp,
                 sa.starts_mp,
                 sa.ends_mp AS ends_mp_sa, -- end date for membership period
+                sa.age_as_year_end_bin,
 
                 MAX(sa.ends_mp) OVER (PARTITION BY mw.member_number_members_sa ORDER BY sa.ends_mp DESC) AS max_ends_mp,
                 ROW_NUMBER() OVER (PARTITION BY mw.member_number_members_sa ORDER BY sa.purchased_on_adjusted_mp DESC) AS rn,
@@ -203,21 +206,23 @@ SET @year_2025 = 2025;
         -- GROUP BY 1, 2, 3, 4
         -- -- HAVING YEAR(max_end_mp_sa) < 2024
         -- ORDER BY member_number_members_sa, id_profiles, ends_mp_sa;
-        
-		, list_pull AS (
+
+        , list_pull AS (
             SELECT
-                member_number_members_sa
-                , id_profiles
+                ph.member_number_members_sa
+                , ph.id_profiles
                 , CASE WHEN RAND() < 0.2 THEN 'Control' ELSE 'Experiment' END AS test_group
-                , '3_Year_2023_End' AS list_pull
+                , '1_Year_2023_End' AS list_pull
                 -- , new_member_category_6_sa
-                , MAX(ends_mp_sa) AS max_end_mp_sa
-                , COUNT(id_profiles)
-                , GROUP_CONCAT(new_member_category_6_sa)
-            FROM purchase_history
-            GROUP BY 1, 2
+                , MAX(ph.ends_mp_sa) AS max_end_mp_sa
+                , COUNT(ph.id_profiles)
+                , GROUP_CONCAT(ph.new_member_category_6_sa)
+            FROM purchase_history AS ph
+                LEFT JOIN sales_key_stats_2015 AS sa ON ph.member_number_members_sa = sa.member_number_members_sa
+            WHERE sa.age_as_year_end_bin IN ('40-49', '50-59')
+            GROUP BY 1, 2   
             HAVING YEAR(max_end_mp_sa) < 2024
-            ORDER BY CAST(member_number_members_sa AS UNSIGNED), id_profiles
+            ORDER BY CAST(ph.member_number_members_sa AS UNSIGNED), ph.id_profiles
         )
 
         SELECT * FROM list_pull
@@ -247,6 +252,6 @@ SET @year_2025 = 2025;
         -- FROM purchase_history
         -- WHERE is_max_end_after_2023_end = 1
         -- GROUP BY new_member_category_6_sa WITH ROLLUP
-        -- ORDER BY new_member_category_6_sa; -- 1,265
+        -- ORDER BY new_member_category_6_sa;
     ;
 -- ##################################################

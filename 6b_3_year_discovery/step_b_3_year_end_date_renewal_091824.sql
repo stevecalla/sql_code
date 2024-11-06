@@ -1,5 +1,6 @@
 USE usat_sales_db;
-SET @member_category = '3-year';
+SET @member_category = '3-Year';
+
 SET @year_1 = 2023;
 SET @year_2 = 2024;
 SET @year_2023 = 2023;   
@@ -8,22 +9,25 @@ SET @year_2025 = 2025;
 
 -- #1) SECTION: STATS = TOTALS
     SELECT 
-        FORMAT(COUNT(DISTINCT(member_number_members_sa)), 0) AS member_count,
-        FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
-        FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
-    FROM all_membership_sales_data_2015_left
-    WHERE new_member_category_6_sa IN (@member_category);
--- ==================================================
-
--- #2) SECTION: STATS = BY MEMBER
-    SELECT 
-        DISTINCT member_number_members_sa,
+		new_member_category_6_sa,
         FORMAT(COUNT(DISTINCT(member_number_members_sa)), 0) AS member_count,
         FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
         FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
     FROM all_membership_sales_data_2015_left
     WHERE new_member_category_6_sa IN (@member_category)
-    GROUP BY member_number_members_sa
+    GROUP BY new_member_category_6_sa;
+-- ==================================================
+
+-- #2) SECTION: STATS = BY MEMBER
+    SELECT 
+        DISTINCT member_number_members_sa,
+        id_profiles,
+        FORMAT(COUNT(DISTINCT(member_number_members_sa)), 0) AS member_count,
+        FORMAT(COUNT(id_membership_periods_sa), 0) AS sales_units,
+        FORMAT(SUM(actual_membership_fee_6_sa), 0) AS sales_revenue
+    FROM all_membership_sales_data_2015_left
+    WHERE new_member_category_6_sa IN (@member_category)
+    GROUP BY member_number_members_sa, id_profiles
     ORDER BY CAST(member_number_members_sa AS UNSIGNED);
 -- ++++++++++++++++++++++++++++++++++++++++++++++++++
 

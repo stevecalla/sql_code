@@ -12,14 +12,16 @@ LIMIT 100
 ;
 
 SELECT 
+    -- sale origin     
 	DISTINCT(origin_flag_ma), 
     CASE
-        WHEN purchased_on_year_adjusted_mp IN ('2023', '2024') AND origin_flag_ma IS NULL THEN 'source_usat_direct'
-        WHEN purchased_on_year_adjusted_mp IN ('2023', '2024') AND origin_flag_ma IN ('SUBSCRIPTION_RENEWAL') THEN 'source_race_registration'
-        WHEN purchased_on_year_adjusted_mp IN ('2023', '2024') THEN 'source_race_registration'
-        WHEN origin_flag_ma IS NULL THEN 'no_origin_flag'
+        -- categorize NULL as sourced from usat direct
+        WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') AND am.origin_flag_ma IS NULL THEN 'source_usat_direct'
+        WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') AND am.origin_flag_ma IN ('SUBSCRIPTION_RENEWAL') THEN 'source_race_registration'
+        -- categorize 'ADMIN_BULK_UPLOADER', 'AUDIT_API', 'RTAV_CLASSIC' as sourced from race registration
+        WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') THEN 'source_race_registration'
         ELSE 'prior_to_2023'
-    END AS origin_category,
+    END AS origin_flag_category,
     COUNT(*) 
 FROM all_membership_sales_data_2015_left 
 GROUP BY 1, 2
@@ -34,7 +36,6 @@ SELECT
         WHEN purchased_on_year_adjusted_mp IN ('2023', '2024') AND origin_flag_ma IS NULL THEN 'source_usat_direct'
         WHEN purchased_on_year_adjusted_mp IN ('2023', '2024') AND origin_flag_ma IN ('SUBSCRIPTION_RENEWAL') THEN 'source_race_registration'
         WHEN purchased_on_year_adjusted_mp IN ('2023', '2024') THEN 'source_race_registration'
-        WHEN origin_flag_ma IS NULL THEN 'no_origin_flag'
         ELSE 'prior_to_2023'
     END AS origin_category
 
@@ -75,7 +76,6 @@ SELECT
     , COUNT(*) AS total_count
 
 FROM all_membership_sales_data_2015_left
-GROUP BY 1 WITH ROLLUP
+GROUP BY 1, 2
 ORDER BY total_count ASC
 LIMIT 100;
-

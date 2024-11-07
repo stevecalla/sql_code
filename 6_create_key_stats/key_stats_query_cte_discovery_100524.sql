@@ -104,12 +104,13 @@ WITH
         -- sale origin
         am.origin_flag_ma,        
         CASE
+            -- categorize NULL as sourced from usat direct
             WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') AND am.origin_flag_ma IS NULL THEN 'source_usat_direct'
             WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') AND am.origin_flag_ma IN ('SUBSCRIPTION_RENEWAL') THEN 'source_race_registration'
+            -- categorize 'ADMIN_BULK_UPLOADER', 'AUDIT_API', 'RTAV_CLASSIC' as sourced from race registration
             WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') THEN 'source_race_registration'
-            WHEN am.origin_flag_ma IS NULL THEN 'no_origin_flag'
             ELSE 'prior_to_2023'
-        END AS origin_category,
+        END AS origin_flag_category,
 
         -- membership periods, types, category
         am.id_membership_periods_sa, 

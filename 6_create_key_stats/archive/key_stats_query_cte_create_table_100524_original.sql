@@ -263,6 +263,4 @@ CREATE INDEX idx_name_events ON sales_key_stats_2015 (name_events);
     CREATE INDEX idx_sales_units ON sales_key_stats_2015 (sales_units);
     CREATE INDEX idx_member_first_purchase_year ON sales_key_stats_2015 (member_first_purchase_year);
     CREATE INDEX idx_id_events ON sales_key_stats_2015 (id_events);
-
-    CREATE INDEX idx_origin_flag_ma ON sales_key_stats_2015 (origin_flag_ma(255));
 -- ********************************************

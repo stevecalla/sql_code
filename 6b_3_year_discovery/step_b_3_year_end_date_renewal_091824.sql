@@ -90,8 +90,8 @@ SET @year_2025 = 2025;
             COUNT(sa.id_membership_periods_sa) AS sales_units,           -- Count of purchases for each member
             SUM(sa.actual_membership_fee_6_sa) AS sales_revenue    -- Total revenue from purchases
         FROM members_with_ends_in_2024 AS mw
-        LEFT JOIN all_membership_sales_data_2015_left AS sa 
-            ON mw.member_number_members_sa = sa.member_number_members_sa
+            LEFT JOIN all_membership_sales_data_2015_left AS sa 
+                ON mw.member_number_members_sa = sa.member_number_members_sa
             -- AND YEAR(sa.purchased_on_adjusted_mp) IN (@year_2024)         -- Filter for purchases made in 2024
             AND YEAR(sa.purchased_on_adjusted_mp) IN (@year_1, @year_2)       -- Filter for purchases made in 2023 & 2024
         GROUP BY mw.member_number_members_sa                         -- Group by member number
@@ -104,8 +104,8 @@ SET @year_2025 = 2025;
         FORMAT(COALESCE(p.sales_units, 0), 0) AS sales_units,           -- Replace NULL with 0 for members without purchases
         FORMAT(COALESCE(p.sales_revenue, 0), 0) AS sales_revenue              -- Replace NULL with 0 for revenue
     FROM members_with_ends_in_2024 AS mw
-    LEFT JOIN purchases_in_2023_2024 AS p 
-        ON mw.member_number_members_sa = p.member_number_members_sa  -- Join to get purchase data
+        LEFT JOIN purchases_in_2023_2024 AS p 
+            ON mw.member_number_members_sa = p.member_number_members_sa  -- Join to get purchase data
     GROUP BY mw.member_number_members_sa                         -- Group by member number
     ORDER BY CAST(mw.member_number_members_sa AS UNSIGNED);                           -- Order by member number
 -- ##################################################

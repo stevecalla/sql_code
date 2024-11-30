@@ -2,10 +2,13 @@ USE usat_sales_db;
 
 -- #1)
     SELECT * FROM slack_membership_sales_data LIMIT 10;
-    SELECT COUNT(*) FROM slack_membership_sales_data LIMIT 10;
 -- **************************************
 
 -- #2)
+    SELECT COUNT(*) FROM slack_membership_sales_data LIMIT 10;
+-- **************************************
+
+-- #3)
 	SELECT 
 		IFNULL(sd.purchased_on_date_adjusted_mp, 'Total') AS purchased_on,
         
@@ -17,7 +20,10 @@ USE usat_sales_db;
     GROUP BY 1 WITH ROLLUP;
 -- **************************************
 
--- #3)
+-- #4) CREATE TABLE WITH DATA FORMATED FOR SLACK OUTPUT
+DROP TABLE IF EXISTS slack_membership_sales_reporting_data;
+
+CREATE TABLE slack_membership_sales_reporting_data AS
 	SELECT 
 		DATE_FORMAT(sd.purchased_on_date_adjusted_mp, '%Y-%m-%d') AS purchased_on_date_adjusted_mp_mtn,
         sd.member_number_members_sa,
@@ -61,8 +67,10 @@ USE usat_sales_db;
 
         CASE
             WHEN 
-                DATE(sd.purchased_on_adjusted_mp) >= '2024-11-29'
-                AND TIME(sd.purchased_on_adjusted_mp) >= '06:00:00'
+                -- DATE(sd.purchased_on_adjusted_mp) >= '2024-11-29'
+                -- AND TIME(sd.purchased_on_adjusted_mp) >= '06:00:00'
+
+                sd.purchased_on_adjusted_mp > '2024-11-29 06:00:00' -- Full datetime comparison
                 AND sd.new_member_category_6_sa IN ('Gold', 'Silver', '3-Year') 
                 AND sd.origin_flag_ma IS NULL -- blank represents Member Hub sales, excluding subscription & registration channels  
             THEN 1 ELSE 0
@@ -99,4 +107,20 @@ USE usat_sales_db;
     
     GROUP BY 1, 2, 3, 4, 5, 7, 8, 9, 10
     ORDER BY 1, 2, 3, 4;
+-- **************************************
+
+-- #5) ALL OUTPUT FROM TABLE AT #4 
+SELECT * FROM slack_membership_sales_reporting_data;
+-- **************************************
+
+-- #6)
+	SELECT 
+		IFNULL(sr.purchased_on_date_adjusted_mp_mtn, 'Total') AS purchased_on,
+        
+		COUNT(*),
+
+		DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') AS queried_at_mtn
+
+	FROM slack_membership_sales_reporting_data AS sR
+    GROUP BY 1 WITH ROLLUP;
 -- **************************************

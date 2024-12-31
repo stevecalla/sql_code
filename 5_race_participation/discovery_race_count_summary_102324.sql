@@ -2,33 +2,33 @@ USE vapor;
 
 WITH participant_race_count AS (
         SELECT 
-                        rr.profile_id AS profile_id_rr
-                        , COUNT(rr.race_id) AS count_rr
+                rr.profile_id AS profile_id_rr
+                , COUNT(rr.race_id) AS count_rr
 
-                        -- RACE YEARS
-                        , COUNT(DISTINCT YEAR(r.start_date)) AS count_of_start_years  -- Count of distinct start years
-                        , GROUP_CONCAT(DISTINCT YEAR(r.start_date) ORDER BY YEAR(r.start_date) ASC) AS start_years  -- Concatenate distinct year
-                        , MIN(YEAR(r.start_date)) AS start_year_least_recent  -- Get the most recent start year
-                        , MAX(YEAR(r.start_date)) AS start_year_most_recent  -- Get the most recent start year
+                -- RACE YEARS
+                , COUNT(DISTINCT YEAR(r.start_date)) AS count_of_start_years  -- Count of distinct start years
+                , GROUP_CONCAT(DISTINCT YEAR(r.start_date) ORDER BY YEAR(r.start_date) ASC) AS start_years  -- Concatenate distinct year
+                , MIN(YEAR(r.start_date)) AS start_year_least_recent  -- Get the most recent start year
+                , MAX(YEAR(r.start_date)) AS start_year_most_recent  -- Get the most recent start year
 
-                        -- RACE DISTANCES
+                -- RACE DISTANCES
 
-                        -- RACE DETAILS
+                -- RACE DETAILS
 
-                        -- FINISH STATUS
-                FROM 
-                        race_results AS rr
-                        LEFT JOIN races AS r ON rr.race_id = r.id          
-                        LEFT JOIN races AS r ON rr.race_id = r.id
-                        LEFT JOIN events AS e ON r.event_id = e.id
-                        LEFT JOIN distance_types AS dt ON r.distance_type_id = dt.id
-                -- WHERE 
-                        -- YEAR(r.start_date) = 2022
-                        -- ADD IN RACE STATUS... FINISH ET AL
-                GROUP BY rr.profile_id
-                ORDER BY CAST(rr.profile_id AS UNSIGNED)
-                -- HAVING count_rr > 1
-                -- LIMIT 100   
+                -- FINISH STATUS
+        FROM 
+                race_results AS rr
+                LEFT JOIN races AS r ON rr.race_id = r.id          
+                LEFT JOIN races AS r ON rr.race_id = r.id
+                LEFT JOIN events AS e ON r.event_id = e.id
+                LEFT JOIN distance_types AS dt ON r.distance_type_id = dt.id
+        -- WHERE 
+                -- YEAR(r.start_date) = 2022
+                -- ADD IN RACE STATUS... FINISH ET AL
+        GROUP BY rr.profile_id
+        ORDER BY CAST(rr.profile_id AS UNSIGNED)
+        -- HAVING count_rr > 1
+        -- LIMIT 100   
 ),
 
 participant_race_count_average AS (
@@ -50,7 +50,7 @@ participant_race_count_average AS (
 ),
  
 summarize_by_count AS (
-        SELECT 
+        SELECT
                 count_rr AS number_of_races
                 , COUNT(*) AS count_of_participants
                 , AVG(avg_races_per_year) -- AVERAGE RACE COUNT

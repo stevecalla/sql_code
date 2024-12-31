@@ -1,0 +1,31 @@
+https://usatriathlon.slack.com/archives/C07PVUF81EF/p1729625274691319
+
+Steve Calla
+Oct 22nd at 1:27 PM
+@Paul Minninger
+ 
+@Sam Mehner
+ 
+@Eric Passe
+Is there logic that determines the current membership base? Meaning the current members defined as active? This would be different than sales. Sales is a leading indicator of how membership base will change over time but not the same. For example, if I was going to create a membership base definition, I would start with:
+
+Look at all valid members and membership periods
+
+Active Rule #1: Any member with a membership period in which the start date is <= today and the end date is > than today (for the calendar date under consideration)
+
+Active Rule #2: Might be a rule that considers any one-day purchased in the last year or 6 months or 3 months active (without double counting or otherwise)
+
+Other Rules: Other rules based on nuances in the data (maybe for Lifetime or other)
+
+I would create SQL that determined a members status on any given calendar date by comparing/evaluating that members membership periods against the calendar date in question then sum it all up by calendar date.
+
+
+Sam Mehner
+Oct 22nd at 2:05 PM
+Hi Steve,
+
+When asked to pull our active member list, we follow rule 1 with end => than today. This would exclude people who have purchased a one-day for future event.
+
+When asked for a list of active members this month we would set rules of start date <= end of month and end date >= start of month.
+
+When asked for unique members in a year we would set start date <= 12/31 and end date >= 1/1 and then dedup the list on member #.

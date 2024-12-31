@@ -13,7 +13,7 @@ SET @year_2025 = 2025;
 -- #1) LIST PULL: AS OF 110524 FOR 3-YEAR RELAUNCH CAMPAIGN
     SELECT * FROM usat_sales_db.relaunch_3_year_110524 LIMIT 10;
     SELECT 		
-        list_pull AS as list_pull_segment,
+        list_pull AS list_pull_segment,
         SUM(CASE WHEN LOWER(test_group) IN ('control') THEN 1 ELSE 0 END) AS control,
         SUM(CASE WHEN LOWER(test_group) IN ('experiment') THEN 1 ELSE 0 END) AS experiment,
         COUNT(*) 

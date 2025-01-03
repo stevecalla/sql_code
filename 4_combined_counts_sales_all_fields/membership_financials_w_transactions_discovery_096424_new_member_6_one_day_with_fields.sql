@@ -3,9 +3,10 @@ USE vapor;
 -- ONE DAY WITH ALL FIELDS = actual_membership_fee_6 CALCULATION
 -- { fixed [Id (Membership Periods)] : max([Membership Fee 6])}
 
-SET @year = 2021;
--- SET @start_date = '2023-01-01 09:00:00';
--- SET @end_date = '2023-01-10 12:00:00';
+SET @year = 2024;
+SET @membership_period_ends = '2008-01-01';
+SET @start_date = '2024-07-01 00:00:00';
+SET @end_date = '2024-12-31 23:59:59';
 
 -- SECTION: STEP #1 - CREATE SOURCE 2 todo: SET TIME PERIOD
     WITH source_2_type AS (
@@ -67,17 +68,18 @@ SET @year = 2021;
             LEFT JOIN users ON profiles.user_id = users.id
             LEFT JOIN events ON membership_applications.event_id = events.id
             LEFT JOIN transactions ON orders.id = transactions.order_id
+            
         WHERE 
             membership_periods.membership_type_id NOT IN (56, 58, 81, 105)
             AND membership_periods.id NOT IN (4652554)
 
-            AND YEAR(membership_periods.purchased_on) >= @year
+            -- AND YEAR(membership_periods.purchased_on) >= @year
             -- AND YEAR(membership_periods.purchased_on) IN (@year)
 
-            -- AND membership_periods.purchased_on >= @start_date
-            -- AND membership_periods.purchased_on <= @end_date
+            AND membership_periods.purchased_on >= @start_date
+            AND membership_periods.purchased_on <= @end_date
 
-            AND membership_periods.ends >= '2022-01-01'
+            AND membership_periods.ends >= @membership_period_ends
             AND membership_periods.membership_type_id > 0
             AND membership_periods.terminated_on IS NULL
 
@@ -203,7 +205,10 @@ SET @year = 2021;
                     WHEN rama.price_paid IN (105.68)    THEN 99  
                     WHEN rama.price_paid IS NOT NULL    THEN rama.price_paid -- assigns 6, 13, 18, 23 et al as appropriate
 
-                    WHEN mp.origin_flag = "ADMIN_BULK_UPLOADER" AND ma.payment_type = "ironman-ticketsocket" THEN 23
+                    -- WHEN mp.origin_flag = "ADMIN_BULK_UPLOADER" AND ma.payment_type = "ironman-ticketsocket" THEN 23 -- remove 12/6/24 per Eric Passe replaced with below
+                    WHEN mp.origin_flag = 'admin_bulk_uploader' and ma.payment_type = 'ironman-ticketsocket' and mp.membership_type_id in (115) then 23
+                    WHEN mp.origin_flag = 'admin_bulk_uploader' and ma.payment_type = 'ironman-ticketsocket' and mp.membership_type_id in (112) then 60
+                    WHEN mp.origin_flag = 'admin_bulk_uploader' and ma.payment_type = 'ironman-ticketsocket' and mp.membership_type_id in (113) then 99
 
                     -- 'KOZ Acception'
                     WHEN mp.origin_flag = "ADMIN_BULK_UPLOADER" AND ma.payment_type != "Chronotrack" AND ka.is_koz_acception IN (0) THEN 0 -- ISNULL('KOZ Acception')
@@ -278,6 +283,124 @@ SET @year = 2021;
         GROUP BY ka.id_membership_periods
     )
 
+    , actual_membership_fee_6_rule AS ( -- todo: rule additional field
+        SELECT 
+            ka.id_membership_periods,
+
+            -- Membership Fee 6
+            MAX(
+                CASE
+                    WHEN mp.terminated_on IS NOT NULL THEN '1_term_rule' -- membership period terminated on ISNULL filtered in the source_2 CTE query above 
+
+                    -- elseif [Source] = "Membership System/RTAV Classic" then [MS or Classic Fee 2] // essentially does it have an Order ID
+                    -- [Source] 
+                        -- has a rule such that if not isnull([Cart Label]) then "Membership System/RTAV Classic"
+                    -- 'MS or Classic Fee 2' = if [Amount Per] - [Discount] - [Amount Refunded] > 0 then [Amount Per] - [Discount] - [Amount Refunded] else 0 END
+                        -- amount per = order_products.amount_per 
+                        -- Discount = order_products.discount
+                        -- Amount Refunded = order_products.amount_refunded   
+                        -- this rule applies the discount for the purchase of a one day then an annual
+                    WHEN op.cart_label IS NOT NULL AND ((op.amount_per - op.discount - op.amount_refunded)  > 0) THEN '2_ops_cart_>_0'
+                    WHEN op.cart_label IS NOT NULL AND ((op.amount_per - op.discount - op.amount_refunded)  <= 0) THEN '3_ops_cart_<=_0'
+                    
+                    WHEN ra.registration_company_id IN (1) THEN '4_design_sensory' -- "Designsensory"
+                    WHEN ra.registration_company_id IN (23) THEN '5_acme_usat' -- "Acme-Usat"
+
+                    -- 'RTAV Batch Fee'
+                    -- elseif [Source] = "RTAV Batch" then [RTAV Batch Fee] //essentially does it have an Audit ID
+                    -- [Source] is elseif not isnull([Price Paid]) then "RTAV Batch"
+                    -- WHEN rama.price_paid IS NOT NULL THEN 1
+                    WHEN rama.price_paid IN (6.41)      THEN '7_rtav_batch_fee_6'
+                    WHEN rama.price_paid IN (10.68)     THEN '7_rtav_batch_fee_10'
+                    WHEN rama.price_paid IN (13.88)     THEN '7_rtav_batch_fee_13'
+                    WHEN rama.price_paid IN (16.01)     THEN '7_rtav_batch_fee_15'
+                    WHEN rama.price_paid IN (19.22)     THEN '7_rtav_batch_fee_18'
+                    WHEN rama.price_paid IN (24.55)     THEN '7_rtav_batch_fee_23'
+                    WHEN rama.price_paid IN (32.03)     THEN '7_rtav_batch_fee_30'
+                    WHEN rama.price_paid IN (38.43)     THEN '7_rtav_batch_fee_36'
+                    WHEN rama.price_paid IN (42.70)     THEN '7_rtav_batch_fee_40'
+                    WHEN rama.price_paid IN (53.38)     THEN '7_rtav_batch_fee_50'
+                    WHEN rama.price_paid IN (64.05)     THEN '7_rtav_batch_fee_60'
+                    WHEN rama.price_paid IN (105.68)    THEN '7_rtav_batch_fee_99'
+                    WHEN rama.price_paid IS NOT NULL    THEN '7_rtav_batch_fee_not_null' -- assigns 6, 13, 18, 23 et al as appropriate
+
+                    -- WHEN mp.origin_flag = "ADMIN_BULK_UPLOADER" AND ma.payment_type = "ironman-ticketsocket" THEN 23 -- remove 12/6/24 per Eric Passe replaced with below
+                    WHEN mp.origin_flag = 'admin_bulk_uploader' and ma.payment_type = 'ironman-ticketsocket' and mp.membership_type_id in (115) then '8_ironman_bulk_23' -- 23
+                    WHEN mp.origin_flag = 'admin_bulk_uploader' and ma.payment_type = 'ironman-ticketsocket' and mp.membership_type_id in (112) then '8_ironman_bulk_60' -- 60
+                    WHEN mp.origin_flag = 'admin_bulk_uploader' and ma.payment_type = 'ironman-ticketsocket' and mp.membership_type_id in (113) then '8_ironman_bulk_90' -- 99
+
+                    -- 'KOZ Acception'
+                    WHEN mp.origin_flag = "ADMIN_BULK_UPLOADER" AND ma.payment_type != "Chronotrack" AND ka.is_koz_acception IN (0) THEN '9_chronotrack_bulk_koz_0' -- 0 -- ISNULL('KOZ Acception')
+                    WHEN mp.origin_flag = "RTAV_CLASSIC" THEN '10_origin_rtav_classic' -- 0
+                    WHEN ma.payment_type = "comped" THEN  '11_payment_type_comp_0' -- 0
+                    WHEN ma.payment_type = "normal" AND mp.membership_type_id IN (74, 103) THEN '12_payment_type_normal_lifetime_0' -- 0 -- 'No Home Member ID' = "Lifetime"
+
+                    -- 'KOZ Acception' & coach recert
+                    WHEN
+                        ma.confirmation_code IS NULL        AND 
+                        ma.payment_type != "Chronotrack"    AND 
+                        ma.payment_type != "stripe"         AND 
+                        -- ISNULL('KOZ Acception')
+                        ka.is_koz_acception IN (0)          AND 
+                        -- ISNULL('Coach Recert')
+                        CASE        
+                            WHEN ma.payment_explanation LIKE '%recert%' THEN 'coach_recert'
+                            WHEN ma.payment_explanation LIKE '%cert%' THEN 'coach_recert'
+                            WHEN ma.payment_explanation LIKE '%coach%' THEN 'coach_recert'
+                            WHEN ma.payment_type LIKE '%stripe%' THEN 'coach_recert' -- 2024 forward
+                            ELSE NULL
+                        END IS NULL THEN '13_koz_acception_coach_recert_0' -- 0
+                    WHEN mp.membership_type_id IN (2, 52, 65, 70, 73, 91, 93, 96, 98) THEN '14_2_year_100' -- 100 -- 2year
+                    WHEN mp.membership_type_id IN (3, 66, 68, 85, 89, 99, 119) AND mp.purchased_on < '2024-06-04 12:00:00' THEN '15_3_year_135' -- 135 -- 3year
+                    WHEN mp.membership_type_id IN (3, 66, 68, 85, 89, 99, 119) THEN '15_3_year_180' -- 180 -- 3year
+                    WHEN mp.membership_type_id IN (74, 103) THEN '16_lifetime_1000' -- 1000 -- lifetime
+                    WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND ma.event_id IN (30785, 30768, 30770) THEN '17_comped_events_0' --  0 -- one-day; //these events were comped
+                    -- 'KOZ Acception'
+                    WHEN ka.is_koz_acception IN (1) AND mp.membership_type_id IN (4, 51, 54, 61, 94) THEN '18_koz_acception_youth_annual_10' -- 10 -- youth = youth annual; 'KOZ Acception' = "KOZ"
+                    WHEN ka.is_koz_acception THEN '19_koz_acception_15' -- 15 -- 'KOZ Acception' = "KOZ"
+                    WHEN mp.membership_type_id IN (4, 51, 54, 61, 94) THEN '20_youth_annual_10' -- 10 -- youth = youth annual
+                    WHEN mp.membership_type_id IN (112) THEN '21_silver_60' -- 60 -- silver
+                    WHEN mp.membership_type_id IN (113) THEN '22_gold_99' -- 99 -- gold
+                    WHEN mp.membership_type_id IN (114) THEN '23_platinum_team_usa_400' -- 400 -- platinum team usa
+                    WHEN mp.membership_type_id IN (117) THEN '23_platinum_foundation_400' -- 400 -- platinum foundation
+                    WHEN mp.membership_type_id IN (115) THEN '24_bronze_23' -- 23 -- bronze
+                    WHEN ma.membership_type_id = 118 THEN '25_bronze_0' -- 0 -- bronze
+                    WHEN mp.membership_type_id IN (107) AND mp.purchased_on >= '2024-01-16 09:00:00' THEN '26_youth_premier_>=_2024-01-16_30' -- 30 -- youth premier
+                    WHEN mp.membership_type_id IN (55) AND mp.purchased_on >= '2024-01-16 09:00:00' THEN '27_youth_adult_>=_2024-01-16_40' -- 40 -- young adult
+                    WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) AND mp.purchased_on >= '2024-01-16 09:00:00' THEN '27_one_day_>=_2024-01-16_23' -- 23  -- one day
+                    WHEN mp.membership_type_id IN (1, 60, 62, 64, 67, 71, 75, 104) AND mp.purchased_on >= '2024-01-16 09:00:00' THEN '28_1_year_>=_2024-01-16_60' -- 60 -- 1year
+                    WHEN mp.membership_type_id IN (83, 84, 86, 87, 88, 90, 102) AND mp.purchased_on >= '2023-11-01 09:00:00' THEN '29_elite_>=_2024-01-16_60' -- 60 -- elite
+                    WHEN mp.membership_type_id IN (107) THEN '30_youth_premier_25' -- 25 -- youth premier
+                    WHEN mp.membership_type_id IN (55) THEN '31_youth_adult_36' -- 36 -- young adult
+                    WHEN mp.membership_type_id IN (5, 46, 47, 72, 97, 100) THEN '32_one_day_15' -- 15 -- one day
+                    WHEN mp.membership_type_id IN (1, 60, 62, 64, 67, 71, 75, 104) THEN '33_1_year_50'-- 50 -- 1 year
+                    WHEN mp.membership_type_id IN (83, 84, 86, 87, 88, 90, 102) THEN '34_elite_50' -- 50 -- elite
+                    ELSE 0
+                END
+            ) AS max_membership_fee_6_rule
+
+        FROM koz_acception AS ka
+            LEFT JOIN membership_applications AS ma ON ka.id_membership_periods = ma.membership_period_id
+            LEFT JOIN membership_periods AS mp ON ka.id_membership_periods = mp.id
+            LEFT JOIN registration_audit AS ra ON ka.id_membership_periods = ra.membership_period_id
+            LEFT JOIN order_products AS op ON ma.id = op.purchasable_id
+            LEFT JOIN registration_audit_membership_application AS rama ON ra.id = rama.audit_id
+
+        -- WHERE 
+            -- mp.terminated_on IS NULL
+            -- ma.payment_type = "ironman-ticketsocket"
+            -- ra.registration_company_id IN (1, 23)
+            -- op.cart_label IS NOT NULL
+            -- rama.price_paid IS NOT NULL
+            -- mp.membership_type_id IN (107) AND mp.purchased_on >= '2024-01-16 09:00:00' -- THEN 30
+            -- mp.membership_type_id IN (55) AND mp.purchased_on >= '2024-01-16 09:00:00' -- THEN 40
+
+            -- use case for bronze 6 relay being priced at $23; added rule above if rama.price_paid = 6 then price at 6
+            -- id_membership_periods IN (4698020, 4636868) 
+
+        GROUP BY ka.id_membership_periods
+    )
+
 , -- COMMA IS NECESSARY FOR CTE BUT NOT DIRECT SQL AS ABOVE
 
 -- GET ALL RECORDS
@@ -311,6 +434,8 @@ SET @year = 2021;
             mf.is_koz_acception,
             mf.real_membership_types AS real_membership_types,
             mf.max_membership_fee_6 AS max_membership_fee_6,
+            r.max_membership_fee_6_rule, -- todo: rule additional field
+
             -- new_member_category_6
             CASE
                 WHEN mp.membership_type_id IN (2, 52, 65, 70, 73, 91, 93, 96, 98) THEN '2-Year'
@@ -366,6 +491,7 @@ SET @year = 2021;
             COUNT(*) AS count
 
         FROM actual_membership_fee_6 AS mf
+            LEFT JOIN actual_membership_fee_6_rule AS r ON mf.id_membership_periods = r.id_membership_periods -- todo: rule additional field
             LEFT JOIN membership_applications AS ma ON mf.id_membership_periods = ma.membership_period_id
             LEFT JOIN membership_periods AS mp ON mf.id_membership_periods = mp.id
 
@@ -383,11 +509,12 @@ SET @year = 2021;
 
 , -- COMMA IS NECESSARY FOR CTE BUT NOT DIRECT SQL AS ABOVE
 
--- SECTION: STEP #5 - ONE DAY SALES ACTUAL MEMBER FEE todo: SET TIME PERIOD
+-- SECTION: STEP #5 - ONE DAY SALES ACTUAL MEMBER FEE
     one_day_sales_actual_member_fee AS (
         SELECT 
             members.member_number AS member_number_members,
             MAX(membership_periods.id) as max_membership_period_id,
+            max_membership_fee_6_rule, -- todo: rule additional field
             mc.real_membership_types,
             -- CASE
             --     WHEN membership_periods.membership_type_id IN (1, 2, 3, 52, 55, 60, 62, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 85, 89, 91, 93, 96, 98, 99, 101, 103, 104, 112, 113, 114, 117, 119) THEN 'adult_annual'
@@ -400,8 +527,8 @@ SET @year = 2021;
             
             mc.max_membership_fee_6 AS max_membership_fee_6,
             mc.new_member_category_6,
-            mc.source_2, -- todo:
-            mc.is_koz_acception, -- todo:
+            mc.source_2,
+            mc.is_koz_acception,
 
             DATE(membership_periods.created_at) AS created_at_membership_periods,
 
@@ -437,7 +564,11 @@ SET @year = 2021;
             -- #1 = ~80,947 records for = 2021
             -- year(membership_periods.purchased_on) = @year
             -- todo:
-            year(membership_periods.purchased_on) >= @year
+            -- year(membership_periods.purchased_on) >= @year
+
+            membership_periods.purchased_on >= @start_date
+            AND membership_periods.purchased_on <= @end_date
+
             -- #2 = 78,027 is allowable below; where purchased = 2021
             -- #3 = 78,071; where purchased = 2021
             -- todo:
@@ -451,7 +582,7 @@ SET @year = 2021;
             AND membership_periods.terminated_on IS NULL
             -- #7 = 40,735; where purchased = 2021
             -- todo:
-            AND membership_periods.ends >= '2022-01-01'
+            AND membership_periods.ends >= @membership_period_ends
 
             -- use case start period date before purchase period date
             -- AND year(membership_periods.purchased_on) IN (2024)
@@ -615,7 +746,7 @@ SET @year = 2021;
                 WHEN membership_periods.membership_type_id IN (83, 84, 86, 87, 88, 90, 102) THEN 'elite'
                 ELSE "other"
             END
-        LIMIT 10
+        -- LIMIT 1000 -- todo: max_membership_fee_6_rule
     )
 
 -- GET ALL DETAILED RECORDS = 46K for 2021
@@ -661,65 +792,67 @@ SET @year = 2021;
                 sa.real_membership_types AS real_membership_types_sa,
                 sa.new_member_category_6 AS new_member_category_6_sa,
                 sa.max_membership_fee_6 AS actual_membership_fee_6_sa,
+                sa.max_membership_fee_6_rule, -- todo: rule additional field
+                sa.max_membership_fee_6_rule AS actual_membership_fee_6_rule_sa, -- todo: rule 
                 sa.source_2 AS source_2_sa,
                 sa.is_koz_acception AS is_koz_acception_sa,
 
             -- EVENTS TABLE
-                events.address AS address_events,
-                events.allow_one_day_purchases AS allow_one_day_purchases_events,
-                events.athlete_guide_url AS athlete_guide_url_events,
-                events.certified_race_director AS certified_race_director_events,
-                events.city AS city_events,
-                events.country_code AS country_code_events,
-                events.country_name AS country_name_events,
-                events.country AS country_events,
-                events.created_at AS created_at_events,
-                events.deleted_at AS deleted_at_events,
-                events.distance AS distance_events,
-                events.ends AS ends_events, -- todo:
-                events.event_type_id AS type_id_events,
-                events.event_website_url AS website_url_events,
-                events.facebook_url AS facebook_url_events,
-                events.featured_at AS featured_at_events,
-                events.id AS id_events, -- todo:
-                events.instagram_url AS instagram_url_events,
-                events.last_season_event_id AS last_season_event_id, -- todo:
-                events.name AS name_events, -- todo:
-                events.qualification_deadline AS qualification_deadline_events,
-                events.qualification_url AS qualification_url_events,
-                events.race_director_id AS race_director_id_events, -- todo:
-                events.registration_company_event_id AS registration_company_event_id,
-                events.registration_policy_url AS registration_policy_url_events,
-                events.remote_id AS remote_id_events,
-                events.sanctioning_event_id AS id_sanctioning_event,
-                events.starts AS starts_events, -- todo:
-                events.state_code AS state_code_events,
-                events.state_id AS state_id_events,
-                events.state_name AS state_name_events,
-                events.state AS state_events, -- todo:
-                events.status AS status_events,
-                events.twitter_url AS twitter_url_events,
-                events.updated_at AS updated_at_events,
-                events.virtual AS virtual_events,
-                events.youtube_url AS youtube_url_events,
-                events.zip AS zip_events,
-                SUBSTRING(events.overview, 1, 1024) AS overview_events,
-                CONCAT('"', SUBSTRING(events.registration_information, 1, 1024), '"') AS registration_information_events,
-                -- SUBSTRING(events.registration_information, 1, 1024) AS registration_information_events,
-                SUBSTRING(events.registration_url, 1, 1024) AS registration_url_events,
+                -- events.address AS address_events,
+                -- events.allow_one_day_purchases AS allow_one_day_purchases_events,
+                -- events.athlete_guide_url AS athlete_guide_url_events,
+                -- events.certified_race_director AS certified_race_director_events,
+                -- events.city AS city_events,
+                -- events.country_code AS country_code_events,
+                -- events.country_name AS country_name_events,
+                -- events.country AS country_events,
+                -- events.created_at AS created_at_events,
+                -- events.deleted_at AS deleted_at_events,
+                -- events.distance AS distance_events,
+                -- events.ends AS ends_events,
+                -- events.event_type_id AS type_id_events,
+                -- events.event_website_url AS website_url_events,
+                -- events.facebook_url AS facebook_url_events,
+                -- events.featured_at AS featured_at_events,
+                -- events.id AS id_events,
+                -- events.instagram_url AS instagram_url_events,
+                -- events.last_season_event_id AS last_season_event_id,
+                -- events.name AS name_events,
+                -- events.qualification_deadline AS qualification_deadline_events,
+                -- events.qualification_url AS qualification_url_events,
+                -- events.race_director_id AS race_director_id_events,
+                -- events.registration_company_event_id AS registration_company_event_id,
+                -- events.registration_policy_url AS registration_policy_url_events,
+                -- events.remote_id AS remote_id_events,
+                -- events.sanctioning_event_id AS id_sanctioning_event,
+                -- events.starts AS starts_events,
+                -- events.state_code AS state_code_events,
+                -- events.state_id AS state_id_events,
+                -- events.state_name AS state_name_events,
+                -- events.state AS state_events,
+                -- events.status AS status_events,
+                -- events.twitter_url AS twitter_url_events,
+                -- events.updated_at AS updated_at_events,
+                -- events.virtual AS virtual_events,
+                -- events.youtube_url AS youtube_url_events,
+                -- events.zip AS zip_events,
+                -- SUBSTRING(events.overview, 1, 1024) AS overview_events,
+                -- CONCAT('"', SUBSTRING(events.registration_information, 1, 1024), '"') AS registration_information_events,
+                -- -- SUBSTRING(events.registration_information, 1, 1024) AS registration_information_events,
+                -- SUBSTRING(events.registration_url, 1, 1024) AS registration_url_events,
 
             -- MEMBERS TABLE
-                members.active AS active_members,
-                members.created_at AS created_at_members,
-                members.deleted_at AS deleted_at_members,
-                members.id AS id_members,
-                members.longevity_status AS longevity_status_members,
-                members.member_number AS member_number_members,
-                members.memberable_id AS memberable_id_members,
-                members.memberable_type AS memberable_type_members,
-                members.period_status AS period_status_members,
-                members.referrer_code AS referrer_code_members,
-                members.updated_at AS updated_at_members,
+                -- members.active AS active_members,
+                -- members.created_at AS created_at_members,
+                -- members.deleted_at AS deleted_at_members,
+                -- members.id AS id_members,
+                -- members.longevity_status AS longevity_status_members,
+                -- members.member_number AS member_number_members,
+                -- members.memberable_id AS memberable_id_members,
+                -- members.memberable_type AS memberable_type_members,
+                -- members.period_status AS period_status_members,
+                -- members.referrer_code AS referrer_code_members,
+                -- members.updated_at AS updated_at_members,
 
             -- MEMBERSHIP PERIODS TABLE
                 mp.id AS id_mp,
@@ -782,279 +915,279 @@ SET @year = 2021;
                 membership_types.require_admin_approval AS require_admin_approval_mt,
                 membership_types.tag_id AS tag_id_mt,
                 membership_types.updated_at AS updated_at_mt,
-                SUBSTRING(membership_types.short_description, 1, 1024) AS short_description_mt,
+                SUBSTRING(membership_types.short_description, 1, 1024) AS short_description_mt
 
             -- MEMBERSHIP APPLICATIONS TABLE
-                ma.address AS address_ma,
-                ma.application_type AS application_type_ma,
-                ma.approval_status AS approval_status_ma,
-                ma.city AS city_ma,
-                ma.confirmation_code AS confirmation_code_ma,
-                ma.country AS country_ma,
-                ma.created_at AS created_at_ma,
-                ma.date_of_birth AS date_of_birth_ma,
-                ma.deleted_at AS deleted_at_ma,
-                ma.distance_type_id AS distance_type_id_ma,
-                ma.email AS email_ma,
-                ma.event_id AS event_id_ma,
-                ma.extension_type AS extension_type_ma,
-                ma.first_name AS first_name_ma,
-                ma.gender AS gender_ma,
-                ma.id AS id_ma,
-                ma.last_name AS last_name_ma,
-                ma.membership_period_id AS membership_period_id_ma,
-                ma.membership_type_id AS membership_type_id_ma,
-                ma.middle_name AS middle_name_ma,
-                ma.origin_flag AS origin_flag_ma,
-                ma.outside_payment AS outside_payment_ma,
-                ma.paper_waivers_signed AS paper_waivers_signed_ma,
-                ma.payment_id AS payment_id_ma,
-                ma.payment_type AS payment_type_ma,
-                ma.phone AS phone_ma,
-                ma.plan_id AS plan_id_ma,
-                ma.profile_id AS profile_id_ma,
-                ma.race_id AS race_id_ma,
-                ma.race_type_id AS race_type_id_ma,
-                ma.referral_code AS referral_code_ma,
-                ma.state AS state_ma,
-                ma.status AS status_ma,
-                ma.updated_at AS updated_at_ma,
-                ma.uuid AS uuid_ma,
-                ma.zip AS zip_ma,
-                SUBSTRING(ma.club_affiliations, 1, 1024) AS club_affiliations_ma,
-                SUBSTRING( ma.denial_reason, 1, 1024) AS denial_reason_ma,
-                SUBSTRING(ma.payment_explanation, 1, 1024) AS payment_explanation_ma,
-                SUBSTRING(ma.upgrade_code, 1, 1024) AS upgrade_code_ma,
+                -- ma.address AS address_ma,
+                -- ma.application_type AS application_type_ma,
+                -- ma.approval_status AS approval_status_ma,
+                -- ma.city AS city_ma,
+                -- ma.confirmation_code AS confirmation_code_ma,
+                -- ma.country AS country_ma,
+                -- ma.created_at AS created_at_ma,
+                -- ma.date_of_birth AS date_of_birth_ma,
+                -- ma.deleted_at AS deleted_at_ma,
+                -- ma.distance_type_id AS distance_type_id_ma,
+                -- ma.email AS email_ma,
+                -- ma.event_id AS event_id_ma,
+                -- ma.extension_type AS extension_type_ma,
+                -- ma.first_name AS first_name_ma,
+                -- ma.gender AS gender_ma,
+                -- ma.id AS id_ma,
+                -- ma.last_name AS last_name_ma,
+                -- ma.membership_period_id AS membership_period_id_ma,
+                -- ma.membership_type_id AS membership_type_id_ma,
+                -- ma.middle_name AS middle_name_ma,
+                -- ma.origin_flag AS origin_flag_ma,
+                -- ma.outside_payment AS outside_payment_ma,
+                -- ma.paper_waivers_signed AS paper_waivers_signed_ma,
+                -- ma.payment_id AS payment_id_ma,
+                -- ma.payment_type AS payment_type_ma,
+                -- ma.phone AS phone_ma,
+                -- ma.plan_id AS plan_id_ma,
+                -- ma.profile_id AS profile_id_ma,
+                -- ma.race_id AS race_id_ma,
+                -- ma.race_type_id AS race_type_id_ma,
+                -- ma.referral_code AS referral_code_ma,
+                -- ma.state AS state_ma,
+                -- ma.status AS status_ma,
+                -- ma.updated_at AS updated_at_ma,
+                -- ma.uuid AS uuid_ma,
+                -- ma.zip AS zip_ma,
+                -- SUBSTRING(ma.club_affiliations, 1, 1024) AS club_affiliations_ma,
+                -- SUBSTRING( ma.denial_reason, 1, 1024) AS denial_reason_ma,
+                -- SUBSTRING(ma.payment_explanation, 1, 1024) AS payment_explanation_ma,
+                -- SUBSTRING(ma.upgrade_code, 1, 1024) AS upgrade_code_ma,
 
             -- ORDER PRODUCTS TABLE
-                op.amount_charged_back AS amount_charged_back_orders_products,
-                op.amount_per AS amount_per_orders_products,
-                op.amount_refunded AS amount_refunded_orders_products,
-                op.base_price AS base_price_orders_products,
-                op.cart_description AS cart_description_orders_products,
-                op.cart_label AS cart_label_orders_products,
-                op.created_at AS created_at_orders_products,
-                op.deleted_at AS deleted_at_orders_products, 
-                op.discount AS discount_orders_products,
-                op.id AS id_order_products_orders_products,
-                op.option_amount_per AS option_amount_per_orders_products,
-                op.order_id AS order_id_orders_products,
-                op.original_tax AS original_tax_orders_products,
-                op.original_total AS original_total_orders_products,
-                op.processed_at AS processed_at_orders_products,
-                op.product_description AS product_description_orders_products,
-                op.product_id AS product_id_orders_products,
-                op.purchasable_id AS purchasable_id_orders_products,
-                op.purchasable_processed_at AS purchasable_processed_at_orders_products,
-                op.purchasable_type AS purchasable_type,
-                op.quantity_refunded AS quantity_refunded_orders_products,
-                op.quantity AS quantity_orders_products,
-                op.sku AS sku_orders_products,
-                op.status_id AS status_id_orders_products,
-                op.tax AS tax_orders_products,
-                op.title AS title_orders_products,
-                op.total AS total_orders_products,
-                op.tracking_number AS tracking_number_orders_products,
-                op.updated_at AS updated_at_order_products,
-                SUBSTRING(op.options_given, 1, 1024) AS options_given_orders_products,
-                SUBSTRING(op.tax_info, 1, 1024) AS tax_info_orders_products,
+                -- op.amount_charged_back AS amount_charged_back_orders_products,
+                -- op.amount_per AS amount_per_orders_products,
+                -- op.amount_refunded AS amount_refunded_orders_products,
+                -- op.base_price AS base_price_orders_products,
+                -- op.cart_description AS cart_description_orders_products,
+                -- op.cart_label AS cart_label_orders_products,
+                -- op.created_at AS created_at_orders_products,
+                -- op.deleted_at AS deleted_at_orders_products, 
+                -- op.discount AS discount_orders_products,
+                -- op.id AS id_order_products_orders_products,
+                -- op.option_amount_per AS option_amount_per_orders_products,
+                -- op.order_id AS order_id_orders_products,
+                -- op.original_tax AS original_tax_orders_products,
+                -- op.original_total AS original_total_orders_products,
+                -- op.processed_at AS processed_at_orders_products,
+                -- op.product_description AS product_description_orders_products,
+                -- op.product_id AS product_id_orders_products,
+                -- op.purchasable_id AS purchasable_id_orders_products,
+                -- op.purchasable_processed_at AS purchasable_processed_at_orders_products,
+                -- op.purchasable_type AS purchasable_type,
+                -- op.quantity_refunded AS quantity_refunded_orders_products,
+                -- op.quantity AS quantity_orders_products,
+                -- op.sku AS sku_orders_products,
+                -- op.status_id AS status_id_orders_products,
+                -- op.tax AS tax_orders_products,
+                -- op.title AS title_orders_products,
+                -- op.total AS total_orders_products,
+                -- op.tracking_number AS tracking_number_orders_products,
+                -- op.updated_at AS updated_at_order_products,
+                -- SUBSTRING(op.options_given, 1, 1024) AS options_given_orders_products,
+                -- SUBSTRING(op.tax_info, 1, 1024) AS tax_info_orders_products,
             
             -- ORDERS TABLE
-                orders.active AS active_orders,
-                orders.address_2 AS address_2_orders,
-                orders.address AS address_orders,
-                orders.amount_charged_back AS amount_charged_back_orders,
-                orders.amount_refunded AS amount_refunded_orders,
-                orders.city AS city_orders,
-                orders.confirmation_number AS confirmation_number_orders,
-                orders.country AS country_orders,
-                orders.created_at AS created_at_orders,
-                orders.deleted_at AS deleted_at_orders,
-                orders.discount_code AS discount_code_orders,
-                orders.discount AS discount_orders,
-                orders.email AS email_orders,
-                orders.first_name AS first_name_orders,
-                orders.group_id AS group_id_orders,
-                orders.handling_charge AS handling_charge_orders,
-                orders.handling_tax AS handling_tax_orders,
-                orders.id AS id_orders,
-                orders.in_hand_date AS in_hand_date_orders,
-                orders.last_name AS last_name_orders,
-                orders.original_tax AS original_tax_orders,
-                orders.original_total AS original_total_orders,
-                orders.phone AS phone_orders,
-                orders.post_process_finished_at AS post_process_finished_at_orders,
-                orders.post_process_started_at AS post_process_started_at_orders,
-                orders.processed AS processed_orders,
-                orders.quote_id AS quote_id_orders,
-                orders.ship_on AS ship_on_orders,
-                orders.shipping_address_2 AS shipping_address_2_orders,
-                orders.shipping_address AS shipping_address_orders,
-                orders.shipping_city AS shipping_city_orders,
-                orders.shipping_company AS shipping_company_orders,
-                orders.shipping_country AS shipping_country_orders,
-                orders.shipping_first_name AS shipping_first_name_orders,
-                orders.shipping_last_name AS shipping_last_name_orders,
-                orders.shipping_method AS shipping_method_orders,
-                orders.shipping_rate AS shipping_rate_orders,
-                orders.shipping_state AS shipping_state_orders,
-                orders.shipping_tax AS shipping_tax_orders,
-                orders.shipping_zip AS shipping_zip_orders,
-                orders.state AS state_orders_orders,
-                orders.status_id AS status_id_orders,
-                orders.store AS store_orders,
-                orders.subtotal AS subtotal_orders,
-                orders.tax_transaction_code AS tax_transaction_code_orders,
-                orders.tax AS tax_orders,
-                orders.total AS total_orders,
-                orders.tracking AS tracking_orders,
-                orders.upcharge AS upcharge_orders,
-                orders.updated_at AS updated_at_orders,
-                orders.user_id AS user_id_orders,
-                orders.uuid AS uuid_orders,
-                orders.zip AS zip_orders,
-                SUBSTRING(orders.customer_note, 1, 1024) AS customer_note_orders,
-                SUBSTRING(orders.internal_note, 1, 1024) AS internal_note_orders,
+                -- orders.active AS active_orders,
+                -- orders.address_2 AS address_2_orders,
+                -- orders.address AS address_orders,
+                -- orders.amount_charged_back AS amount_charged_back_orders,
+                -- orders.amount_refunded AS amount_refunded_orders,
+                -- orders.city AS city_orders,
+                -- orders.confirmation_number AS confirmation_number_orders,
+                -- orders.country AS country_orders,
+                -- orders.created_at AS created_at_orders,
+                -- orders.deleted_at AS deleted_at_orders,
+                -- orders.discount_code AS discount_code_orders,
+                -- orders.discount AS discount_orders,
+                -- orders.email AS email_orders,
+                -- orders.first_name AS first_name_orders,
+                -- orders.group_id AS group_id_orders,
+                -- orders.handling_charge AS handling_charge_orders,
+                -- orders.handling_tax AS handling_tax_orders,
+                -- orders.id AS id_orders,
+                -- orders.in_hand_date AS in_hand_date_orders,
+                -- orders.last_name AS last_name_orders,
+                -- orders.original_tax AS original_tax_orders,
+                -- orders.original_total AS original_total_orders,
+                -- orders.phone AS phone_orders,
+                -- orders.post_process_finished_at AS post_process_finished_at_orders,
+                -- orders.post_process_started_at AS post_process_started_at_orders,
+                -- orders.processed AS processed_orders,
+                -- orders.quote_id AS quote_id_orders,
+                -- orders.ship_on AS ship_on_orders,
+                -- orders.shipping_address_2 AS shipping_address_2_orders,
+                -- orders.shipping_address AS shipping_address_orders,
+                -- orders.shipping_city AS shipping_city_orders,
+                -- orders.shipping_company AS shipping_company_orders,
+                -- orders.shipping_country AS shipping_country_orders,
+                -- orders.shipping_first_name AS shipping_first_name_orders,
+                -- orders.shipping_last_name AS shipping_last_name_orders,
+                -- orders.shipping_method AS shipping_method_orders,
+                -- orders.shipping_rate AS shipping_rate_orders,
+                -- orders.shipping_state AS shipping_state_orders,
+                -- orders.shipping_tax AS shipping_tax_orders,
+                -- orders.shipping_zip AS shipping_zip_orders,
+                -- orders.state AS state_orders_orders,
+                -- orders.status_id AS status_id_orders,
+                -- orders.store AS store_orders,
+                -- orders.subtotal AS subtotal_orders,
+                -- orders.tax_transaction_code AS tax_transaction_code_orders,
+                -- orders.tax AS tax_orders,
+                -- orders.total AS total_orders,
+                -- orders.tracking AS tracking_orders,
+                -- orders.upcharge AS upcharge_orders,
+                -- orders.updated_at AS updated_at_orders,
+                -- orders.user_id AS user_id_orders,
+                -- orders.uuid AS uuid_orders,
+                -- orders.zip AS zip_orders,
+                -- SUBSTRING(orders.customer_note, 1, 1024) AS customer_note_orders,
+                -- SUBSTRING(orders.internal_note, 1, 1024) AS internal_note_orders,
 
             -- PROFILES TABLE
-                profiles.active AS active_profiles,
-                profiles.anonymous AS anonymous_profiles,
-                profiles.created_at AS created_at_profiles,
-                profiles.date_of_birth AS date_of_birth_profiles,
-                profiles.deceased_recorded_on AS deceased_recorded_on_profiles,
-                profiles.deleted_at AS deleted_at_profiles,
-                profiles.education_id AS education_id_profiles,
-                profiles.ethnicity_id AS ethnicity_id_profiles,
-                profiles.first_name AS first_name_profiles_profiles,
-                profiles.gender_id AS gender_id_profiles,
-                profiles.gender_opt_out AS gender_opt_out_profiles,
-                profiles.id AS id_profiles,
-                profiles.income_id AS income_id_profiles,
-                profiles.is_us_citizen AS is_us_citizen_profiles,
-                profiles.last_name AS last_name_profiles,
-                profiles.marketo_lead_id_old AS marketo_lead_id_old_profiles,
-                profiles.marketo_lead_id AS marketo_lead_id_profiles,
-                profiles.merged_from_profile_id AS merged_from_profile_id,
-                profiles.merged_to_profile_id AS merged_to_profile_id,
-                profiles.middle_name AS middle_name_profiles,
-                profiles.military_id AS military_id_profiles,
-                profiles.name AS name_profiles,
-                profiles.occupation_id AS occupation_id_profiles,
-                profiles.para AS para_profiles,
-                profiles.primary_address_id AS primary_address_id_profiles,
-                profiles.primary_citizenship_id AS primary_citizenship_id_profiles,
-                profiles.primary_email_id AS primary_email_id_profiles,
-                profiles.primary_emergency_contact_id AS primary_emergency_contact_id_profiles,
-                profiles.primary_phone_id AS primary_phone_id_profiles,
-                profiles.remote_id AS remote_id_profiles_profiles,
-                profiles.suffix AS suffix_profiles,
-                profiles.updated_at AS updated_at_profiles,
-                profiles.user_id AS user_id_profiles,
-                profiles.uuid AS uuid_profiles,
-                SUBSTRING(profiles.merge_info, 1, 1024) AS merge_info_profiles,
+                -- profiles.active AS active_profiles,
+                -- profiles.anonymous AS anonymous_profiles,
+                -- profiles.created_at AS created_at_profiles,
+                -- profiles.date_of_birth AS date_of_birth_profiles,
+                -- profiles.deceased_recorded_on AS deceased_recorded_on_profiles,
+                -- profiles.deleted_at AS deleted_at_profiles,
+                -- profiles.education_id AS education_id_profiles,
+                -- profiles.ethnicity_id AS ethnicity_id_profiles,
+                -- profiles.first_name AS first_name_profiles_profiles,
+                -- profiles.gender_id AS gender_id_profiles,
+                -- profiles.gender_opt_out AS gender_opt_out_profiles,
+                -- profiles.id AS id_profiles,
+                -- profiles.income_id AS income_id_profiles,
+                -- profiles.is_us_citizen AS is_us_citizen_profiles,
+                -- profiles.last_name AS last_name_profiles,
+                -- profiles.marketo_lead_id_old AS marketo_lead_id_old_profiles,
+                -- profiles.marketo_lead_id AS marketo_lead_id_profiles,
+                -- profiles.merged_from_profile_id AS merged_from_profile_id,
+                -- profiles.merged_to_profile_id AS merged_to_profile_id,
+                -- profiles.middle_name AS middle_name_profiles,
+                -- profiles.military_id AS military_id_profiles,
+                -- profiles.name AS name_profiles,
+                -- profiles.occupation_id AS occupation_id_profiles,
+                -- profiles.para AS para_profiles,
+                -- profiles.primary_address_id AS primary_address_id_profiles,
+                -- profiles.primary_citizenship_id AS primary_citizenship_id_profiles,
+                -- profiles.primary_email_id AS primary_email_id_profiles,
+                -- profiles.primary_emergency_contact_id AS primary_emergency_contact_id_profiles,
+                -- profiles.primary_phone_id AS primary_phone_id_profiles,
+                -- profiles.remote_id AS remote_id_profiles_profiles,
+                -- profiles.suffix AS suffix_profiles,
+                -- profiles.updated_at AS updated_at_profiles,
+                -- profiles.user_id AS user_id_profiles,
+                -- profiles.uuid AS uuid_profiles,
+                -- SUBSTRING(profiles.merge_info, 1, 1024) AS merge_info_profiles,
 
             -- REGISTRATION AUDIT MEMBERSHIP APPLICATION TABLE
-                registration_audit_membership_application.audit_id AS audit_id_rama,
-                registration_audit_membership_application.created_at AS created_at_rama,
-                registration_audit_membership_application.distance_type_id AS distance_type_id_rama,
-                registration_audit_membership_application.id AS id_rama,
-                registration_audit_membership_application.membership_application_id AS membership_application_id_rama,
-                registration_audit_membership_application.membership_type_id AS membership_type_id_rama,
-                registration_audit_membership_application.price_paid AS price_paid_rama,
-                registration_audit_membership_application.race_id AS race_id_rama,
-                registration_audit_membership_application.race_type_id AS race_type_id_rama,
-                registration_audit_membership_application.status AS status_rama,
-                registration_audit_membership_application.updated_at AS updated_at_rama,
-                SUBSTRING(registration_audit_membership_application.upgrade_codes, 1, 1024) AS upgrade_codes_rama,
+                -- registration_audit_membership_application.audit_id AS audit_id_rama,
+                -- registration_audit_membership_application.created_at AS created_at_rama,
+                -- registration_audit_membership_application.distance_type_id AS distance_type_id_rama,
+                -- registration_audit_membership_application.id AS id_rama,
+                -- registration_audit_membership_application.membership_application_id AS membership_application_id_rama,
+                -- registration_audit_membership_application.membership_type_id AS membership_type_id_rama,
+                -- registration_audit_membership_application.price_paid AS price_paid_rama,
+                -- registration_audit_membership_application.race_id AS race_id_rama,
+                -- registration_audit_membership_application.race_type_id AS race_type_id_rama,
+                -- registration_audit_membership_application.status AS status_rama,
+                -- registration_audit_membership_application.updated_at AS updated_at_rama,
+                -- SUBSTRING(registration_audit_membership_application.upgrade_codes, 1, 1024) AS upgrade_codes_rama,
 
             -- REGISTRATION AUDIT TABLE
-                registration_audit.address AS address_ra,
-                registration_audit.billing_address AS billing_address_ra,
-                registration_audit.billing_city AS billing_city_ra,
-                registration_audit.billing_country AS billing_country_ra,
-                registration_audit.billing_email AS billing_email_ra,
-                registration_audit.billing_first_name AS billing_first_name_ra,
-                registration_audit.billing_last_name AS billing_last_name_ra,
-                registration_audit.billing_middle_name AS billing_middle_name_ra,
-                registration_audit.billing_phone AS billing_phone_ra,
-                registration_audit.billing_state AS billing_state_ra,
-                registration_audit.billing_zip AS billing_zip_ra,
-                registration_audit.city AS city_ra,
-                registration_audit.confirmation_number AS confirmation_number_ra,
-                registration_audit.country AS country_ra,
-                registration_audit.created_at AS created_at_ra,
-                registration_audit.date_of_birth AS date_of_birth_ra,
-                registration_audit.deleted_at AS deleted_at_ra,
-                registration_audit.email AS email_ra,
-                registration_audit.ethnicity AS ethnicity_ra,
-                registration_audit.event_id AS event_id_ra,
-                registration_audit.first_name AS first_name_ra,
-                registration_audit.gender AS gender_ra,
-                registration_audit.id AS id_ra,
-                registration_audit.invoice_product_id AS invoice_product_id_ra,
-                registration_audit.last_name AS last_name_ra,
-                registration_audit.member_number AS member_number_ra,
-                registration_audit.membership_period_id AS membership_period_id_ra,
-                registration_audit.middle_name AS middle_name_ra,
-                registration_audit.phone_number AS phone_number_ra,
-                registration_audit.processed_at AS processed_at_ra,
-                registration_audit.profile_id AS profile_id_ra,
-                registration_audit.registration_company_id AS registration_company_id_ra,
-                registration_audit.remote_audit_code AS remote_audit_code_ra,
-                registration_audit.remote_id AS remote_id_ra,
-                registration_audit.state AS state_ra,
-                registration_audit.status AS status_ra,
-                registration_audit.updated_at AS updated_at_ra,
-                registration_audit.user_id AS user_id_ra,
-                registration_audit.zip AS zip_ra,
+                -- registration_audit.address AS address_ra,
+                -- registration_audit.billing_address AS billing_address_ra,
+                -- registration_audit.billing_city AS billing_city_ra,
+                -- registration_audit.billing_country AS billing_country_ra,
+                -- registration_audit.billing_email AS billing_email_ra,
+                -- registration_audit.billing_first_name AS billing_first_name_ra,
+                -- registration_audit.billing_last_name AS billing_last_name_ra,
+                -- registration_audit.billing_middle_name AS billing_middle_name_ra,
+                -- registration_audit.billing_phone AS billing_phone_ra,
+                -- registration_audit.billing_state AS billing_state_ra,
+                -- registration_audit.billing_zip AS billing_zip_ra,
+                -- registration_audit.city AS city_ra,
+                -- registration_audit.confirmation_number AS confirmation_number_ra,
+                -- registration_audit.country AS country_ra,
+                -- registration_audit.created_at AS created_at_ra,
+                -- registration_audit.date_of_birth AS date_of_birth_ra,
+                -- registration_audit.deleted_at AS deleted_at_ra,
+                -- registration_audit.email AS email_ra,
+                -- registration_audit.ethnicity AS ethnicity_ra,
+                -- registration_audit.event_id AS event_id_ra,
+                -- registration_audit.first_name AS first_name_ra,
+                -- registration_audit.gender AS gender_ra,
+                -- registration_audit.id AS id_ra,
+                -- registration_audit.invoice_product_id AS invoice_product_id_ra,
+                -- registration_audit.last_name AS last_name_ra,
+                -- registration_audit.member_number AS member_number_ra,
+                -- registration_audit.membership_period_id AS membership_period_id_ra,
+                -- registration_audit.middle_name AS middle_name_ra,
+                -- registration_audit.phone_number AS phone_number_ra,
+                -- registration_audit.processed_at AS processed_at_ra,
+                -- registration_audit.profile_id AS profile_id_ra,
+                -- registration_audit.registration_company_id AS registration_company_id_ra,
+                -- registration_audit.remote_audit_code AS remote_audit_code_ra,
+                -- registration_audit.remote_id AS remote_id_ra,
+                -- registration_audit.state AS state_ra,
+                -- registration_audit.status AS status_ra,
+                -- registration_audit.updated_at AS updated_at_ra,
+                -- registration_audit.user_id AS user_id_ra,
+                -- registration_audit.zip AS zip_ra,
 
             -- TRANSACTIONS TABLE
-                transactions.amount AS amount_tr,
-                transactions.captured AS captured_tr,
-                transactions.created_at AS created_at_tr,
-                transactions.date AS date_tr,
-                transactions.deleted_at AS deleted_at_tr,
-                transactions.exported_at AS exported_at_tr,
-                transactions.id AS id_tr,
-                transactions.order_id AS order_id_tr,
-                transactions.payment_id AS payment_id_tr,
-                transactions.payment_method AS payment_method_tr,
-                transactions.processed AS processed_tr,
-                transactions.refunded_amount AS refunded_amount_tr,
-                transactions.tax_transaction_code AS tax_transaction_code_tr,
-                transactions.tax AS tax_tr,
-                transactions.updated_at AS updated_at_tr,
-                transactions.user_id AS user_id_tr,
-                SUBSTRING(events.description, 1, 1024) AS description_tr,
-                SUBSTRING(transactions.note, 1, 1024) AS note_tr,
-                SUBSTRING(transactions.tax_transaction, 1, 1024) AS tax_transaction_tr,
+                -- transactions.amount AS amount_tr,
+                -- transactions.captured AS captured_tr,
+                -- transactions.created_at AS created_at_tr,
+                -- transactions.date AS date_tr,
+                -- transactions.deleted_at AS deleted_at_tr,
+                -- transactions.exported_at AS exported_at_tr,
+                -- transactions.id AS id_tr,
+                -- transactions.order_id AS order_id_tr,
+                -- transactions.payment_id AS payment_id_tr,
+                -- transactions.payment_method AS payment_method_tr,
+                -- transactions.processed AS processed_tr,
+                -- transactions.refunded_amount AS refunded_amount_tr,
+                -- transactions.tax_transaction_code AS tax_transaction_code_tr,
+                -- transactions.tax AS tax_tr,
+                -- transactions.updated_at AS updated_at_tr,
+                -- transactions.user_id AS user_id_tr,
+                -- SUBSTRING(events.description, 1, 1024) AS description_tr,
+                -- SUBSTRING(transactions.note, 1, 1024) AS note_tr,
+                -- SUBSTRING(transactions.tax_transaction, 1, 1024) AS tax_transaction_tr,
 
             -- USERS TABLE
-                users.active AS active_users,
-                users.api_token AS api_token_users,
-                users.claimed AS claimed_users,
-                users.created_at AS created_at_users,
-                users.deleted_at AS deleted_at_users,
-                users.email_verified_at AS email_verified_at_users,
-                users.email AS email_users,
-                users.id AS id_users,
-                users.invalid_email AS invalid_email_users,
-                users.logged_in_at AS logged_in_at_users,
-                users.merged_from_user_id AS merged_from_user_id_users,
-                users.merged_to_user_id AS merged_to_user_id_users,
-                users.name AS name_users_users,
-                users.old_email AS old_email,
-                users.opted_out_of_notifications AS opted_out_of_notifications_users,
-                users.password AS password_users,
-                users.primary AS primary_users,
-                users.remember_token AS remember_token_users,
-                users.remote_id AS remote_id_users,
-                users.updated_at AS updated_at_users,
-                users.username AS username_users,
-                users.uuid AS uuid_users,
-                SUBSTRING(users.invalid_email_value, 1, 1024) AS invalid_email_value_users,
-                SUBSTRING(users.merge_info, 1, 1024) AS merge_info_users,
-                SUBSTRING(users.personal_access_token, 1, 1024) AS personal_access_token_users
+                -- users.active AS active_users,
+                -- users.api_token AS api_token_users,
+                -- users.claimed AS claimed_users,
+                -- users.created_at AS created_at_users,
+                -- users.deleted_at AS deleted_at_users,
+                -- users.email_verified_at AS email_verified_at_users,
+                -- users.email AS email_users,
+                -- users.id AS id_users,
+                -- users.invalid_email AS invalid_email_users,
+                -- users.logged_in_at AS logged_in_at_users,
+                -- users.merged_from_user_id AS merged_from_user_id_users,
+                -- users.merged_to_user_id AS merged_to_user_id_users,
+                -- users.name AS name_users_users,
+                -- users.old_email AS old_email,
+                -- users.opted_out_of_notifications AS opted_out_of_notifications_users,
+                -- users.password AS password_users,
+                -- users.primary AS primary_users,
+                -- users.remember_token AS remember_token_users,
+                -- users.remote_id AS remote_id_users,
+                -- users.updated_at AS updated_at_users,
+                -- users.username AS username_users,
+                -- users.uuid AS uuid_users,
+                -- SUBSTRING(users.invalid_email_value, 1, 1024) AS invalid_email_value_users,
+                -- SUBSTRING(users.merge_info, 1, 1024) AS merge_info_users,
+                -- SUBSTRING(users.personal_access_token, 1, 1024) AS personal_access_token_users
 
         FROM one_day_sales_actual_member_fee AS sa -- as = actual_sales
             LEFT JOIN membership_periods AS mp ON sa.max_membership_period_id = mp.id -- DONE
@@ -1083,9 +1216,16 @@ SET @year = 2021;
         GROUP BY mp.id
     )
 
-    -- -- todo:
-    SELECT * FROM add_all_fields
+    -- SELECT * FROM add_all_fields
     -- SELECT * FROM add_all_fields LIMIT 10
+
+    -- GET PRICE RULES COUNT
+    SELECT 
+        max_membership_fee_6_rule, 
+        COUNT(*) 
+    FROM add_all_fields 
+    GROUP BY 1 WITH ROLLUP
+    ORDER BY 1 -- todo: rule additional field
 
     -- GET COUNT BY YEAR
     -- SELECT

@@ -58,7 +58,7 @@ DROP TABLE IF EXISTS step_3_member_total_life_time_purchases;
     GROUP BY member_number_members_sa;
 
     CREATE INDEX idx_member_number_members_sa ON step_3_member_total_life_time_purchases (member_number_members_sa);
-    CREATE INDEX idx_member_lifetime_purchases ON step_3_member_total_life_time_purchases (id_member_lifetime_purchases);
+    CREATE INDEX idx_member_lifetime_purchases ON step_3_member_total_life_time_purchases (member_lifetime_purchases);
 -- *********************************************
 
 -- STEP #4 = CREATE AGE NOW TABLE -- TODO: done 92
@@ -120,12 +120,13 @@ DROP TABLE IF EXISTS step_6_membership_period_stats;
     CREATE TABLE step_6_membership_period_stats AS
         SELECT
             id_membership_periods_sa,
+            actual_membership_fee_6_rule_sa,
                 
             COUNT(id_membership_periods_sa) AS sales_units,
             SUM(actual_membership_fee_6_sa) AS sales_revenue
 
         FROM all_membership_sales_data_2015_left
-        GROUP BY id_membership_periods_sa;
+        GROUP BY id_membership_periods_sa, actual_membership_fee_6_rule_sa;
 
     CREATE INDEX idx_id_membership_periods_sa ON step_6_membership_period_stats (id_membership_periods_sa);
     CREATE INDEX idx_sales_units ON step_6_membership_period_stats (sales_units);
@@ -208,7 +209,7 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             -- membership periods, types, category
             am.id_membership_periods_sa, 
             am.real_membership_types_sa, 
-            am.new_member_category_6_sa,   
+            am.new_member_category_6_sa, 
 
             -- purchase on dates
             am.purchased_on_mp,
@@ -398,7 +399,8 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
             -- key stats
             st.sales_units,
-            st.sales_revenue,    
+            st.sales_revenue,
+            st.actual_membership_fee_6_rule_sa, 
 
             -- data created at dates
             DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -6 HOUR), '%Y-%m-%d') AS created_at_mtn,

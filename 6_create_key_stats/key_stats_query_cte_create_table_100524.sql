@@ -19,8 +19,8 @@ DROP TABLE IF EXISTS step_1_member_minimum_first_created_at_dates;
         FROM all_membership_sales_data_2015_left
         GROUP BY member_number_members_sa;
         
-        CREATE INDEX idx_member_number_members_sa ON step_1_member_minimum_first_created_at_dates (member_number_members_sa);
-        CREATE INDEX idx_first_purchased_on_year_adjusted_mp ON step_1_member_minimum_first_created_at_dates (first_purchased_on_year_adjusted_mp);
+        -- CREATE INDEX idx_member_number_members_sa ON step_1_member_minimum_first_created_at_dates (member_number_members_sa);
+        -- CREATE INDEX idx_first_purchased_on_year_adjusted_mp ON step_1_member_minimum_first_created_at_dates (first_purchased_on_year_adjusted_mp);
 -- *********************************************
 
 -- STEP #2 = CREATE MIN CREATED AT DATE TABLE -- TODO: DONE 26 SECS
@@ -42,8 +42,8 @@ DROP TABLE IF EXISTS step_2_member_min_created_at_date;
 
         FROM step_1_member_minimum_first_created_at_dates;
         
-        CREATE INDEX idx_member_number_members_sa ON step_2_member_min_created_at_date (member_number_members_sa);
-        CREATE INDEX idx_min_created_at ON step_2_member_min_created_at_date (min_created_at);
+        -- CREATE INDEX idx_member_number_members_sa ON step_2_member_min_created_at_date (member_number_members_sa);
+        -- CREATE INDEX idx_min_created_at ON step_2_member_min_created_at_date (min_created_at);
 -- *********************************************
 
 -- STEP #3 = CREATE TOTAL LIFETIME PURCHASES TABLE -- TODO: DONE 61 secs
@@ -57,8 +57,8 @@ DROP TABLE IF EXISTS step_3_member_total_life_time_purchases;
     FROM all_membership_sales_data_2015_left
     GROUP BY member_number_members_sa;
 
-    CREATE INDEX idx_member_number_members_sa ON step_3_member_total_life_time_purchases (member_number_members_sa);
-    CREATE INDEX idx_member_lifetime_purchases ON step_3_member_total_life_time_purchases (member_lifetime_purchases);
+    -- CREATE INDEX idx_member_number_members_sa ON step_3_member_total_life_time_purchases (member_number_members_sa);
+    -- CREATE INDEX idx_member_lifetime_purchases ON step_3_member_total_life_time_purchases (member_lifetime_purchases);
 -- *********************************************
 
 -- STEP #4 = CREATE AGE NOW TABLE -- TODO: done 92
@@ -73,8 +73,8 @@ DROP TABLE IF EXISTS step_4_member_age_dimensions;
         FROM all_membership_sales_data_2015_left
         GROUP BY member_number_members_sa, 2;
 
-        CREATE INDEX idx_member_number_members_sa ON step_4_member_age_dimensions (member_number_members_sa);
-        CREATE INDEX idx_date_of_birth_profiles ON step_4_member_age_dimensions (date_of_birth_profiles);
+        -- CREATE INDEX idx_member_number_members_sa ON step_4_member_age_dimensions (member_number_members_sa);
+        -- CREATE INDEX idx_date_of_birth_profiles ON step_4_member_age_dimensions (date_of_birth_profiles);
 -- *********************************************
 
 -- STEP #5 = CREATE MEMBER AGE AT SALE DATE TABLE -- TODO: done 94 secs
@@ -90,9 +90,9 @@ DROP TABLE IF EXISTS step_5_member_age_at_sale_date;
         FROM all_membership_sales_data_2015_left as am
         GROUP BY 1, 2;
         
-    CREATE INDEX idx_member_number_members_sa ON step_5_member_age_at_sale_date (member_number_members_sa);
-    CREATE INDEX idx_id_membership_periods_sa ON step_5_member_age_at_sale_date (id_membership_periods_sa);
-    CREATE INDEX idx_age_as_of_sale_date ON step_5_member_age_at_sale_date (age_as_of_sale_date);
+    -- CREATE INDEX idx_member_number_members_sa ON step_5_member_age_at_sale_date (member_number_members_sa);
+    -- CREATE INDEX idx_id_membership_periods_sa ON step_5_member_age_at_sale_date (id_membership_periods_sa);
+    -- CREATE INDEX idx_age_as_of_sale_date ON step_5_member_age_at_sale_date (age_as_of_sale_date);
 -- *********************************************
 
 -- STEP #5a = CREATE AGE AT THE END OF EACH YEAR OF THE DATE OF SALE -- TODO: done 101 secs
@@ -109,9 +109,9 @@ DROP TABLE IF EXISTS step_5a_member_age_at_end_of_year_of_sale;
         FROM all_membership_sales_data_2015_left AS am
         GROUP BY 1, 2;
         
-    CREATE INDEX idx_member_number_members_sa ON step_5a_member_age_at_end_of_year_of_sale (member_number_members_sa);
-    CREATE INDEX idx_id_membership_periods_sa ON step_5a_member_age_at_end_of_year_of_sale (id_membership_periods_sa);
-    CREATE INDEX idx_age_at_end_of_year ON step_5a_member_age_at_end_of_year_of_sale (age_at_end_of_year);
+    -- CREATE INDEX idx_member_number_members_sa ON step_5a_member_age_at_end_of_year_of_sale (member_number_members_sa);
+    -- CREATE INDEX idx_id_membership_periods_sa ON step_5a_member_age_at_end_of_year_of_sale (id_membership_periods_sa);
+    -- CREATE INDEX idx_age_at_end_of_year ON step_5a_member_age_at_end_of_year_of_sale (age_at_end_of_year);
 -- *********************************************
 
 -- STEP #6 = CREATE MEMBERSHIP PERIOD STATS TABLE -- TODO: 
@@ -128,9 +128,9 @@ DROP TABLE IF EXISTS step_6_membership_period_stats;
         FROM all_membership_sales_data_2015_left
         GROUP BY id_membership_periods_sa, actual_membership_fee_6_rule_sa;
 
-    CREATE INDEX idx_id_membership_periods_sa ON step_6_membership_period_stats (id_membership_periods_sa);
-    CREATE INDEX idx_sales_units ON step_6_membership_period_stats (sales_units);
-    CREATE INDEX idx_sales_revenue ON step_6_membership_period_stats (sales_revenue);
+    -- CREATE INDEX idx_id_membership_periods_sa ON step_6_membership_period_stats (id_membership_periods_sa);
+    -- CREATE INDEX idx_sales_units ON step_6_membership_period_stats (sales_units);
+    -- CREATE INDEX idx_sales_revenue ON step_6_membership_period_stats (sales_revenue);
 -- *********************************************
 
 -- STEP #7 = MOST RECENT PRIOR PURCHASE TO DETERMINE NEW, LAPSED, RENEW -- TODO: 
@@ -180,11 +180,11 @@ DROP TABLE IF EXISTS step_7_prior_purchase;
         -- LIMIT 100
         ;
 
-    CREATE INDEX idx_member_number_members_sa ON step_7_prior_purchase (member_number_members_sa);
-    CREATE INDEX idx_most_recent_purchase_date ON step_7_prior_purchase (most_recent_purchase_date);
-    CREATE INDEX idx_most_recent_prior_purchase_date ON step_7_prior_purchase (most_recent_prior_purchase_date);
-    CREATE INDEX idx_most_recent_prior_purchase_membership_type ON step_7_prior_purchase (most_recent_prior_purchase_membership_type);
-    CREATE INDEX idx_most_recent_prior_purchase_membership_category ON step_7_prior_purchase (most_recent_prior_purchase_membership_category);
+    -- CREATE INDEX idx_member_number_members_sa ON step_7_prior_purchase (member_number_members_sa);
+    -- CREATE INDEX idx_most_recent_purchase_date ON step_7_prior_purchase (most_recent_purchase_date);
+    -- CREATE INDEX idx_most_recent_prior_purchase_date ON step_7_prior_purchase (most_recent_prior_purchase_date);
+    -- CREATE INDEX idx_most_recent_prior_purchase_membership_type ON step_7_prior_purchase (most_recent_prior_purchase_membership_type);
+    -- CREATE INDEX idx_most_recent_prior_purchase_membership_category ON step_7_prior_purchase (most_recent_prior_purchase_membership_category);
 -- *********************************************
 
 -- STEP #8 = CREATE FINAL SALES TABLE
@@ -473,6 +473,8 @@ CREATE INDEX idx_name_events ON sales_key_stats_2015 (name_events);
     CREATE INDEX idx_most_recent_purchase_date ON sales_key_stats_2015 (most_recent_purchase_date);
     CREATE INDEX idx_most_recent_prior_purchase_date ON sales_key_stats_2015 (most_recent_prior_purchase_date);
 -- ********************************************
+
+SELECT * FROM sales_key_stats_2015 LIMIT 10;
 
 -- SELECT 
 -- 	purchased_on_year_adjusted_mp

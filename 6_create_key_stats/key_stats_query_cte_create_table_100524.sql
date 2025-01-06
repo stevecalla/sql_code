@@ -1,5 +1,8 @@
 USE usat_sales_db;
 
+-- SOURCE?
+-- C:\Users\calla\development\usat\sql_code\6_create_key_stats\key_stats_query_cte_create_table_100524.sql
+
 -- STEP #1 = CREATE MINIMUM FIRST CREATED AT DATES TABLE -- TODO: DONE 90 SECS
 DROP TABLE IF EXISTS step_1_member_minimum_first_created_at_dates;
 
@@ -133,7 +136,7 @@ DROP TABLE IF EXISTS step_6_membership_period_stats;
     -- CREATE INDEX idx_sales_revenue ON step_6_membership_period_stats (sales_revenue);
 -- *********************************************
 
--- STEP #7 = MOST RECENT PRIOR PURCHASE TO DETERMINE NEW, LAPSED, RENEW -- TODO: 
+-- STEP #7 = MOST RECENT PRIOR PURCHASE TO DETERMINE NEW, LAPSED, RENEW -- TODO: done 10 min
 DROP TABLE IF EXISTS step_7_prior_purchase;
 
     CREATE TABLE step_7_prior_purchase AS
@@ -187,7 +190,7 @@ DROP TABLE IF EXISTS step_7_prior_purchase;
     -- CREATE INDEX idx_most_recent_prior_purchase_membership_category ON step_7_prior_purchase (most_recent_prior_purchase_membership_category);
 -- *********************************************
 
--- STEP #8 = CREATE FINAL SALES TABLE
+-- STEP #8 = CREATE FINAL SALES TABLE -- TODO: done in 10 min
 DROP TABLE IF EXISTS sales_key_stats_2015;
 
     CREATE TABLE sales_key_stats_2015 AS
@@ -199,10 +202,10 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             am.origin_flag_ma,        
             CASE
                 -- categorize NULL as sourced from usat direct
-                WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') AND am.origin_flag_ma IS NULL THEN 'source_usat_direct'
-                WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') AND am.origin_flag_ma IN ('SUBSCRIPTION_RENEWAL') THEN 'source_usat_direct'
+                WHEN am.purchased_on_year_adjusted_mp >= 2023 AND am.origin_flag_ma IS NULL THEN 'source_usat_direct'
+                WHEN am.purchased_on_year_adjusted_mp >= 2023 AND am.origin_flag_ma IN ('SUBSCRIPTION_RENEWAL') THEN 'source_usat_direct'
                 -- categorize 'ADMIN_BULK_UPLOADER', 'AUDIT_API', 'RTAV_CLASSIC' as sourced from race registration
-                WHEN am.purchased_on_year_adjusted_mp IN ('2023', '2024') THEN 'source_race_registration'
+                WHEN am.purchased_on_year_adjusted_mp >= 2023 THEN 'source_race_registration'
                 ELSE 'prior_to_2023'
             END AS origin_flag_category,
 
@@ -434,11 +437,9 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
         -- LIMIT 10    
         ;
-    
-    -- SELECT * FROM sales_key_stats_2015;
 -- *********************************************
 
--- Step 2: Create indexes on the new table
+-- Step #8a: Create indexes on the new table
 CREATE INDEX idx_name_events ON sales_key_stats_2015 (name_events);
     CREATE INDEX idx_name_events_starts_events ON sales_key_stats_2015 (name_events, starts_events);
 

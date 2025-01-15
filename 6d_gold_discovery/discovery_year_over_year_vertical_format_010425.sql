@@ -119,6 +119,7 @@ FROM (
     UNION ALL
     -- Revenue Per Unit Rows
     SELECT 
+        @segment,
         'Revenue Per Unit' AS metric_name,
         current_year_date,
         prior_year_date,
@@ -137,6 +138,7 @@ FROM (
     UNION ALL
     -- Grand Total Rows for Sales Revenue
     SELECT 
+        @segment,
         'Sales Revenue' AS metric_name,
         'Grand Total' AS current_year_date,
         'Grand Total' AS prior_year_date,
@@ -155,6 +157,7 @@ FROM (
     UNION ALL
     -- Grand Total Rows for Units
     SELECT 
+        @segment,
         'Units' AS metric_name,
         'Grand Total' AS current_year_date,
         'Grand Total' AS prior_year_date,
@@ -173,6 +176,7 @@ FROM (
     UNION ALL
     -- Grand Total Rows for Revenue Per Unit
     SELECT 
+        @segment,
         'Revenue Per Unit' AS metric_name,
         'Grand Total' AS current_year_date,
         'Grand Total' AS prior_year_date,

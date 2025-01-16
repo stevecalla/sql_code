@@ -37,11 +37,8 @@ comparison_data AS (
         prior_year_data.total_sales_units_prior AS prior_units,
         current_year_data.revenue_per_unit AS current_revenue_per_unit,
         prior_year_data.revenue_per_unit_prior AS prior_revenue_per_unit
-    FROM 
-        current_year_data
-    LEFT JOIN 
-        prior_year_data
-    ON current_year_data.purchased_on_date_adjusted_mp = DATE_ADD(prior_year_data.prior_year_date, INTERVAL 1 YEAR)
+    FROM current_year_data
+        LEFT JOIN prior_year_data ON current_year_data.purchased_on_date_adjusted_mp = DATE_ADD(prior_year_data.prior_year_date, INTERVAL 1 YEAR)
 )
 SELECT 
     metric_name,
@@ -172,7 +169,7 @@ FROM (
     FROM comparison_data
     UNION ALL
     -- Grand Total Rows for Revenue Per Unit
-    SELECT 
+    SELECT
         'Revenue Per Unit' AS metric_name,
         'Grand Total' AS current_year_date,
         'Grand Total' AS prior_year_date,

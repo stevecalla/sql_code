@@ -250,7 +250,7 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             QUARTER(mc.min_created_at) AS member_min_created_at_quarter,
             MONTH(mc.min_created_at) AS member_min_created_at_month,
 
-            am.purchased_on_year_adjusted_mp - YEAR(mc.min_created_at) AS member_created_at_years_out,
+            GREATEST(am.purchased_on_year_adjusted_mp - YEAR(mc.min_created_at), 0) AS member_created_at_years_out, -- TODO
             CASE
                 WHEN am.purchased_on_year_adjusted_mp = YEAR(mc.min_created_at) THEN 'created_year'
                 WHEN am.purchased_on_year_adjusted_mp > YEAR(mc.min_created_at) THEN 'after_created_year'
@@ -289,7 +289,7 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
             -- member first purchase year segmentation
             fd.first_purchased_on_year_adjusted_mp AS member_first_purchase_year,
-            am.purchased_on_year_adjusted_mp - first_purchased_on_year_adjusted_mp AS member_first_purchase_years_out,
+            GREATEST(am.purchased_on_year_adjusted_mp - first_purchased_on_year_adjusted_mp, 0) AS member_first_purchase_years_out, -- TODO
             CASE
                 WHEN am.purchased_on_year_adjusted_mp = fd.first_purchased_on_year_adjusted_mp THEN 'first_year'
                 WHEN am.purchased_on_year_adjusted_mp > fd.first_purchased_on_year_adjusted_mp THEN 'after_first_year'
@@ -354,9 +354,9 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             END AS age_as_year_end_bin, -- create bin for age at the end of year of sale
 
             -- event detais
-            id_events,
-            event_type_id_events,
-            name_events,
+            am.id_events,
+            am.event_type_id_events,
+            am.name_events,
             -- cleaned event name for comparison
             REGEXP_REPLACE(
                 LOWER(REPLACE(
@@ -364,7 +364,7 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
                         REGEXP_REPLACE(
                             REGEXP_REPLACE(
                                 REGEXP_REPLACE(
-                                    name_events, 
+                                    am.name_events, 
                                     '^\\b[0-9]{4}\\s*|\\s*\\b[0-9]{4}\\b', ''  -- Remove year at start or end
                                 ),  
                                 'The\\s+\\b[0-9]{1,2}(st|nd|rd|th)\\s*', ''  -- Remove "The" followed by series number
@@ -377,32 +377,32 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
                 )),
             '\\s+', ' ' -- Replace multiple spaces with a single space
             ) AS cleaned_name_events,
-            LOWER(name_events) AS name_events_lower, -- used to index & search efficiently
+            LOWER(am.name_events) AS name_events_lower, -- used to index & search efficiently
 
-            created_at_events,
-            created_at_month_events,
-            created_at_quarter_events,
-            created_at_year_events,
+            am.created_at_events,
+            am.created_at_month_events,
+            am.created_at_quarter_events,
+            am.created_at_year_events,
 
-            starts_events,
-            starts_month_events,
-            starts_quarter_events,
-            starts_year_events,
+            am.starts_events,
+            am.starts_month_events,
+            am.starts_quarter_events,
+            am.starts_year_events,
 
-            ends_events,
-            ends_month_events,
-            ends_quarter_events,
-            ends_year_events,
+            am.ends_events,
+            am.ends_month_events,
+            am.ends_quarter_events,
+            am.ends_year_events,
 
-            status_events,
+            am.status_events,
 
-            race_director_id_events,
-            last_season_event_id,
+            am.race_director_id_events,
+            am.last_season_event_id,
 
-            city_events,
-            state_events,
-            country_name_events,
-            country_events,
+            am.city_events,
+            am.state_events,
+            am.country_name_events,
+            am.country_events,
 
             -- key stats
             st.sales_units,
@@ -439,6 +439,8 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             LEFT JOIN step_7_prior_purchase AS pp
             ON am.id_membership_periods_sa = pp.id_membership_periods_sa
 
+        -- WHERE id_membership_periods_sa IN (421768, 1214842, 1214843, 1952878, 3272901) -- bad purchased on dates; eliminated iwth where statement below
+		WHERE CAST(am.purchased_on_date_mp AS CHAR) != '0000-00-00';
         -- LIMIT 10    
         ;
 -- *********************************************

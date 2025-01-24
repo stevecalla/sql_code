@@ -1050,6 +1050,11 @@ SET @end_date = '2024-12-31 23:59:59';
                 -- SUBSTRING(orders.internal_note, 1, 1024) AS internal_note_orders,
 
             -- PROFILES TABLE
+                , profiles.primary_address_id
+                , addresses.postal_code
+                , addresses.state_code
+                , addresses.state_name
+                , addresses.country_name
                 -- profiles.active AS active_profiles,
                 -- profiles.anonymous AS anonymous_profiles,
                 -- profiles.created_at AS created_at_profiles,
@@ -1210,6 +1215,8 @@ SET @end_date = '2024-12-31 23:59:59';
             -- RIGHT JOIN profiles ON members.memberable_id = profiles.id -- DONE = CHANGED FROM RIGHT JOIN TO LEFT
 
             LEFT JOIN users ON profiles.user_id = users.id
+            LEFT JOIN addresses ON profiles.primary_address_id = addresses.id
+
             LEFT JOIN events ON ma.event_id = events.id
             LEFT JOIN transactions ON orders.id = transactions.order_id     
 
@@ -1220,12 +1227,12 @@ SET @end_date = '2024-12-31 23:59:59';
     -- SELECT * FROM add_all_fields LIMIT 10
 
     -- GET PRICE RULES COUNT
-    SELECT 
-        max_membership_fee_6_rule, 
-        COUNT(*) 
-    FROM add_all_fields 
-    GROUP BY 1 WITH ROLLUP
-    ORDER BY 1 -- todo: rule additional field
+    -- SELECT 
+    --     max_membership_fee_6_rule, 
+    --     COUNT(*) 
+    -- FROM add_all_fields 
+    -- GROUP BY 1 WITH ROLLUP
+    -- ORDER BY 1 -- todo: rule additional field
 
     -- GET COUNT BY YEAR
     -- SELECT

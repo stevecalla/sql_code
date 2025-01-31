@@ -6,6 +6,7 @@ SELECT FORMAT(COUNT(*), 0) FROM race_results;
 SELECT MIN(created_at) FROM race_results;
 SELECT YEAR(created_at), FORMAT(COUNT(*), 0) FROM race_results GROUP BY YEAR(created_at) ORDER BY YEAR(created_at) ;
 SELECT YEAR(updated_at), FORMAT(COUNT(*), 0) FROM race_results GROUP BY YEAR(updated_at) ORDER BY YEAR(updated_at);
+
 -- find null profile id / member number id
 SELECT 
 	* 
@@ -17,6 +18,7 @@ WHERE 	YEAR(r.start_date) IN (2022)
         AND member_number IS NULL 
 -- LIMIT 
 ;
+
 SELECT 
     YEAR(r.start_date) AS race_year,
     FORMAT(COUNT(CASE WHEN rr.race_id IS NULL THEN 1 END), 0) AS count_null_race_id,

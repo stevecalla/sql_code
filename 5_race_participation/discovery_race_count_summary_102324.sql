@@ -3,6 +3,7 @@ USE vapor;
 WITH participant_race_count AS (
         SELECT 
                 rr.profile_id AS profile_id_rr
+                , rr.member_number as member_number_rr
                 , COUNT(rr.race_id) AS count_rr
 
                 -- RACE YEARS
@@ -18,14 +19,13 @@ WITH participant_race_count AS (
                 -- FINISH STATUS
         FROM 
                 race_results AS rr
-                LEFT JOIN races AS r ON rr.race_id = r.id          
-                LEFT JOIN races AS r ON rr.race_id = r.id
+                LEFT JOIN races AS r ON rr.race_id = r.id 
                 LEFT JOIN events AS e ON r.event_id = e.id
                 LEFT JOIN distance_types AS dt ON r.distance_type_id = dt.id
         -- WHERE 
                 -- YEAR(r.start_date) = 2022
                 -- ADD IN RACE STATUS... FINISH ET AL
-        GROUP BY rr.profile_id
+        GROUP BY rr.profile_id, rr.member_number
         ORDER BY CAST(rr.profile_id AS UNSIGNED)
         -- HAVING count_rr > 1
         -- LIMIT 100   
@@ -34,6 +34,7 @@ WITH participant_race_count AS (
 participant_race_count_average AS (
         SELECT 
                 profile_id_rr,
+                member_number_rr,
                 count_rr,
                 count_of_start_years,
                 start_years,
@@ -44,7 +45,7 @@ participant_race_count_average AS (
                         ELSE 0 
                 END AS avg_races_per_year  -- Calculate average races per year
         FROM participant_race_count
-        GROUP BY profile_id_rr, count_rr, count_of_start_years, start_years, start_year_least_recent, start_year_most_recent
+        GROUP BY profile_id_rr, member_number_rr, count_rr, count_of_start_years, start_years, start_year_least_recent, start_year_most_recent
         ORDER BY CAST(profile_id_rr AS UNSIGNED)
         -- LIMIT 100
 ),
@@ -76,8 +77,8 @@ summarize_by_count AS (
         ORDER BY CAST(count_rr AS UNSIGNED)
 )
 
--- SELECT * FROM participant_race_count_average; 
-SELECT * FROM summarize_by_count;
+SELECT * FROM participant_race_count_average; 
+-- SELECT * FROM summarize_by_count;
 
 -- finish_status
 -- pivot by year

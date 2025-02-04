@@ -5,8 +5,8 @@ USE vapor;
 
 SET @year = 2024;
 SET @membership_period_ends = '2008-01-01';
-SET @start_date = '2024-07-01 00:00:00';
-SET @end_date = '2024-12-31 23:59:59';
+SET @start_date = '2025-01-01 00:00:00';
+SET @end_date = '2025-02-28 23:59:59';
 
 -- SECTION: STEP #1 - CREATE SOURCE 2 todo: SET TIME PERIOD
     WITH source_2_type AS (
@@ -171,7 +171,10 @@ SET @end_date = '2024-12-31 23:59:59';
             -- Membership Fee 6
             MAX(
                 CASE
+                
                     WHEN mp.terminated_on IS NOT NULL THEN 0 -- membership period terminated on ISNULL filtered in the source_2 CTE query above 
+                    
+                    WHEN events.id IN ('32774', '32775') AND mp.membership_type_id IN (115) THEN 14 -- tri for cure rule; sale is at $0 then race director is billed the membership fee; added 2/4/25
 
                     -- elseif [Source] = "Membership System/RTAV Classic" then [MS or Classic Fee 2] // essentially does it have an Order ID
                     -- [Source] 
@@ -267,6 +270,7 @@ SET @end_date = '2024-12-31 23:59:59';
             LEFT JOIN registration_audit AS ra ON ka.id_membership_periods = ra.membership_period_id
             LEFT JOIN order_products AS op ON ma.id = op.purchasable_id
             LEFT JOIN registration_audit_membership_application AS rama ON ra.id = rama.audit_id
+            LEFT JOIN events ON ma.event_id = events.id
 
         -- WHERE 
             -- mp.terminated_on IS NULL
@@ -291,6 +295,8 @@ SET @end_date = '2024-12-31 23:59:59';
             MAX(
                 CASE
                     WHEN mp.terminated_on IS NOT NULL THEN '1_term_rule' -- membership period terminated on ISNULL filtered in the source_2 CTE query above 
+                    
+                    WHEN events.id IN ('32774', '32775') AND mp.membership_type_id IN (115) THEN '35_tri_for_cure' -- tri for cure rule; sale is at $0 then race director is billed the membership fee; added 02/04/25
 
                     -- elseif [Source] = "Membership System/RTAV Classic" then [MS or Classic Fee 2] // essentially does it have an Order ID
                     -- [Source] 
@@ -385,6 +391,7 @@ SET @end_date = '2024-12-31 23:59:59';
             LEFT JOIN registration_audit AS ra ON ka.id_membership_periods = ra.membership_period_id
             LEFT JOIN order_products AS op ON ma.id = op.purchasable_id
             LEFT JOIN registration_audit_membership_application AS rama ON ra.id = rama.audit_id
+            LEFT JOIN events ON ma.event_id = events.id
 
         -- WHERE 
             -- mp.terminated_on IS NULL
@@ -604,9 +611,14 @@ SET @end_date = '2024-12-31 23:59:59';
             -- AND members.member_number IN (2, 7, 9, 21, 24, 386, 406, 477, 521, 572, 3281)
 
             -- #2 = 78,072; where purchased = 2021
+            -- one day logic starts
             AND (CASE 
-                WHEN membership_periods.membership_type_id IN (5, 46, 47, 72, 97, 100, 115, 118) THEN 1
-                ELSE 0 END ) = 1 -- one_day only
+                    WHEN membership_periods.membership_type_id IN (5, 46, 47, 72, 97, 100, 115, 118) THEN 1
+                    ELSE 0 
+                END 
+            ) = 1 -- one_day only
+            -- one day logic ends
+
             -- is allowable
             AND 
             (CASE
@@ -814,10 +826,14 @@ SET @end_date = '2024-12-31 23:59:59';
                 -- events.event_website_url AS website_url_events,
                 -- events.facebook_url AS facebook_url_events,
                 -- events.featured_at AS featured_at_events,
-                -- events.id AS id_events,
+
+                events.id AS id_events, -- fix tri for cure
+
                 -- events.instagram_url AS instagram_url_events,
                 -- events.last_season_event_id AS last_season_event_id,
-                -- events.name AS name_events,
+
+                events.name AS name_events, -- fix tri for cure
+
                 -- events.qualification_deadline AS qualification_deadline_events,
                 -- events.qualification_url AS qualification_url_events,
                 -- events.race_director_id AS race_director_id_events,
@@ -1223,8 +1239,15 @@ SET @end_date = '2024-12-31 23:59:59';
         GROUP BY mp.id
     )
 
-    -- SELECT * FROM add_all_fields
+    SELECT * FROM add_all_fields
     -- SELECT * FROM add_all_fields LIMIT 10
+
+    -- SELECT * FROM add_all_fields WHERE id_events IN ('32774', '32775'); -- fix tri for cure bronze $0 to $14
+    -- SELECT 
+    --     * 
+    -- FROM add_all_fields 
+    -- WHERE id_membership_periods_sa  IN (4884522, 4884285, 4884311, 4884401, 4884369, 4884325, 4884990, 4884601, 4884383, 4884225, 4884230, 4885048)
+    -- ; -- fix tri for cure bronze $0 to $14
 
     -- GET PRICE RULES COUNT
     -- SELECT 

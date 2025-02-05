@@ -472,6 +472,9 @@ SET @end_date = '2025-02-28 23:59:59';
                 WHEN mp.membership_type_id IN (118) AND ma.membership_type_id = 118 THEN 'Bronze - AO'
                 WHEN mp.membership_type_id IN (115) AND ma.membership_type_id = 118 THEN 'Bronze - AO'
                 WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 6 THEN 'Bronze - $6' -- 'Actual Membership Fee 6'
+                
+                WHEN events.id IN ('32774', '32775') AND mp.membership_type_id IN (115) THEN 'Bronze - $13' -- tri for cure rule; sale is at $0 then race director is billed the membership fee; added 2/4/25
+
                 WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 13 THEN 'Bronze - $13' -- 'Actual Membership Fee 6'
                 WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 15 THEN 'One Day - $15' -- 'Actual Membership Fee 6'
                 WHEN mp.membership_type_id IN (115) AND mf.max_membership_fee_6 = 18 THEN 'Bronze - $18' -- 'Actual Membership Fee 6'
@@ -501,6 +504,7 @@ SET @end_date = '2025-02-28 23:59:59';
             LEFT JOIN actual_membership_fee_6_rule AS r ON mf.id_membership_periods = r.id_membership_periods -- todo: rule additional field
             LEFT JOIN membership_applications AS ma ON mf.id_membership_periods = ma.membership_period_id
             LEFT JOIN membership_periods AS mp ON mf.id_membership_periods = mp.id
+            LEFT JOIN events ON ma.event_id = events.id
 
         GROUP BY mf.id_membership_periods
     )
@@ -1239,10 +1243,10 @@ SET @end_date = '2025-02-28 23:59:59';
         GROUP BY mp.id
     )
 
-    SELECT * FROM add_all_fields
+    -- SELECT * FROM add_all_fields
     -- SELECT * FROM add_all_fields LIMIT 10
 
-    -- SELECT * FROM add_all_fields WHERE id_events IN ('32774', '32775'); -- fix tri for cure bronze $0 to $14
+    SELECT * FROM add_all_fields WHERE id_events IN ('32774', '32775'); -- fix tri for cure bronze $0 to $14
     -- SELECT 
     --     * 
     -- FROM add_all_fields 

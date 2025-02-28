@@ -1,3 +1,6 @@
+-- ****************************
+-- GET MEMBERSHIP SALES DATA
+-- ****************************
 SELECT 	
 	created_at_mp,
 	id_events,

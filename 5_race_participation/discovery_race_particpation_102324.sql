@@ -1,11 +1,25 @@
 USE vapor;
 
-SELECT * FROM race_results;
--- count
-SELECT FORMAT(COUNT(*), 0) FROM race_results;
-SELECT MIN(created_at) FROM race_results;
-SELECT YEAR(created_at), FORMAT(COUNT(*), 0) FROM race_results GROUP BY YEAR(created_at) ORDER BY YEAR(created_at) ;
-SELECT YEAR(updated_at), FORMAT(COUNT(*), 0) FROM race_results GROUP BY YEAR(updated_at) ORDER BY YEAR(updated_at);
+-- RACE RESULTS DISCOVERY
+SELECT * FROM race_results LIMIT 10;
+SELECT "race_results", FORMAT(COUNT(*), 0) FROM race_results; -- 5.9M records
+SELECT "race_results", MIN(created_at) FROM race_results; -- 12/20/22
+SELECT "race_results", YEAR(created_at), FORMAT(COUNT(*), 0) FROM race_results GROUP BY YEAR(created_at) ORDER BY YEAR(created_at); -- most records created in 2023 = 5.3M
+SELECT "race_results", YEAR(updated_at), FORMAT(COUNT(*), 0) FROM race_results GROUP BY YEAR(updated_at) ORDER BY YEAR(updated_at); -- most records updated in 2023 = 5.3M with 68.9K in 2025
+
+-- RACES TABLE DISCOVERY
+SELECT * FROM races LIMIT 10;
+SELECT "races", FORMAT(COUNT(*), 0) FROM races; -- 611,903
+SELECT "race",  MIN(created_at) FROM races; -- 2/23/11
+SELECT "races", YEAR(created_at), FORMAT(COUNT(*), 0) FROM races GROUP BY YEAR(created_at) ORDER BY YEAR(created_at); -- most created in 2021
+SELECT "races", YEAR(updated_at), FORMAT(COUNT(*), 0) FROM races GROUP BY YEAR(updated_at) ORDER BY YEAR(updated_at); -- all updated 2021 forward
+
+-- EVENTS TABLE DISCOVERY
+SELECT * FROM events LIMIT 10;
+SELECT "events", FORMAT(COUNT(*), 0) FROM events; -- 33,291
+SELECT "events", MIN(created_at) FROM events; -- 10/29/2011
+SELECT "events", YEAR(created_at), FORMAT(COUNT(*), 0) FROM events GROUP BY YEAR(created_at) ORDER BY YEAR(created_at); -- most created in 2018
+SELECT "events", YEAR(updated_at), FORMAT(COUNT(*), 0) FROM events GROUP BY YEAR(updated_at) ORDER BY YEAR(updated_at); -- most updated 2021 forward
 
 -- find null profile id / member number id
 SELECT 
@@ -19,6 +33,9 @@ WHERE 	YEAR(r.start_date) IN (2022)
 -- LIMIT 
 ;
 
+-- *************************************
+-- EXCEL SHEET COUNT BY RACE YEAR
+-- *************************************
 SELECT 
     YEAR(r.start_date) AS race_year,
     FORMAT(COUNT(CASE WHEN rr.race_id IS NULL THEN 1 END), 0) AS count_null_race_id,
@@ -32,6 +49,8 @@ FROM race_results AS rr
 -- WHERE YEAR(r.start_date) > 2010 
 GROUP BY YEAR(r.start_date) WITH ROLLUP
 ;
+-- *************************************
+
 -- DNF, DNS, DQ, FINISHED, UNKNOWN
 SELECT DISTINCT(finish_status), FORMAT(COUNT(*), 0) FROM race_results GROUP BY finish_status ORDER BY finish_status;
 -- agegroup, elite, open, para

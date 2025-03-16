@@ -1,35 +1,54 @@
-USE vapor; 
+USE usat_sales_db;
+
+SELECT * FROM all_participation_data_raw LIMIT 10;
+SELECT COUNT(*), SUM(count_all_participation) FROM all_participation_data_raw;
+SELECT "participation data", start_date_year_races, COUNT(*), SUM(count_all_participation) FROM all_participation_data_raw GROUP BY 2;
 
 -- *************************************
+-- QUERY #1 
+-- EXCEL SHEET COUNT BY RACE YEAR
+-- missing data with no race start date; didn't load this data
+-- *************************************
+SELECT 
+    start_date_year_races AS race_year,
+    FORMAT(COUNT(CASE WHEN id_race_rr IS NULL THEN 1 END), 0) AS count_null_race_id,
+    FORMAT(COUNT(CASE WHEN id_profile_rr IS NULL THEN 1 END), 0) AS count_null_profile_id,
+    FORMAT(COUNT(CASE WHEN id_profile_rr IS NOT NULL THEN 1 END), 0) AS count_not_null_profile_id,
+    FORMAT(COUNT(CASE WHEN member_number_rr IS NULL THEN 1 END), 0) AS count_null_member_number,
+    FORMAT(COUNT(CASE WHEN member_number_rr IS NOT NULL THEN 1 END), 0) AS count_not_null_member_number,
+    FORMAT(COUNT(*), 0) AS total_count
+FROM all_participation_data_raw
+GROUP BY start_date_year_races WITH ROLLUP
+;
+-- *************************************
+
+-- *************************************
+-- QUERY #2
 -- EXCEL SHEET COUNT BY NUMBER OF EVENTS
 -- *************************************
 WITH participant_race_count AS (
         SELECT 
-                rr.profile_id AS profile_id_rr
-                , rr.member_number as member_number_rr
-                , COUNT(rr.race_id) AS count_rr
+                id_profile_rr AS profile_id_rr
+                , member_number_rr
+                , COUNT(id_race_rr) AS count_rr
 
                 -- RACE YEARS
-                , COUNT(DISTINCT YEAR(r.start_date)) AS count_of_start_years  -- Count of distinct start years
-                , GROUP_CONCAT(DISTINCT YEAR(r.start_date) ORDER BY YEAR(r.start_date) ASC) AS start_years  -- Concatenate distinct year
-                , MIN(YEAR(r.start_date)) AS start_year_least_recent  -- Get the most recent start year
-                , MAX(YEAR(r.start_date)) AS start_year_most_recent  -- Get the most recent start year
+                , COUNT(DISTINCT YEAR(start_date_races)) AS count_of_start_years  -- Count of distinct start years
+                , GROUP_CONCAT(DISTINCT YEAR(start_date_races) ORDER BY YEAR(start_date_races) ASC) AS start_years  -- Concatenate distinct year
+                , MIN(YEAR(start_date_races)) AS start_year_least_recent  -- Get the most recent start year
+                , MAX(YEAR(start_date_races)) AS start_year_most_recent  -- Get the most recent start year
 
                 -- RACE DISTANCES
 
                 -- RACE DETAILS
 
                 -- FINISH STATUS
-        FROM 
-                race_results AS rr
-                LEFT JOIN races AS r ON rr.race_id = r.id 
-                LEFT JOIN events AS e ON r.event_id = e.id
-                LEFT JOIN distance_types AS dt ON r.distance_type_id = dt.id
+        FROM all_participation_data_raw
         -- WHERE 
-                -- YEAR(r.start_date) = 2022
+                -- YEAR(start_date_races) = 2022
                 -- ADD IN RACE STATUS... FINISH ET AL
-        GROUP BY rr.profile_id, rr.member_number
-        ORDER BY CAST(rr.profile_id AS UNSIGNED)
+        GROUP BY id_profile_rr, member_number_rr
+        ORDER BY CAST(id_profile_rr AS UNSIGNED)
         -- HAVING count_rr > 1
         -- LIMIT 100   
 ),
@@ -80,23 +99,7 @@ summarize_by_count AS (
         ORDER BY CAST(count_rr AS UNSIGNED)
 )
 
+-- QUERY #2A
 SELECT * FROM participant_race_count_average; 
+-- QUERY #2B
 -- SELECT * FROM summarize_by_count;
-
--- finish_status
--- pivot by year
--- group concat the number of race years... proxy for annual is someone with races over multiple years?
-
--- QA CHECKS
--- #1) SOME # OF RACES = 0? LEGIT = MEANS THE RACE ID WAS BLANK
--- SELECT
---         *
--- FROM participant_race_count AS mr
---         LEFT JOIN race_results AS rr ON mr.profile_id_rr = rr.profile_id
--- WHERE count_rr IN (0);
--- #2) SOME # OF RACES = 725806? LEGIT = MEANS NO PROFILE ID EXISTS
--- SELECT
---         *
--- FROM participant_race_count AS mr
---         LEFT JOIN race_results AS rr ON mr.profile_id_rr = rr.profile_id
--- WHERE count_rr IN (725806);

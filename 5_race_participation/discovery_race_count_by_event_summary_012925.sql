@@ -70,8 +70,8 @@ WITH participation_by_race AS (
         -- METRICS
         COUNT(DISTINCT rr.profile_id) AS count_profile_id_distinct, -- Excludes those without a profile ID
         COUNT(*) AS count_all_participation, -- Includes all race participants because this query includes granular data
-		COUNT(DISTINCT CASE WHEN rr.gender_code = 1 THEN e.sanctioning_event_id END) AS unique_sanctioned_male_count,
-		COUNT(DISTINCT CASE WHEN rr.gender_code = 2 THEN e.sanctioning_event_id END) AS unique_sanctioned_female_count
+		COUNT(DISTINCT CASE WHEN rr.gender_id = 1 THEN e.sanctioning_event_id END) AS unique_sanctioned_male_count,
+		COUNT(DISTINCT CASE WHEN rr.gender_id = 2 THEN e.sanctioning_event_id END) AS unique_sanctioned_female_count
 
     FROM race_results AS rr
 		LEFT JOIN races AS r ON rr.race_id = r.id 

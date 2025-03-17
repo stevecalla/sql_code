@@ -14,6 +14,7 @@
     -- load all records
     -- insert only records that have changed based on updated date?
     -- load to bq
+    
 -- SETUP TO RUN ON USAT SERVER
 -- CONNECT POWER PIVOT TO USAT SERVER DB
 -- CREATE LOOKER REPORTS

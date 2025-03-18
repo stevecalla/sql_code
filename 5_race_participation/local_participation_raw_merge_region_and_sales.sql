@@ -46,12 +46,12 @@ ALTER TABLE all_participation_data_with_regions
     ADD INDEX idx_member_number_rr (member_number_rr),
     ADD INDEX idx_gender_code_rr (gender_code),
     ADD INDEX idx_start_date_races (start_date_races),
+    ADD INDEX idx_start_date_year_races (start_date_year_races),
     ADD INDEX idx_name_distance_types (name_distance_types),
-    ADD INDEX idx_name_race_type (name_race_type)
-    ADD INDEX idx_state_code_events (state_code_events)
-    ADD INDEX idx_region_abbr (region_abbr)
+    ADD INDEX idx_name_race_type (name_race_type),
+    ADD INDEX idx_state_code_events (state_code_events),
+    ADD INDEX idx_region_abbr (region_abbr),
     ADD INDEX idx_region_name (region_name)
-;
 
 -- *************************************
 -- *************************************

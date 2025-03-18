@@ -2,13 +2,21 @@
 -- TODO
 
 -- MERGE
-    -- merge data with region data
-    -- merge participation data with member data
-        -- start with most recent purchase... 
-        -- then need the purchase for the specific event/race
+    -- DONE merge data with region data
+    -- DONE merge participation data with member data
+    
 
+
+-- of the annual members who races in 2024, what is their race history... number of times races in 2024, number of times raced lifetime, number of years racing, avg races per year
+	-- have a race in 2024
+    -- are an annual member in 2024
+    -- get life time races, get number of years raced, get avg number of life time races, get number of races in 2024
+-- of the one-day members who races in 2024, what is their race history... number of times races in 2024, number of times raced lifetime, number of years racing, avg races per year
+
+---------------------------------
 -- update created at mtn & utc as a SET variable so it's consistent for each row
 -- create count by year for each user... count prior to 2010, 2011, 2012, 2013...
+----------------------------------
 
 -- SETUP DAILY DATA PIPELINE
     -- load all records

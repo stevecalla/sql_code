@@ -1,32 +1,78 @@
 
--- TODO
+-- TODO = PARTICIPATION & MEMBERSHIP PERIOD DATA
 
--- MERGE
-    -- DONE merge data with region data
-    -- DONE merge participation data with member data
-    
+-- DOCUMENT THE QUERY
 
+-- RERUNNING DATA
+    -- race results match - new / repeat stats
+    -- mp match - create excel report summary
 
--- of the annual members who races in 2024, what is their race history... number of times races in 2024, number of times raced lifetime, number of years racing, avg races per year
-	-- have a race in 2024
-    -- are an annual member in 2024
-    -- get life time races, get number of years raced, get avg number of life time races, get number of races in 2024
--- of the one-day members who races in 2024, what is their race history... number of times races in 2024, number of times raced lifetime, number of years racing, avg races per year
+-- SETUP TIME TO REVIEW WITH TEAM
 
----------------------------------
--- update created at mtn & utc as a SET variable so it's consistent for each row
--- create count by year for each user... count prior to 2010, 2011, 2012, 2013...
-----------------------------------
+-- 2019 WITH SAM
+    -- participation data = also large number of non-matches
+    -- TBD
 
--- SETUP DAILY DATA PIPELINE
-    -- load all records
-    -- insert only records that have changed based on updated date?
-    -- load to bq
-    
--- SETUP TO RUN ON USAT SERVER
--- CONNECT POWER PIVOT TO USAT SERVER DB
--- CREATE LOOKER REPORTS
-    -- create looker reports
+-- update the query logic for memberships with overlapping to take into account memberships that don't end in a given year but raced in that year
+    -- modify logic for membership periods with overlapping race results
+        0_ current logic counts based on membership period end year
+        1_ need to consider 3-Year that have ends in future years but raced in current year
+        2_ need to consider youth annual that have ends in future years but raced in current year
+            -- has starts_mp = current year && start_date_races = current year
+
+-------------------------
+*************************
+-------------------------
+    #1-- match membership periods with overlapping race results
+        -- DONE create data set that matches membership periods with overlapping race results
+        -- DONE add the repeat / new field from the membership sales table
+        -- DONE add member state, region
+        -- DONE run all data from 2010 forward & QA
+        -- DONE membership with matching race result = filter out duplicate race results 
+            -- EXAMPLE: 1000906 has a duplicate for Dino Gravel Tri
+        -- DONE ADD FIELDS
+            -- add new vs repeat, lapsed vs otherwise
+            -- add all member geo info such as state, lat, long, country, zip
+            -- add membership sales event info such as name & ids
+        
+        -- create summary queries & put data in excel
+
+        -- automate data every night - using created at / updated at dates
+        -- add data to looker
+        -- CONNECT POWER PIVOT TO USAT SERVER DB
+        
+    #2 -- match race results with overlapping membership periods
+        -- DONE create data set that matches race results with overlapping membership periods
+        -- DONE create # of races summary
+        -- DONE create summary queries & put data in excel
+        -- DONE add the repeat / new field from the membership sales table
+        -- DONE add member state, region
+        -- DONE run all data from 2010 forward & QA
+        -- DONE double check duplicate SQL statement - is okay; id_rr should never be null
+        -- DONE ADD FIELDS
+            -- add new vs repeat, lapsed vs otherwise
+            -- add all member geo info such as state, lat, long, country, zip
+            -- add membership sales event info such as name & ids
+
+        -- automate data every night - using created at / updated at dates
+        -- add data to looker
+        -- CONNECT POWER PIVOT TO USAT SERVER DB
+
+    #3 -- OTHER
+        -- add lifetime races per member?
+        -- create participation profile
+        -- CREATE RACE RESULTS PROFILES
+            -- races - results by race id, a race profile data set
+            -- participant - results by participant results, a participant profile dataset
+
+    #4 -- DONE = CONVERSATION WITH SAM = Agenda:
+        -- CREATED LOGIC TO MATCH
+            -- race results with matching memberships
+            -- memberships with matching race results
+        -- Review slack note re: membership sales with no race result match
+        -- Review membership sales race event id vs race results event id
+        -- Logic to match membership with race results for a particular year?
+            -- Ends_mp logic
 
 **************************
 -- QUERY LIBRARY

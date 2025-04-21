@@ -51,7 +51,7 @@ ALTER TABLE all_participation_data_with_regions
     ADD INDEX idx_name_race_type (name_race_type),
     ADD INDEX idx_state_code_events (state_code_events),
     ADD INDEX idx_region_abbr (region_abbr),
-    ADD INDEX idx_region_name (region_name)
+    ADD INDEX idx_region_name (region_name);
 
 -- *************************************
 -- *************************************

@@ -3,24 +3,22 @@ USE usat_sales_db;
 -- ***********************
 -- ACTUALS
 -- ***********************
--- SELECT * FROM sales_data_year_over_year;
--- SELECT DISTINCT(new_member_category_6_sa), SUM(revenue_current) FROM sales_data_year_over_year GROUP BY 1;
+SELECT * FROM sales_data_year_over_year;
+SELECT DISTINCT(new_member_category_6_sa), SUM(revenue_current), SUM(units_current_year) FROM sales_data_year_over_year WHERE MONTH(common_purchased_on_date_adjusted) = 4 GROUP BY 1 WITH ROLLUP ORDER BY 1;
 
--- SELECT
---     MONTH(sd.common_purchased_on_date_adjusted),
---     SUM(sd.revenue_current),
---     SUM(sd.revenue_prior)
--- FROM sales_data_year_over_year AS sd
--- WHERE real_membership_types_sa = 'adult_annual'
--- GROUP BY 1
--- ORDER BY 1
--- ;
+SELECT
+    MONTH(sd.common_purchased_on_date_adjusted),
+    SUM(sd.revenue_current),
+    SUM(sd.revenue_prior)
+FROM sales_data_year_over_year AS sd
+WHERE real_membership_types_sa = 'adult_annual'
+GROUP BY 1
+ORDER BY 1
+;
 
 -- ***********************
 -- GOALS
 -- ***********************
-USE usat_sales_db;
-
 SELECT * FROM sales_goal_data;
 SELECT DISTINCT(new_member_category_6_sa) FROM sales_goal_data;
 
@@ -36,7 +34,6 @@ ORDER BY 1
 -- ***********************
 -- FINAL QUERY
 -- ***********************
-
 -- GET CURRENT DATE IN MTN (MST OR MDT) & UTC
 SET @created_at_mtn = (         
     SELECT CASE 
@@ -96,7 +93,31 @@ sales_goals AS (
 
     FROM sales_goal_data AS sg
     GROUP BY 1, 2, 3, 4, 5
-    ORDER BY 1
+    -- ORDER BY 1
+
+    UNION ALL
+
+    -- Add a row for Unknown category per month/type since unknown doesn't exist in goals but might for actual (as it does for 3/2025)
+    SELECT
+        purchased_on_month_adjusted_mp AS month_goal,
+        CASE 
+            WHEN purchased_on_month_adjusted_mp IN (1,2,3) THEN 1
+            WHEN purchased_on_month_adjusted_mp IN (4,5,6) THEN 2
+            WHEN purchased_on_month_adjusted_mp IN (7,8,9) THEN 3
+            ELSE 4
+        END AS quarter_goal,
+        "2025" AS year_goal,
+        real_membership_types_sa AS type_goal,
+        'Unknown' AS category_goal,
+        0 AS sales_rev_2025_goal,
+        0 AS sales_rev_2024_goal,
+        0 AS sales_units_2025_goal,
+        0 AS sales_units_2024_goal,
+        0 AS rev_per_unit_2025_goal,
+        0 AS rev_per_unit_2024_goal
+    FROM sales_goal_data
+    GROUP BY 1, 2, 3, 4
+    -- ORDER BY 1
 )
 -- SELECT * FROM sales_actuals
 SELECT

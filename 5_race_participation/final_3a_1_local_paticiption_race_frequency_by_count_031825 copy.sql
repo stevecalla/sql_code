@@ -69,9 +69,7 @@ WITH participation_by_race AS (
 
         -- METRICS
         COUNT(DISTINCT rr.profile_id) AS count_profile_id_distinct, -- Excludes those without a profile ID
-        COUNT(*) AS count_all_participation, -- Includes all race participants because this query includes granular data
-		COUNT(DISTINCT CASE WHEN rr.gender_id = 1 THEN e.sanctioning_event_id END) AS unique_sanctioned_male_count,
-		COUNT(DISTINCT CASE WHEN rr.gender_id = 2 THEN e.sanctioning_event_id END) AS unique_sanctioned_female_count
+        COUNT(*) AS count_all_participation -- Includes all race participants because this query includes granular data
 
     FROM race_results AS rr
 		LEFT JOIN races AS r ON rr.race_id = r.id 
@@ -80,8 +78,8 @@ WITH participation_by_race AS (
 		LEFT JOIN event_types AS et ON e.event_type_id = et.id
 		LEFT JOIN distance_types AS dt ON r.distance_type_id = dt.id
 
-	WHERE
-		YEAR(e.starts) = 2024
+	-- WHERE
+	-- 	YEAR(e.starts) = 2024
         
     GROUP BY 
         rr.race_id, r.id, e.id, e.sanctioning_event_id, e.event_type_id, et.name,

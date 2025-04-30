@@ -1,43 +1,36 @@
-USE vapor; 
+USE usat_sales_db; 
+SELECT * FROM usat_sales_db.all_participation_data_with_membership_match LIMIT 10;
 
+SELECT id_profile_rr, COUNT(id_race_rr) FROM all_participation_data_with_membership_match GROUP BY 1 LIMIT 10;
 -- *************************************
 -- EXCEL SHEET COUNT BY NUMBER OF EVENTS
 -- *************************************
 WITH participant_race_count AS (
-        SELECT 
-                rr.profile_id AS profile_id_rr
-                , rr.member_number as member_number_rr
-                , COUNT(rr.race_id) AS count_rr
+	SELECT 
+		id_profile_rr 
+        , COUNT(DISTINCT id_race_rr)
+        
+		-- RACE YEARS
+		, COUNT(DISTINCT start_date_year_races) AS count_of_start_years  										-- Count of distinct start years
+ 		, GROUP_CONCAT(DISTINCT start_date_year_races ORDER BY start_date_year_races ASC) AS start_years  -- Concatenate distinct year
+ 		, MIN(start_date_year_races) AS start_year_least_recent  												-- Get the most recent start year
+		, MAX(start_date_year_races) AS start_year_most_recent  												-- Get the most recent start year
+        
+	FROM all_participation_data_with_membership_match
+	-- WHERE 1 = 1
+		-- AND start_date_year_races = 2025
+        -- AND id_profile_rr = '35'
+	GROUP BY id_profile_rr
+	-- HAVING count_rr > 1
+	-- ORDER BY CAST(id_profile_rr AS UNSIGNED)
+	-- LIMIT 100
+)
 
-                -- RACE YEARS
-                , COUNT(DISTINCT YEAR(r.start_date)) AS count_of_start_years  -- Count of distinct start years
-                , GROUP_CONCAT(DISTINCT YEAR(r.start_date) ORDER BY YEAR(r.start_date) ASC) AS start_years  -- Concatenate distinct year
-                , MIN(YEAR(r.start_date)) AS start_year_least_recent  -- Get the most recent start year
-                , MAX(YEAR(r.start_date)) AS start_year_most_recent  -- Get the most recent start year
+SELECT * FROM participant_race_count LIMIT 10;
 
-                -- RACE DISTANCES
-
-                -- RACE DETAILS
-
-                -- FINISH STATUS
-        FROM 
-                race_results AS rr
-                LEFT JOIN races AS r ON rr.race_id = r.id 
-                LEFT JOIN events AS e ON r.event_id = e.id
-                LEFT JOIN distance_types AS dt ON r.distance_type_id = dt.id
-        -- WHERE 
-                -- YEAR(r.start_date) = 2022
-                -- ADD IN RACE STATUS... FINISH ET AL
-        GROUP BY rr.profile_id, rr.member_number
-        ORDER BY CAST(rr.profile_id AS UNSIGNED)
-        -- HAVING count_rr > 1
-        -- LIMIT 100   
-),
-
-participant_race_count_average AS (
+, participant_race_count_average AS (
         SELECT 
                 profile_id_rr,
-                member_number_rr,
                 count_rr,
                 count_of_start_years,
                 start_years,
@@ -48,12 +41,13 @@ participant_race_count_average AS (
                         ELSE 0 
                 END AS avg_races_per_year  -- Calculate average races per year
         FROM participant_race_count
-        GROUP BY profile_id_rr, member_number_rr, count_rr, count_of_start_years, start_years, start_year_least_recent, start_year_most_recent
-        ORDER BY CAST(profile_id_rr AS UNSIGNED)
+        GROUP BY profile_id_rr, count_rr, count_of_start_years, start_years, start_year_least_recent, start_year_most_recent
+        -- ORDER BY CAST(profile_id_rr AS UNSIGNED)
         -- LIMIT 100
-),
+)
+SELECT * FROM participant_race_count_average LIMIT 10;
  
-summarize_by_count AS (
+, summarize_by_count AS (
         SELECT
                 count_rr AS number_of_races
                 , COUNT(*) AS count_of_participants

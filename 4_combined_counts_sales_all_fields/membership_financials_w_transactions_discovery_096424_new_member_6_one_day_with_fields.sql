@@ -287,7 +287,7 @@ SET @end_date = '2025-02-28 23:59:59';
         GROUP BY ka.id_membership_periods
     )
 
-    , actual_membership_fee_6_rule AS ( -- todo: rule additional field
+    , actual_membership_fee_6_rule AS ( 
         SELECT 
             ka.id_membership_periods,
 
@@ -441,7 +441,7 @@ SET @end_date = '2025-02-28 23:59:59';
             mf.is_koz_acception,
             mf.real_membership_types AS real_membership_types,
             mf.max_membership_fee_6 AS max_membership_fee_6,
-            r.max_membership_fee_6_rule, -- todo: rule additional field
+            r.max_membership_fee_6_rule, 
 
             -- new_member_category_6
             CASE
@@ -501,7 +501,7 @@ SET @end_date = '2025-02-28 23:59:59';
             COUNT(*) AS count
 
         FROM actual_membership_fee_6 AS mf
-            LEFT JOIN actual_membership_fee_6_rule AS r ON mf.id_membership_periods = r.id_membership_periods -- todo: rule additional field
+            LEFT JOIN actual_membership_fee_6_rule AS r ON mf.id_membership_periods = r.id_membership_periods 
             LEFT JOIN membership_applications AS ma ON mf.id_membership_periods = ma.membership_period_id
             LEFT JOIN membership_periods AS mp ON mf.id_membership_periods = mp.id
             LEFT JOIN events ON ma.event_id = events.id
@@ -525,7 +525,7 @@ SET @end_date = '2025-02-28 23:59:59';
         SELECT 
             members.member_number AS member_number_members,
             MAX(membership_periods.id) as max_membership_period_id,
-            max_membership_fee_6_rule, -- todo: rule additional field
+            max_membership_fee_6_rule, 
             mc.real_membership_types,
             -- CASE
             --     WHEN membership_periods.membership_type_id IN (1, 2, 3, 52, 55, 60, 62, 64, 65, 66, 67, 68, 70, 71, 73, 74, 75, 85, 89, 91, 93, 96, 98, 99, 101, 103, 104, 112, 113, 114, 117, 119) THEN 'adult_annual'
@@ -574,7 +574,7 @@ SET @end_date = '2025-02-28 23:59:59';
         WHERE
             -- #1 = ~80,947 records for = 2021
             -- year(membership_periods.purchased_on) = @year
-            -- todo:
+
             -- year(membership_periods.purchased_on) >= @year
 
             membership_periods.purchased_on >= @start_date
@@ -582,7 +582,7 @@ SET @end_date = '2025-02-28 23:59:59';
 
             -- #2 = 78,027 is allowable below; where purchased = 2021
             -- #3 = 78,071; where purchased = 2021
-            -- todo:
+            
             AND 
             membership_periods.id NOT IN (4652554)
             -- #4 = 78,071; where purchased = 2021
@@ -592,7 +592,7 @@ SET @end_date = '2025-02-28 23:59:59';
             -- #6 = 78,024; where purchased = 2021
             AND membership_periods.terminated_on IS NULL
             -- #7 = 40,735; where purchased = 2021
-            -- todo:
+            
             AND membership_periods.ends >= @membership_period_ends
 
             -- use case start period date before purchase period date
@@ -762,7 +762,7 @@ SET @end_date = '2025-02-28 23:59:59';
                 WHEN membership_periods.membership_type_id IN (83, 84, 86, 87, 88, 90, 102) THEN 'elite'
                 ELSE "other"
             END
-        -- LIMIT 1000 -- todo: max_membership_fee_6_rule
+        -- LIMIT 1000 -- max_membership_fee_6_rule
     )
 
 -- GET ALL DETAILED RECORDS = 46K for 2021
@@ -808,8 +808,8 @@ SET @end_date = '2025-02-28 23:59:59';
                 sa.real_membership_types AS real_membership_types_sa,
                 sa.new_member_category_6 AS new_member_category_6_sa,
                 sa.max_membership_fee_6 AS actual_membership_fee_6_sa,
-                sa.max_membership_fee_6_rule, -- todo: rule additional field
-                sa.max_membership_fee_6_rule AS actual_membership_fee_6_rule_sa, -- todo: rule 
+                sa.max_membership_fee_6_rule,
+                sa.max_membership_fee_6_rule AS actual_membership_fee_6_rule_sa,
                 sa.source_2 AS source_2_sa,
                 sa.is_koz_acception AS is_koz_acception_sa,
 
@@ -832,6 +832,7 @@ SET @end_date = '2025-02-28 23:59:59';
                 -- events.featured_at AS featured_at_events,
 
                 events.id AS id_events, -- fix tri for cure
+                -- events.sanctioning_event_id AS id_sanctioning_event, -- todo
 
                 -- events.instagram_url AS instagram_url_events,
                 -- events.last_season_event_id AS last_season_event_id,
@@ -890,7 +891,6 @@ SET @end_date = '2025-02-28 23:59:59';
                 mp.purchased_on AS purchased_on_mp,
                 YEAR(mp.purchased_on) AS purchased_on_year_mp,
                 
-                -- todo:
                 CASE   
                     WHEN mp.starts < DATE_FORMAT(mp.purchased_on, '%Y-%m-%d') THEN mp.starts
                     ELSE mp.purchased_on
@@ -1259,7 +1259,7 @@ SET @end_date = '2025-02-28 23:59:59';
     --     COUNT(*) 
     -- FROM add_all_fields 
     -- GROUP BY 1 WITH ROLLUP
-    -- ORDER BY 1 -- todo: rule additional field
+    -- ORDER BY 1 
 
     -- GET COUNT BY YEAR
     -- SELECT

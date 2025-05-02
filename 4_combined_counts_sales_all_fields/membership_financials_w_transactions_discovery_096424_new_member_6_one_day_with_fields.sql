@@ -6,7 +6,7 @@ USE vapor;
 SET @year = 2024;
 SET @membership_period_ends = '2008-01-01';
 SET @start_date = '2025-01-01 00:00:00';
-SET @end_date = '2025-02-28 23:59:59';
+SET @end_date = '2025-01-31 23:59:59';
 
 -- SECTION: STEP #1 - CREATE SOURCE 2 todo: SET TIME PERIOD
     WITH source_2_type AS (
@@ -832,7 +832,7 @@ SET @end_date = '2025-02-28 23:59:59';
                 -- events.featured_at AS featured_at_events,
 
                 events.id AS id_events, -- fix tri for cure
-                -- events.sanctioning_event_id AS id_sanctioning_event, -- todo
+                events.sanctioning_event_id AS id_sanctioning_event, -- todo:
 
                 -- events.instagram_url AS instagram_url_events,
                 -- events.last_season_event_id AS last_season_event_id,
@@ -989,9 +989,9 @@ SET @end_date = '2025-02-28 23:59:59';
                 -- op.created_at AS created_at_orders_products,
                 -- op.deleted_at AS deleted_at_orders_products, 
                 -- op.discount AS discount_orders_products,
-                -- op.id AS id_order_products_orders_products,
+                -- op.id AS id_order_products,
                 -- op.option_amount_per AS option_amount_per_orders_products,
-                -- op.order_id AS order_id_orders_products,
+                , op.order_id AS order_id_orders_products
                 -- op.original_tax AS original_tax_orders_products,
                 -- op.original_total AS original_total_orders_products,
                 -- op.processed_at AS processed_at_orders_products,
@@ -1148,7 +1148,7 @@ SET @end_date = '2025-02-28 23:59:59';
                 -- registration_audit.event_id AS event_id_ra,
                 -- registration_audit.first_name AS first_name_ra,
                 -- registration_audit.gender AS gender_ra,
-                -- registration_audit.id AS id_ra,
+                , registration_audit.id AS id_registration_audit
                 -- registration_audit.invoice_product_id AS invoice_product_id_ra,
                 -- registration_audit.last_name AS last_name_ra,
                 -- registration_audit.member_number AS member_number_ra,
@@ -1165,6 +1165,9 @@ SET @end_date = '2025-02-28 23:59:59';
                 -- registration_audit.updated_at AS updated_at_ra,
                 -- registration_audit.user_id AS user_id_ra,
                 -- registration_audit.zip AS zip_ra,
+
+            -- REGISTRATION COMPANY TABLE
+                , registration_companies.name AS name_registration_companies
 
             -- TRANSACTIONS TABLE
                 -- transactions.amount AS amount_tr,
@@ -1215,12 +1218,16 @@ SET @end_date = '2025-02-28 23:59:59';
                 -- SUBSTRING(users.personal_access_token, 1, 1024) AS personal_access_token_users
 
         FROM one_day_sales_actual_member_fee AS sa -- as = actual_sales
+
             LEFT JOIN membership_periods AS mp ON sa.max_membership_period_id = mp.id -- DONE
-            LEFT JOIN membership_applications AS ma ON sa.max_membership_period_id = ma.membership_period_id -- DONE   
+            LEFT JOIN membership_applications AS ma ON sa.max_membership_period_id = ma.membership_period_id -- DONE 
+
             LEFT JOIN order_products AS op ON ma.id = op.purchasable_id -- DONE
             LEFT JOIN orders ON op.order_id = orders.id -- DONE
+
             LEFT JOIN registration_audit ON sa.max_membership_period_id = registration_audit.membership_period_id
             LEFT JOIN registration_audit_membership_application ON registration_audit.id = registration_audit_membership_application.audit_id
+            LEFT JOIN registration_companies ON registration_audit.registration_company_id = registration_companies.id
             
             -- RIGHT JOIN membership_periods ON (membership_applications.membership_period_id = membership_periods.id) -- DONE LINE 879
 
@@ -1238,15 +1245,17 @@ SET @end_date = '2025-02-28 23:59:59';
             LEFT JOIN addresses ON profiles.primary_address_id = addresses.id
 
             LEFT JOIN events ON ma.event_id = events.id
-            LEFT JOIN transactions ON orders.id = transactions.order_id     
+            LEFT JOIN transactions ON orders.id = transactions.order_id  
+
+        -- WHERE sa.max_membership_period_id = '4849363'
 
         GROUP BY mp.id
     )
 
-    -- SELECT * FROM add_all_fields
+    SELECT * FROM add_all_fields
     -- SELECT * FROM add_all_fields LIMIT 10
 
-    SELECT * FROM add_all_fields WHERE id_events IN ('32774', '32775'); -- fix tri for cure bronze $0 to $14
+    -- SELECT * FROM add_all_fields WHERE id_events IN ('32774', '32775'); -- fix tri for cure bronze $0 to $14
     -- SELECT 
     --     * 
     -- FROM add_all_fields 

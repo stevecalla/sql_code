@@ -11,15 +11,20 @@ SELECT
     GROUP_CONCAT(DISTINCT(new_member_category_6_sa)) AS new_member_category_6_sa,
     GROUP_CONCAT(DISTINCT(date_of_birth_profiles)) AS date_of_birth_profiles,
     GROUP_CONCAT(DISTINCT(age_now)) AS age_now,
+    GROUP_CONCAT(DISTINCT(region_name_member)) AS region_name_member,	
     GROUP_CONCAT(DISTINCT(member_postal_code_addresses)) AS member_postal_code_addresses,
     GROUP_CONCAT(DISTINCT(LEFT(member_postal_code_addresses, 5))) AS member_postal_code_addresses_adjusted,
-    GROUP_CONCAT(DISTINCT(member_state_code_addresses))
+    GROUP_CONCAT(DISTINCT(member_state_code_addresses)) AS member_state_code_addresses
 FROM sales_key_stats_2015
 WHERE 1 = 1
-	AND member_state_code_addresses IN ('TX')
+	-- AND member_state_code_addresses IN ('TX')
+    -- AND CAST(LEFT(member_postal_code_addresses, 5) AS UNSIGNED) BETWEEN 75001 AND 79999 -- TX zip code range
+    
     AND ends_year_mp >= 2020
     -- AND ends_year_mp <= 2026
-    AND CAST(LEFT(member_postal_code_addresses, 5) AS UNSIGNED) BETWEEN 75001 AND 79999
+    AND LEFT(member_postal_code_addresses, 5) REGEXP '^[0-9]{5}'
+	AND CAST(LEFT(member_postal_code_addresses, 5) AS UNSIGNED) BETWEEN 501 AND 99950 -- USA zip code range
+
 GROUP BY id_profiles, member_number_members_sa, member_state_code_addresses
 -- LIMIT 10
 ;

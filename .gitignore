@@ -8,6 +8,7 @@ test.txt
 __pycache__/
 *.pyc
 .vscode/
+*.geojson
 
 # Ignore Python virtual environments
 venv/

@@ -9,6 +9,7 @@ __pycache__/
 *.pyc
 .vscode/
 *.geojson
+*.mbtiles
 
 # Ignore Python virtual environments
 venv/

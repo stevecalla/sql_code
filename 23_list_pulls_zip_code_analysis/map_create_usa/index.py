@@ -105,6 +105,67 @@ def main():
         gdf[required_cols].to_file(OUTPUT_GEOJSON, driver="GeoJSON")
         print("✅ GeoJSON saved.")
 
+    def save_geojson_in_chunks(df, chunk_size=50000):
+        print("📦 Preparing GeoJSON data in chunks...")
+
+        output_dir = os.path.dirname(OUTPUT_GEOJSON)
+        os.makedirs(output_dir, exist_ok=True)
+        temp_files = []
+
+        color_cols = ['color_by_state', 'color_by_region'] + [f'color_by_{col}' for col in end_cols]
+        required_cols = ['id_profiles', 'membership_periods', 'state_flag', 'region'] + end_cols + color_cols + ['geometry']
+
+        for i in range(0, len(df), chunk_size):
+            chunk = df.iloc[i:i + chunk_size].copy()
+            print(f"Processing rows {i} to {i + len(chunk)}")
+
+            geometry = [Point(xy) for xy in zip(chunk['lng'], chunk['lat'])]
+            gdf = gpd.GeoDataFrame(chunk, geometry=geometry, crs="EPSG:4326")
+
+            missing = [col for col in required_cols if col not in gdf.columns]
+            if missing:
+                raise ValueError(f"Missing columns in chunk {i // chunk_size + 1}: {missing}")
+
+            temp_path = os.path.join(output_dir, f"temp_chunk_{i//chunk_size + 1}.geojson")
+            gdf[required_cols].to_file(temp_path, driver="GeoJSON")
+            temp_files.append(temp_path)
+
+        # Optional: Merge all GeoJSON chunks into a single one
+        print("🧩 Merging chunks...")
+        merged = gpd.GeoDataFrame(pd.concat([
+            gpd.read_file(temp_file) for temp_file in temp_files
+        ], ignore_index=True), crs="EPSG:4326")
+
+        merged.to_file(OUTPUT_GEOJSON, driver="GeoJSON")
+        print(f"✅ Final GeoJSON saved: {OUTPUT_GEOJSON}")
+
+        # Optional cleanup
+        for temp_file in temp_files:
+            os.remove(temp_file)
+
+    import subprocess
+
+    def generate_vector_tiles_from_geojson(geojson_path, mbtiles_output_path):
+        """
+        Converts a GeoJSON file to vector tiles (MBTiles) using tippecanoe.
+        """
+        print("🗂️ Converting GeoJSON to MBTiles with Tippecanoe...")
+
+        try:
+            subprocess.run([
+                "tippecanoe",
+                "-o", mbtiles_output_path,
+                "-zg",  # Auto zoom
+                "--drop-densest-as-needed",
+                "--extend-zooms-if-still-dropping",
+                "--read-parallel",
+                geojson_path
+            ], check=True)
+            print(f"✅ MBTiles saved at: {mbtiles_output_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Tippecanoe failed: {e}")
+
+
     # --- Interactive Map ---
     def plot_map_geojson(df):
         print("🗺️ Building interactive map...")
@@ -168,8 +229,13 @@ def main():
         print("✅ Map saved.")
 
     # --- Run processing functions ---
-    plot_map_geojson(geo_customers)
-    save_geojson(geo_customers)
+    # plot_map_geojson(geo_customers)
+    # save_geojson(geo_customers)
+
+    # CSV FILE AT 700k ROWS WAS TOO LARGE USED THE CHUNKS FUNCTION BELOW
+    # save_geojson_in_chunks(geo_customers)
+    mbtiles_path = os.path.join(OUTPUT_GEOJSON, "customer_map_with_colors.mbtiles")
+    generate_vector_tiles_from_geojson(OUTPUT_GEOJSON, mbtiles_path)
 
     # --- Timer End ---
     print(f"\n✅ Finished in {time.perf_counter() - start_time:.2f} seconds")

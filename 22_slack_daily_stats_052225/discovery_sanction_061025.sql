@@ -15,6 +15,7 @@ SELECT
     TRIM(BOTH '"' FROM name_events) AS name_events,
     status_events,
     CASE WHEN name_event_type LIKE "%missing%" THEN "missing" ELSE name_event_type END name_event_type,
+    id_races,
     name_distance_types,
     name_race_type,
             DATE_FORMAT(starts_events, '%Y-%m-%d') AS starts_events,

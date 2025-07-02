@@ -3,12 +3,12 @@ USE vapor;
 -- ONE DAY WITH ALL FIELDS = actual_membership_fee_6 CALCULATION
 -- { fixed [Id (Membership Periods)] : max([Membership Fee 6])}
 
-SET @year = 2024;
+SET @year = 2025;
 SET @membership_period_ends = '2008-01-01';
 SET @start_date = '2025-01-01 00:00:00';
 SET @end_date = '2025-01-31 23:59:59';
 
--- SECTION: STEP #1 - CREATE SOURCE 2 todo: SET TIME PERIOD
+-- SECTION: STEP #1 - CREATE SOURCE 2 TODO: SET TIME PERIOD
     WITH source_2_type AS (
         SELECT 
             membership_periods.id AS id_membership_periods,
@@ -73,11 +73,11 @@ SET @end_date = '2025-01-31 23:59:59';
             membership_periods.membership_type_id NOT IN (56, 58, 81, 105)
             AND membership_periods.id NOT IN (4652554)
 
-            -- AND YEAR(membership_periods.purchased_on) >= @year
+            AND YEAR(membership_periods.purchased_on) >= @year
             -- AND YEAR(membership_periods.purchased_on) IN (@year)
 
-            AND membership_periods.purchased_on >= @start_date
-            AND membership_periods.purchased_on <= @end_date
+            -- AND membership_periods.purchased_on >= @start_date -- TODO:
+            -- AND membership_periods.purchased_on <= @end_date -- TODO:
 
             AND membership_periods.ends >= @membership_period_ends
             AND membership_periods.membership_type_id > 0
@@ -575,10 +575,10 @@ SET @end_date = '2025-01-31 23:59:59';
             -- #1 = ~80,947 records for = 2021
             -- year(membership_periods.purchased_on) = @year
 
-            -- year(membership_periods.purchased_on) >= @year
+            year(membership_periods.purchased_on) >= @year
 
-            membership_periods.purchased_on >= @start_date
-            AND membership_periods.purchased_on <= @end_date
+            -- membership_periods.purchased_on >= @start_date -- TODO:
+            -- AND membership_periods.purchased_on <= @end_date -- TODO:
 
             -- #2 = 78,027 is allowable below; where purchased = 2021
             -- #3 = 78,071; where purchased = 2021
@@ -832,7 +832,13 @@ SET @end_date = '2025-01-31 23:59:59';
                 -- events.featured_at AS featured_at_events,
 
                 events.id AS id_events, -- fix tri for cure
-                events.sanctioning_event_id AS id_sanctioning_event, -- todo:
+                events.sanctioning_event_id AS id_sanctioning_event,
+
+                CASE 
+                    WHEN r.designation IS NOT NULL AND r.designation != '' 
+                        THEN CONCAT(events.sanctioning_event_id, '-', r.designation)
+                    ELSE events.sanctioning_event_id
+                END AS id_sanctioning_events_and_type, -- TODO:
 
                 -- events.instagram_url AS instagram_url_events,
                 -- events.last_season_event_id AS last_season_event_id,
@@ -862,6 +868,18 @@ SET @end_date = '2025-01-31 23:59:59';
                 -- -- SUBSTRING(events.registration_information, 1, 1024) AS registration_information_events,
                 -- SUBSTRING(events.registration_url, 1, 1024) AS registration_url_events,
 
+           -- EVENT TYPE TABLE
+            et.id AS id_event_types, -- TODO:
+            events.event_type_id AS id_event_type_events, -- TODO:
+            CASE
+                WHEN r.designation IS NOT NULL THEN r.designation
+                WHEN r.designation IS NULL AND events.event_type_id = 1 THEN 'Adult Race'
+                WHEN r.designation IS NULL AND events.event_type_id = 2 THEN 'Adult Clinic'
+                WHEN r.designation IS NULL AND events.event_type_id = 3 THEN 'Youth Race'
+                WHEN r.designation IS NULL AND events.event_type_id = 4 THEN 'Youth Clinic'
+                ELSE "missing_event_type_race_designation"
+            END AS name_event_type, -- TODO:
+            
             -- MEMBERS TABLE
                 -- members.active AS active_members,
                 -- members.created_at AS created_at_members,
@@ -1111,6 +1129,9 @@ SET @end_date = '2025-01-31 23:59:59';
                 -- profiles.uuid AS uuid_profiles,
                 -- SUBSTRING(profiles.merge_info, 1, 1024) AS merge_info_profiles,
 
+            -- RACE TABLE / EVENT TYPE TABLE
+            , r.designation as designation_races -- TODO:
+
             -- REGISTRATION AUDIT MEMBERSHIP APPLICATION TABLE
                 -- registration_audit_membership_application.audit_id AS audit_id_rama,
                 -- registration_audit_membership_application.created_at AS created_at_rama,
@@ -1245,6 +1266,10 @@ SET @end_date = '2025-01-31 23:59:59';
             LEFT JOIN addresses ON profiles.primary_address_id = addresses.id
 
             LEFT JOIN events ON ma.event_id = events.id
+            LEFT JOIN races AS r ON events.id = r.event_id -- TODO:
+                AND r.deleted_at IS NULL
+            LEFT JOIN event_types AS et ON events.event_type_id = et.id -- TODO:
+
             LEFT JOIN transactions ON orders.id = transactions.order_id  
 
         -- WHERE sa.max_membership_period_id = '4849363'
@@ -1253,6 +1278,11 @@ SET @end_date = '2025-01-31 23:59:59';
     )
 
     SELECT * FROM add_all_fields
+    
+    -- TODO: ADD ADJUSTED SANCTIONING ID WITH RACE DESIGNATION FIELDS
+    WHERE 1 = 1
+        AND id_sanctioning_event IN (308417, 350398)
+
     -- SELECT * FROM add_all_fields LIMIT 10
 
     -- SELECT * FROM add_all_fields WHERE id_events IN ('32774', '32775'); -- fix tri for cure bronze $0 to $14

@@ -73,11 +73,11 @@ SET @end_date = '2025-01-31 23:59:59';
             membership_periods.membership_type_id NOT IN (56, 58, 81, 105)
             AND membership_periods.id NOT IN (4652554)
 
-            AND YEAR(membership_periods.purchased_on) >= @year
+            -- AND YEAR(membership_periods.purchased_on) >= @year
             -- AND YEAR(membership_periods.purchased_on) IN (@year)
 
-            -- AND membership_periods.purchased_on >= @start_date -- TODO:
-            -- AND membership_periods.purchased_on <= @end_date -- TODO:
+            AND membership_periods.purchased_on >= @start_date -- TODO:
+            AND membership_periods.purchased_on <= @end_date -- TODO:
 
             AND membership_periods.ends >= @membership_period_ends
             AND membership_periods.membership_type_id > 0
@@ -575,10 +575,10 @@ SET @end_date = '2025-01-31 23:59:59';
             -- #1 = ~80,947 records for = 2021
             -- year(membership_periods.purchased_on) = @year
 
-            year(membership_periods.purchased_on) >= @year
+            -- year(membership_periods.purchased_on) >= @year
 
-            -- membership_periods.purchased_on >= @start_date -- TODO:
-            -- AND membership_periods.purchased_on <= @end_date -- TODO:
+            membership_periods.purchased_on >= @start_date -- TODO:
+            AND membership_periods.purchased_on <= @end_date -- TODO:
 
             -- #2 = 78,027 is allowable below; where purchased = 2021
             -- #3 = 78,071; where purchased = 2021
@@ -1280,8 +1280,8 @@ SET @end_date = '2025-01-31 23:59:59';
     SELECT * FROM add_all_fields
     
     -- TODO: ADD ADJUSTED SANCTIONING ID WITH RACE DESIGNATION FIELDS
-    WHERE 1 = 1
-        AND id_sanctioning_event IN (308417, 350398)
+    -- WHERE 1 = 1
+    --     AND id_sanctioning_event IN (308417, 350398)
 
     -- SELECT * FROM add_all_fields LIMIT 10
 

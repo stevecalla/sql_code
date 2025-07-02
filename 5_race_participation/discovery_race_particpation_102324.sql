@@ -1,9 +1,20 @@
 USE vapor;
 
+SELECT @@session.time_zone;
+SELECT NOW() AS `local_time`, UTC_TIMESTAMP() AS `utc_time`;
+
 -- RACE RESULTS DISCOVERY
 SELECT * FROM race_results LIMIT 10;
 SELECT "race_results", FORMAT(COUNT(*), 0) FROM race_results; -- 5.9M records
 SELECT "race_results", MIN(created_at) FROM race_results; -- 12/20/22
+SELECT "race_results", MAX(created_at) FROM race_results; -- 2025-03-14 08:46:57
+SELECT "race_results", MAX(updated_at) FROM race_results; -- 2025-03-14 11:46:44
+SELECT * FROM race_results p WHERE p.profile_id = 42;
+SELECT 
+  (SELECT MAX(updated_at) FROM race_results) AS max_date,
+  COUNT(*) AS record_count
+FROM race_results
+WHERE updated_at = (SELECT MAX(updated_at) FROM race_results);
 SELECT "race_results", YEAR(created_at), FORMAT(COUNT(*), 0) FROM race_results GROUP BY YEAR(created_at) ORDER BY YEAR(created_at); -- most records created in 2023 = 5.3M
 SELECT "race_results", YEAR(updated_at), FORMAT(COUNT(*), 0) FROM race_results GROUP BY YEAR(updated_at) ORDER BY YEAR(updated_at); -- most records updated in 2023 = 5.3M with 68.9K in 2025
 
@@ -38,16 +49,21 @@ WHERE 	YEAR(r.start_date) IN (2022)
 -- *************************************
 SELECT 
     YEAR(r.start_date) AS race_year,
+    et.name AS name_event_type,
     FORMAT(COUNT(CASE WHEN rr.race_id IS NULL THEN 1 END), 0) AS count_null_race_id,
     FORMAT(COUNT(CASE WHEN rr.profile_id IS NULL THEN 1 END), 0) AS count_null_profile_id,
     FORMAT(COUNT(CASE WHEN rr.profile_id IS NOT NULL THEN 1 END), 0) AS count_not_null_profile_id,
-    FORMAT(COUNT(CASE WHEN rr. member_number IS NULL THEN 1 END), 0) AS count_null_member_number,
-    FORMAT(COUNT(CASE WHEN rr. member_number IS NOT NULL THEN 1 END), 0) AS count_not_null_member_number,
+    FORMAT(COUNT(CASE WHEN rr.member_number IS NULL THEN 1 END), 0) AS count_null_member_number,
+    FORMAT(COUNT(CASE WHEN rr.member_number IS NOT NULL THEN 1 END), 0) AS count_not_null_member_number,
     FORMAT(COUNT(*), 0) AS total_count
 FROM race_results AS rr
-        LEFT JOIN races AS r ON rr.race_id = r.id  
+	LEFT JOIN races AS r ON rr.race_id = r.id 
+	LEFT JOIN events AS e ON r.event_id = e.id
+	LEFT JOIN event_types AS et ON e.event_type_id = et.id
+	LEFT JOIN distance_types AS dt ON r.distance_type_id = dt.id
 -- WHERE YEAR(r.start_date) > 2010 
-GROUP BY YEAR(r.start_date) WITH ROLLUP
+WHERE et.name = 'Adult Event' -- name_event_type
+GROUP BY YEAR(r.start_date), et.name
 ;
 -- *************************************
 

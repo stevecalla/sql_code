@@ -839,6 +839,14 @@ SET @end_date = '2025-01-31 23:59:59';
                         THEN CONCAT(events.sanctioning_event_id, '-', r.designation)
                     ELSE events.sanctioning_event_id
                 END AS id_sanctioning_events_and_type, -- TODO:
+                CASE 
+                    WHEN r.designation IS NOT NULL AND r.designation != '' THEN CONCAT(events.sanctioning_event_id, '-', r.designation)
+                    WHEN events.event_type_id = 1 THEN CONCAT(events.sanctioning_event_id, '-', 'Adult Race')
+                    WHEN events.event_type_id = 2 THEN CONCAT(events.sanctioning_event_id, '-', 'Adult Clinic')
+                    WHEN events.event_type_id = 3 THEN CONCAT(events.sanctioning_event_id, '-', 'Youth Race')
+                    WHEN events.event_type_id = 4 THEN CONCAT(events.sanctioning_event_id, '-', 'Youth Clinic')
+                    ELSE events.sanctioning_event_id
+                END AS id_sanctioning_events_and_type,
 
                 -- events.instagram_url AS instagram_url_events,
                 -- events.last_season_event_id AS last_season_event_id,

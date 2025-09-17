@@ -108,7 +108,7 @@
 
     WHERE 1 = 1
         -- AND e.sanctioning_event_id = '308400'
-        AND e.sanctioning_event_id IN (308417, 350398)
+        -- AND e.sanctioning_event_id IN (308417, 350398)
         
         -- FILTERS
         -- AND LOWER(e.name) LIKE '%test%'

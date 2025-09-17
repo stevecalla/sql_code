@@ -46,7 +46,8 @@ DROP TABLE IF EXISTS step_1_member_minimum_first_created_at_dates;
 
     CREATE TABLE step_1_member_minimum_first_created_at_dates AS
         SELECT 
-            member_number_members_sa,
+            -- member_number_members_sa,
+            id_profiles,
 
             MIN(created_at_members) AS first_created_at_members,
             MIN(created_at_mp) AS first_created_at_mp,
@@ -58,7 +59,7 @@ DROP TABLE IF EXISTS step_1_member_minimum_first_created_at_dates;
             YEAR(MIN(purchased_on_adjusted_mp)) AS first_purchased_on_year_adjusted_mp
 
         FROM all_membership_sales_data_2015_left
-        GROUP BY member_number_members_sa;
+        GROUP BY id_profiles;
         
         -- CREATE INDEX idx_member_number_members_sa ON step_1_member_minimum_first_created_at_dates (member_number_members_sa);
         -- CREATE INDEX idx_first_purchased_on_year_adjusted_mp ON step_1_member_minimum_first_created_at_dates (first_purchased_on_year_adjusted_mp);
@@ -126,7 +127,13 @@ DROP TABLE IF EXISTS step_5_member_age_at_sale_date;
             am.member_number_members_sa,
             am.id_membership_periods_sa,
             
-            (YEAR(purchased_on_adjusted_mp) - YEAR(am.date_of_birth_profiles)) - (DATE_FORMAT(am.purchased_on_adjusted_mp, '%m%d') < DATE_FORMAT(am.date_of_birth_profiles, '%m%d')) AS age_as_of_sale_date -- create age of of sale date
+            -- (YEAR(purchased_on_adjusted_mp) - YEAR(am.date_of_birth_profiles)) - (DATE_FORMAT(am.purchased_on_adjusted_mp, '%m%d') < DATE_FORMAT(am.date_of_birth_profiles, '%m%d')) AS age_as_of_sale_date -- create age of of sale date               
+            (
+                YEAR(MAX(purchased_on_adjusted_mp)) - YEAR(MAX(am.date_of_birth_profiles))) - 
+                (DATE_FORMAT(MAX(am.purchased_on_adjusted_mp), '%m%d') 
+                < DATE_FORMAT(MAX(am.date_of_birth_profiles), '%m%d')
+            )   
+            AS age_as_of_sale_date -- create age of of sale date
 
         FROM all_membership_sales_data_2015_left as am
         GROUP BY 1, 2;
@@ -144,8 +151,14 @@ DROP TABLE IF EXISTS step_5a_member_age_at_end_of_year_of_sale;
             am.member_number_members_sa,
             am.id_membership_periods_sa,
             
-            (YEAR(am.purchased_on_adjusted_mp) - YEAR(am.date_of_birth_profiles)) - 
-            (DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(am.purchased_on_adjusted_mp), '-12-31'), '%Y-%m-%d'), '%m%d') < DATE_FORMAT(am.date_of_birth_profiles, '%m%d')) AS age_at_end_of_year
+            -- (YEAR(am.purchased_on_adjusted_mp) - YEAR(am.date_of_birth_profiles)) - 
+            -- (DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(am.purchased_on_adjusted_mp), '-12-31'), '%Y-%m-%d'), '%m%d') < DATE_FORMAT(am.date_of_birth_profiles, '%m%d')) AS age_at_end_of_year                  
+            (
+                YEAR(MAX(am.purchased_on_adjusted_mp))
+                - YEAR(MAX(am.date_of_birth_profiles))) 
+                - (DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(MAX(am.purchased_on_adjusted_mp)), '-12-31'), '%Y-%m-%d'), '%m%d') 
+                < DATE_FORMAT(MAX(am.date_of_birth_profiles), '%m%d')
+            ) AS age_at_end_of_year
 
         FROM all_membership_sales_data_2015_left AS am
         GROUP BY 1, 2;
@@ -177,6 +190,53 @@ DROP TABLE IF EXISTS step_6_membership_period_stats;
 -- STEP #7 = MOST RECENT PRIOR PURCHASE TO DETERMINE NEW, LAPSED, RENEW -- TODO: done 10 min
 DROP TABLE IF EXISTS step_7_prior_purchase;
 
+    -- Fast version using window functions (MySQL 8+)
+    CREATE TABLE step_7_prior_purchase AS
+    WITH ordered AS (
+        SELECT
+            am.member_number_members_sa,
+            am.id_membership_periods_sa,
+            am.new_member_category_6_sa,
+            am.purchased_on_adjusted_mp,
+            am.ends_mp,
+            am.real_membership_types_sa,
+
+            -- Prior by purchase date (matches your MAX(... WHERE purchased_on < current) intent)
+            LAG(am.purchased_on_adjusted_mp)
+                OVER (PARTITION BY am.member_number_members_sa
+                    ORDER BY am.purchased_on_adjusted_mp) AS most_recent_prior_purchase_date,
+
+            LAG(am.real_membership_types_sa)
+                OVER (PARTITION BY am.member_number_members_sa
+                    ORDER BY am.purchased_on_adjusted_mp) AS most_recent_prior_purchase_membership_type,
+
+            LAG(am.new_member_category_6_sa)
+                OVER (PARTITION BY am.member_number_members_sa
+                    ORDER BY am.purchased_on_adjusted_mp) AS most_recent_prior_purchase_membership_category,
+
+            -- Prior by ends date (matches your MAX(... WHERE ends_mp < current) intent)
+            LAG(am.ends_mp)
+                OVER (PARTITION BY am.member_number_members_sa
+                    ORDER BY am.ends_mp) AS most_recent_prior_mp_ends_date
+                    
+            FROM all_membership_sales_data_2015_left am
+        -- 	WHERE member_number_members_sa IN ('1001416', '100181772', '100142051', '100853852') 
+        -- 	LIMIT 100
+    )
+        SELECT
+            member_number_members_sa,
+            id_membership_periods_sa,
+            new_member_category_6_sa,
+            purchased_on_adjusted_mp   AS most_recent_purchase_date,
+            ends_mp                    AS most_recent_mp_ends_date,
+            most_recent_prior_purchase_date,
+            most_recent_prior_mp_ends_date,
+            most_recent_prior_purchase_membership_type,
+            most_recent_prior_purchase_membership_category
+        FROM ordered
+    ;
+
+    -- REPLACED WITH ABOVE 8/15/2025
     CREATE TABLE step_7_prior_purchase AS
         SELECT 
 			am1.member_number_members_sa AS member_number_members_sa,
@@ -263,9 +323,6 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             END AS origin_flag_category,
 
             -- membership periods, types, category
-            am.created_at_mp,
-            DATE(am.created_at_mp) AS created_at_date_mp,
-
             am.id_membership_periods_sa, 
             am.real_membership_types_sa, 
             am.new_member_category_6_sa, 
@@ -302,13 +359,9 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             QUARTER(mc.min_created_at) AS member_min_created_at_quarter,
             MONTH(mc.min_created_at) AS member_min_created_at_month,
 
-            GREATEST(am.purchased_on_year_adjusted_mp - YEAR(mc.min_created_at), 0) AS member_created_at_years_out,
+            GREATEST(am.purchased_on_year_adjusted_mp - YEAR(mc.min_created_at), 0) AS member_created_at_years_out, -- TODO
             CASE
-                -- new first year member
                 WHEN am.purchased_on_year_adjusted_mp = YEAR(mc.min_created_at) THEN 'created_year'
-                WHEN lp.member_lifetime_purchases = 1 THEN 'created_year' -- new first year member
-                WHEN lp.member_lifetime_purchases > 1 AND YEAR(first_starts_mp) = YEAR(am.starts_mp) THEN 'created_year'
-                
                 WHEN am.purchased_on_year_adjusted_mp > YEAR(mc.min_created_at) THEN 'after_created_year'
                 ELSE 'error_first_purchase_year_category'
             END AS member_created_at_category,
@@ -317,77 +370,33 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             pp.most_recent_purchase_date,
             pp.most_recent_prior_purchase_date,
 
-            pp.most_recent_mp_ends_date,
-            pp.most_recent_prior_mp_ends_date,
+			pp.most_recent_mp_ends_date,
+			pp.most_recent_prior_mp_ends_date,
             
             CASE
-                -- new first year member
-                WHEN lp.member_lifetime_purchases = 1 THEN 'created_year' -- new first year member
-                WHEN am.purchased_on_year_adjusted_mp = YEAR(mc.min_created_at) THEN 'created_year'
-                WHEN lp.member_lifetime_purchases > 1 AND YEAR(first_starts_mp) = YEAR(am.starts_mp) THEN 'created_year'
-
-                WHEN am.starts_mp > DATE_ADD(pp.most_recent_prior_mp_ends_date, INTERVAL 2 YEAR) THEN 'after_created_year_lapsed' 
-                WHEN am.starts_mp <= DATE_ADD(pp.most_recent_prior_mp_ends_date, INTERVAL 2 YEAR) THEN 'after_created_year_renew'
+                WHEN am.purchased_on_year_adjusted_mp = YEAR(mc.min_created_at) THEN 'created_year' -- new 
+                -- ORIGINAL DEFINITION BASED ON MOST RECENT PURCHASE DATE LOGIC; REVISED TO USE MP END & START PERIOD DATE
+                -- WHEN pp.most_recent_purchase_date > DATE_ADD(most_recent_prior_purchase_date, INTERVAL 2 YEAR) THEN 'after_created_year_lapsed'
+                -- WHEN pp.most_recent_purchase_date <= DATE_ADD(most_recent_prior_purchase_date, INTERVAL 2 YEAR) THEN 'after_created_year_renew'
+                
+                 -- current starts_mp is within 2 years of the most recent ends_mp
+				WHEN am.starts_mp > DATE_ADD(pp.most_recent_prior_mp_ends_date, INTERVAL 2 YEAR) THEN 'after_created_year_lapsed'
+				WHEN am.starts_mp <= DATE_ADD(pp.most_recent_prior_mp_ends_date, INTERVAL 2 YEAR) THEN 'after_created_year_renew'
+                    
                 ELSE 'error_lapsed_renew_segmentation'
             END AS member_lapsed_renew_category,
 
             -- upgrade, downgrade, same
             most_recent_prior_purchase_membership_type,
             most_recent_prior_purchase_membership_category,
-
             CASE
-                -- new first year member
-                WHEN lp.member_lifetime_purchases = 1 THEN 'created_year' -- new first year member
-                WHEN am.purchased_on_year_adjusted_mp = YEAR(mc.min_created_at) THEN 'created_year'
-                WHEN lp.member_lifetime_purchases > 1 AND YEAR(first_starts_mp) = YEAR(am.starts_mp) THEN 'created_year'
-
-                -- UPGRADE
+                WHEN am.purchased_on_year_adjusted_mp = YEAR(mc.min_created_at) THEN 'created_year' -- new 
                 WHEN pp.most_recent_prior_purchase_membership_type = 'one_day' AND real_membership_types_sa = 'adult_annual' THEN 'upgrade_oneday_to_annual'
-                
-                -- DOWNGRADE
                 WHEN pp.most_recent_prior_purchase_membership_type = 'adult_annual' AND real_membership_types_sa = 'one_day' THEN 'downgrade_annual_to_oneday'
-                
-                -- SAME
                 WHEN pp.most_recent_prior_purchase_membership_type = 'one_day' AND real_membership_types_sa = 'one_day' THEN 'same_one_day_to_one_day'
                 WHEN pp.most_recent_prior_purchase_membership_type ='adult_annual' AND real_membership_types_sa = 'adult_annual' THEN 'same_annual_to_annual'
-                
-                -- OTHER = UPGRADE
-                WHEN pp.most_recent_prior_purchase_membership_type = 'youth_annual' AND real_membership_types_sa = 'adult_annual' THEN 'upgrade_youth_to_annual'
-                WHEN pp.most_recent_prior_purchase_membership_type = 'youth_annual' AND real_membership_types_sa = 'one_day' THEN 'upgrade_youth_to_oneday'
-                WHEN pp.most_recent_prior_purchase_membership_type = 'one_day' AND real_membership_types_sa = 'elite' THEN 'upgrade_oneday_to_elite'
-                WHEN pp.most_recent_prior_purchase_membership_type = 'adult_annual' AND real_membership_types_sa = 'elite' THEN 'upgrade_annual_to_elite'
-                WHEN pp.most_recent_prior_purchase_membership_type = 'youth_annual' AND real_membership_types_sa = 'elite' THEN 'upgrade_youth_to_elite'
-                
-                -- OTHER = DOWNGRADE
-                WHEN pp.most_recent_prior_purchase_membership_type = 'elite' AND real_membership_types_sa <> 'elite' THEN 'downgrade_elite_to_any_other_membership'
-                
-                -- OTHER = SAME
-                WHEN pp.most_recent_prior_purchase_membership_type ='youth_annual' AND real_membership_types_sa = 'youth_annual' THEN 'same_youth_to_youth'
-                WHEN pp.most_recent_prior_purchase_membership_type ='elite' AND real_membership_types_sa = 'elite' THEN 'same_elite_to_elite'
-
                 ELSE 'other'
             END AS member_upgrade_downgrade_category,
-
-            CASE
-                -- new first year member
-                WHEN lp.member_lifetime_purchases = 1 THEN 'created_year' -- new first year member
-                WHEN am.purchased_on_year_adjusted_mp = YEAR(mc.min_created_at) THEN 'created_year'
-                WHEN lp.member_lifetime_purchases > 1 AND YEAR(first_starts_mp) = YEAR(am.starts_mp) THEN 'created_year'
-
-                -- UPGRADE
-                WHEN pp.most_recent_prior_purchase_membership_type = 'one_day' AND real_membership_types_sa = 'adult_annual' THEN 'upgrade_oneday_to_annual'
-                
-                -- DOWNGRADE
-                WHEN pp.most_recent_prior_purchase_membership_type = 'adult_annual' AND real_membership_types_sa = 'one_day' THEN 'downgrade_annual_to_oneday'
-                
-                -- SAME
-                WHEN pp.most_recent_prior_purchase_membership_type = 'one_day' AND real_membership_types_sa = 'one_day' THEN 'same_one_day_to_one_day'
-                WHEN pp.most_recent_prior_purchase_membership_type ='adult_annual' AND real_membership_types_sa = 'adult_annual' THEN 'same_annual_to_annual'
-                
-                -- OTHER
-                ELSE 'other'
-
-            END AS member_upgrade_downgrade_major,
             
             -- member lifetime frequency
             lp.member_lifetime_purchases, -- total lifetime purchases  
@@ -399,8 +408,7 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
 
             -- member first purchase year segmentation
             fd.first_purchased_on_year_adjusted_mp AS member_first_purchase_year,
-            fd.first_starts_mp AS first_starts_mp,
-            GREATEST(am.purchased_on_year_adjusted_mp - first_purchased_on_year_adjusted_mp, 0) AS member_first_purchase_years_out,
+            GREATEST(am.purchased_on_year_adjusted_mp - first_purchased_on_year_adjusted_mp, 0) AS member_first_purchase_years_out, -- TODO
             CASE
                 WHEN am.purchased_on_year_adjusted_mp = fd.first_purchased_on_year_adjusted_mp THEN 'first_year'
                 WHEN am.purchased_on_year_adjusted_mp > fd.first_purchased_on_year_adjusted_mp THEN 'after_first_year'
@@ -464,13 +472,10 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
                 ELSE 'bad_age'
             END AS age_as_year_end_bin, -- create bin for age at the end of year of sale
 
-            -- EVENT DETAILS
+            -- event detais
             am.id_events,
-            am.id_sanctioning_events,
-            am.id_sanctioning_events_and_type, -- TODO:
             am.event_type_id_events,
             am.name_events,
-
             -- cleaned event name for comparison
             REGEXP_REPLACE(
                 LOWER(REPLACE(
@@ -513,67 +518,33 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             am.race_director_id_events,
             am.last_season_event_id,
 
-            -- EVENT TYPES
-            am.id_event_types, 
-            am.id_event_type_events,
-            am.name_event_type,
-
-            -- MEMBER LOCATION INFO
-            am.city_addresses AS member_city_addresses,
-            am.postal_code_addresses AS member_postal_code_addresses,
-            am.lng_addresses AS member_lng_addresses,
-            am.lat_addresses AS member_lat_addresses,
-            am.state_code_addresses AS member_state_code_addresses,
-            am.country_code_addresses AS member_country_code_addresses,
-            ar.region_name AS region_name_member,
-            ar.region_abbr AS region_abbr_member,
-            
-            -- EVENT LOCATION INFO
-            am.address_events,
             am.city_events,
-            am.zip_events,
-            am.state_code_events,
-            am.country_code_events,
-            er.region_name AS region_name_events,
-            er.region_abbr AS region_abbr_events,
+            am.state_events,
+            am.country_name_events,
+            am.country_events,
 
-            -- OTHER
-            am.gender_id_profiles, -- todo:
-            CASE
-                WHEN am.gender_id_profiles = 1 THEN 'm'
-                WHEN am.gender_id_profiles = 2 THEN 'f'
-                WHEN am.gender_id_profiles = 3 THEN 'binary'
-                ELSE 'unknown'
-            END AS gender_profiles,
-            am.created_at_ma,
-            am.order_id_orders_products,
-            am.id_registration_audit,
-            am.confirmation_number_registration_audit,
-            am.name_registration_companies,
-            am.designation_races,
-
-            -- KEY STATS
+            -- key stats
             st.sales_units,
             st.sales_revenue,
             st.actual_membership_fee_6_rule_sa, 
 
-            -- DATE CREATED AT DATES
+            -- data created at dates
             DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -6 HOUR), '%Y-%m-%d') AS created_at_mtn,
             DATE_FORMAT(NOW(), '%Y-%m-%d') AS created_at_utc
 
         FROM all_membership_sales_data_2015_left am
 
             LEFT JOIN step_1_member_minimum_first_created_at_dates AS fd
-                ON am.id_profiles = fd.id_profiles
+                ON am.member_number_members_sa = fd.member_number_members_sa
 
             LEFT JOIN step_2_member_min_created_at_date AS mc
-                ON am.id_profiles = mc.id_profiles
+                ON am.member_number_members_sa = mc.member_number_members_sa
             
             LEFT JOIN step_3_member_total_life_time_purchases AS lp
-                ON am.id_profiles = lp.id_profiles
+                ON am.member_number_members_sa = lp.member_number_members_sa
 
             LEFT JOIN step_4_member_age_dimensions AS ad
-                ON am.id_profiles = ad.id_profiles
+                ON am.member_number_members_sa = ad.member_number_members_sa
 
             LEFT JOIN step_5_member_age_at_sale_date AS sd
                 ON am.id_membership_periods_sa = sd.id_membership_periods_sa
@@ -587,17 +558,9 @@ DROP TABLE IF EXISTS sales_key_stats_2015;
             LEFT JOIN step_7_prior_purchase AS pp
                 ON am.id_membership_periods_sa = pp.id_membership_periods_sa
 
-            LEFT JOIN region_data AS er -- event region
-                ON am.state_code_events = er.state_code
-
-            LEFT JOIN region_data AS ar -- address region
-                ON am.state_code_addresses = ar.state_code
-
-        WHERE 1 = 1
-            AND am.purchased_on_year_adjusted_mp >= 2010
-            AND am.id_profiles IS NOT NULL
-
-        LIMIT 10
+        -- WHERE id_membership_periods_sa IN (421768, 1214842, 1214843, 1952878, 3272901) -- bad purchased on dates; eliminated iwth where statement below
+		WHERE CAST(am.purchased_on_date_mp AS CHAR) != '0000-00-00';
+        -- LIMIT 10    
         ;
 -- *********************************************
 

@@ -569,7 +569,6 @@ SET @end_date = '2025-01-31 23:59:59';
             LEFT JOIN users ON (profiles.user_id = users.id)
             LEFT JOIN events ON (membership_applications.event_id = events.id)
             LEFT JOIN transactions ON (orders.id = transactions.order_id)
-            
             LEFT JOIN new_member_category_6 AS mc ON membership_periods.id = mc.id_membership_periods   
         WHERE
             -- #1 = ~80,947 records for = 2021
@@ -1248,28 +1247,20 @@ SET @end_date = '2025-01-31 23:59:59';
 
         FROM one_day_sales_actual_member_fee AS sa -- as = actual_sales
 
-            LEFT JOIN membership_periods AS mp ON sa.max_membership_period_id = mp.id -- DONE
-            LEFT JOIN membership_applications AS ma ON sa.max_membership_period_id = ma.membership_period_id -- DONE 
+            LEFT JOIN membership_periods AS mp ON sa.max_membership_period_id = mp.id
+            LEFT JOIN membership_applications AS ma ON sa.max_membership_period_id = ma.membership_period_id 
 
-            LEFT JOIN order_products AS op ON ma.id = op.purchasable_id -- DONE
-            LEFT JOIN orders ON op.order_id = orders.id -- DONE
+            LEFT JOIN order_products AS op ON ma.id = op.purchasable_id
+            LEFT JOIN orders ON op.order_id = orders.id
 
             LEFT JOIN registration_audit ON sa.max_membership_period_id = registration_audit.membership_period_id
             LEFT JOIN registration_audit_membership_application ON registration_audit.id = registration_audit_membership_application.audit_id
             LEFT JOIN registration_companies ON registration_audit.registration_company_id = registration_companies.id
-            
-            -- RIGHT JOIN membership_periods ON (membership_applications.membership_period_id = membership_periods.id) -- DONE LINE 879
 
-            LEFT JOIN membership_types ON ma.membership_type_id = membership_types.id -- DONE
+            LEFT JOIN membership_types ON ma.membership_type_id = membership_types.id
 
-            -- RIGHT JOIN members ON membership_periods.member_id = members.id
-            LEFT JOIN members ON mp.member_id = members.id -- DONE = CHANGED FROM RIGHT JOIN TO LEFT
-            -- RIGHT JOIN members ON mp.member_id = members.id -- DONE = CHANGED FROM RIGHT JOIN TO LEFT
-
-            -- RIGHT JOIN profiles ON members.memberable_id = profiles.id
-            LEFT JOIN profiles ON members.memberable_id = profiles.id -- DONE = CHANGED FROM RIGHT JOIN TO LEFT
-            -- RIGHT JOIN profiles ON members.memberable_id = profiles.id -- DONE = CHANGED FROM RIGHT JOIN TO LEFT
-
+            LEFT JOIN members ON mp.member_id = members.id
+            LEFT JOIN profiles ON members.memberable_id = profiles.id
             LEFT JOIN users ON profiles.user_id = users.id
             LEFT JOIN addresses ON profiles.primary_address_id = addresses.id
 

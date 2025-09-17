@@ -2,7 +2,8 @@ USE vapor;
 
 SET@start_date = "2025-01-01 00:00:00";
 SET @end_date = "2025-12-31 23:59:59";
-SET @year = "2021";
+-- SET @year = "2021";
+SET @year = "2025";
 
 WITH participation_by_race AS (
     SELECT
@@ -15,7 +16,15 @@ WITH participation_by_race AS (
         e.event_type_id AS event_type_id_events,
 
         -- EVENT TYPES
-        et.name AS name_event_type,
+        -- et.name AS name_event_type,
+        CASE
+			WHEN r.designation IS NOT NULL THEN r.designation
+            WHEN r.designation IS NULL AND e.event_type_id = 1 THEN 'Adult Race'
+            WHEN r.designation IS NULL AND e.event_type_id = 2 THEN 'Adult Clinic'
+            WHEN r.designation IS NULL AND e.event_type_id = 3 THEN 'Youth Race'
+            WHEN r.designation IS NULL AND e.event_type_id = 4 THEN 'Youth Clinic'
+            ELSE "missing_event_type_race_designation"
+         END AS name_event_type,
 
         -- EVENTS
         CONCAT('"', REPLACE(REPLACE(REPLACE(SUBSTRING(e.name, 1, 255), '''', ''), '"', ''), ',', ''), '"') AS name_events,
@@ -94,6 +103,7 @@ WITH participation_by_race AS (
         -- AND r.start_date <= @end_date
 
         AND YEAR(r.start_date) >= @year
+        AND e.sanctioning_event_id = 350554
         
         -- NODE / JS
         -- AND r.start_date >= '${start_date}'
@@ -105,20 +115,20 @@ WITH participation_by_race AS (
     -- NODE / JS  
     -- LIMIT ${batch_size} OFFSET ${offset}
 )
--- SELECT * FROM participation_by_race
+SELECT * FROM participation_by_race
 
 -- *************************************
 -- EXCEL SHEET COUNT BY RACE YEAR
 -- *************************************
-SELECT 
-    start_date_year_races AS race_year,
-    FORMAT(COUNT(CASE WHEN id_race_rr IS NULL THEN 1 END), 0) AS count_null_race_id,
-    FORMAT(COUNT(CASE WHEN id_profile_rr IS NULL THEN 1 END), 0) AS count_null_profile_id,
-    FORMAT(COUNT(CASE WHEN id_profile_rr IS NOT NULL THEN 1 END), 0) AS count_not_null_profile_id,
-    FORMAT(COUNT(CASE WHEN member_number_rr IS NULL THEN 1 END), 0) AS count_null_member_number,
-    FORMAT(COUNT(CASE WHEN member_number_rr IS NOT NULL THEN 1 END), 0) AS count_not_null_member_number,
-    FORMAT(COUNT(*), 0) AS total_count
-FROM participation_by_race 
-GROUP BY start_date_year_races WITH ROLLUP
+-- SELECT 
+--     start_date_year_races AS race_year,
+--     FORMAT(COUNT(CASE WHEN id_race_rr IS NULL THEN 1 END), 0) AS count_null_race_id,
+--     FORMAT(COUNT(CASE WHEN id_profile_rr IS NULL THEN 1 END), 0) AS count_null_profile_id,
+--     FORMAT(COUNT(CASE WHEN id_profile_rr IS NOT NULL THEN 1 END), 0) AS count_not_null_profile_id,
+--     FORMAT(COUNT(CASE WHEN member_number_rr IS NULL THEN 1 END), 0) AS count_null_member_number,
+--     FORMAT(COUNT(CASE WHEN member_number_rr IS NOT NULL THEN 1 END), 0) AS count_not_null_member_number,
+--     FORMAT(COUNT(*), 0) AS total_count
+-- FROM participation_by_race 
+-- GROUP BY start_date_year_races WITH ROLLUP
 ;
 -- *************************************;

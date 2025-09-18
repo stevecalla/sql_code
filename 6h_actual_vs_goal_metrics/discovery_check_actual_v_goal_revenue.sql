@@ -1,4 +1,4 @@
-USE usat_sales_db;
+    USE usat_sales_db;
 
 SELECT * FROM sales_data_actual_v_goal;
 

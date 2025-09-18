@@ -101,7 +101,7 @@ USE usat_sales_db;
     SET @UG_Youth_Annual = 0.00;
     SET @UG_Youth_Premier_25 = 0.00;
     SET @UG_Youth_Premier_30 = 0.00;
-    SET @UG_Elite = 1.00;
+    SET @UG_Elite = 0.00;
 -- <<< UNIT GROWTH (ADDED) <<<
 
 -- GET CURRENT DATE IN MTN (MST OR MDT) & UTC

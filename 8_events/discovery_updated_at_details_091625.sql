@@ -38,9 +38,9 @@ SELECT
             END AS name_event_type	
 FROM events AS e	
 	LEFT JOIN races AS r ON e.id = r.event_id 
-	
 WHERE 1 = 1	
 	AND e.updated_at IS NOT NULL
+    -- AND e.sanctioning_event_id IN (352322, 352331)
     AND e.starts >= '2025-01-01' AND e.starts < '2026-01-01'    -- sargable year filter	
 	-- AND LOWER(status) NOT IN ('cancelled', 'declined', 'deleted')
 GROUP BY 1,2,3,4,5,6,7	

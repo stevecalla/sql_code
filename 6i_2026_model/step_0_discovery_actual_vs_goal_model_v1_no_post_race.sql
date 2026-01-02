@@ -1,35 +1,19 @@
 USE usat_sales_db;
 
+-- CREATE BACKUP OR VERSION OF PRIOR MODELS
+    CREATE TABLE sales_model_2026_v2_111025 AS
+    SELECT *
+    FROM sales_model_2026
+    ;
+    -- RENAME TABLE sales_model_2026 TO sales_model_2026_v2_111025; -- save model_v2_111025
+    -- RENAME TABLE sales_model_2026 TO sales_model_2026_v1_100125; -- save model_v1_100125
+    -- RENAME TABLE sales_model_2026_v1_100125 TO sales_model_2026; -- rollback if needed
+
 -- CREATE ACTUAL VS GOAL DATA
     DROP TABLE IF EXISTS sales_model_2026;
 
--- 2025 EFFECTIVE PRICE LEVELS
-    SET @One_Day_15 = 15.27; -- $15
-    SET @Bronze_Relay = 9.75; -- $9.99
-    SET @Bronze_Sprint = 14.92; -- $15
-    SET @Bronze_Intermediate = 22.72; -- $23
-    SET @Bronze_Ultra = 28.5; -- $30
-    SET @Bronze_$0 = 0; -- $0
-    SET @Bronze_AO = 0; -- $0
-    SET @Bronze_Upgrade = 5.12; -- $7
-    SET @Club = 0; -- $0
-    SET @Unknown = 2.2; -- $4
-    SET @1_Year_50 = 0; -- $69
-    SET @Silver = 67.32; -- $69
-    SET @Gold = 97.6; -- $99.99
-    SET @3_Year = 171.01; -- $175
-    SET @Lifetime = 0; -- $0
-    SET @Platinum_Foundation = 409.37; -- $410
-    SET @Platinum_USA = 385.29; -- $410
-    SET @Young_Adult_36 = 0; -- $42
-    SET @Young_Adult_40 = 40.37; -- $42
-    SET @Youth_Annual = 10; -- $10
-    SET @Youth_Premier_25 = 0; -- $30
-    SET @Youth_Premier_30 = 30; -- $30
-    SET @Elite = 65.59; -- $69
-
 -- 2025 ACTUAL PRICE LEVELS
-    SET @One_Day_15_2025 = 15;
+    SET @One_Day_15_2025 = 14;
     SET @Bronze_Relay_2025 = 9;
     SET @Bronze_Sprint_2025 = 14;
     SET @Bronze_Intermediate_2025 = 21;
@@ -39,7 +23,7 @@ USE usat_sales_db;
     SET @Bronze_Upgrade_2025 = 7;
     SET @Club_2025 = 0;
     SET @Unknown_2025 = 4;
-    SET @1_Year_50_2025 = 50;
+    SET @1_Year_50_2025 = 64;
     SET @Silver_2025 = 64;
     SET @Gold_2025 = 99;
     SET @3_Year_2025 = 165;
@@ -48,35 +32,61 @@ USE usat_sales_db;
     SET @Platinum_USA_2025 = 400;
     SET @Young_Adult_36_2025 = 40;
     SET @Young_Adult_40_2025 = 40;
-    SET @Youth_Annual_2025 = 10;
-    SET @Youth_Premier_25_2025 = 30;
+    SET @Youth_Premier_25_2025 = 25;
     SET @Youth_Premier_30_2025 = 30;
+    SET @Youth_Annual_2025 = 10;
     SET @Elite_2025 = 64;
 
 -- 2026 ACTUAL PRICE LEVELS
-    SET @One_Day_15_2026 = 15;
-    SET @Bronze_Relay_2026 = 9.99;
-    SET @Bronze_Sprint_2026 = 15;
-    SET @Bronze_Intermediate_2026 = 23;
-    SET @Bronze_Ultra_2026 = 30;
+    SET @One_Day_15_2026 = 14.99; -- todo:
+    SET @Bronze_Relay_2026 = 9;
+    SET @Bronze_Sprint_2026 = 14.99; -- todo:
+    SET @Bronze_Intermediate_2026 = 24.99; -- todo:
+    SET @Bronze_Ultra_2026 = 34.99; -- todo:
     SET @Bronze_$0_2026 = 0;
     SET @Bronze_AO_2026 = 0;
     SET @Bronze_Upgrade_2026 = 7;
     SET @Club_2026 = 0;
     SET @Unknown_2026 = 4;
-    SET @1_Year_50_2026 = 69;
-    SET @Silver_2026 = 69;
+    SET @1_Year_50_2026 = 69.99;
+    SET @Silver_2026 = 69.99;
     SET @Gold_2026 = 99.99;
-    SET @3_Year_2026 = 175;
+    SET @3_Year_2026 = 178.49;
     SET @Lifetime_2026 = 0;
-    SET @Platinum_Foundation_2026 = 410;
-    SET @Platinum_USA_2026 = 410;
-    SET @Young_Adult_36_2026 = 42;
-    SET @Young_Adult_40_2026 = 42;
-    SET @Youth_Annual_2026 = 10;
-    SET @Youth_Premier_25_2026 = 30;
+    SET @Platinum_Foundation_2026 = 429.99; -- todo:
+    SET @Platinum_USA_2026 = 429.99; -- todo:
+    SET @Young_Adult_36_2026 = 40;
+    SET @Young_Adult_40_2026 = 40;
+    SET @Youth_Premier_25_2026 = 25;
     SET @Youth_Premier_30_2026 = 30;
-    SET @Elite_2026 = 69;
+    SET @Youth_Annual_2026 = 10;
+    SET @Elite_2026 = 79.99;
+
+-- TODO: Find calc for effective rate assumptions in "assumptions" sheet in the 2026 sales model
+-- 2026 EFFECTIVE PRICE LEVELS
+    SET @One_Day_15 = 14.91; -- $14.99
+    SET @Bronze_Relay = 8.79; -- $9
+    SET @Bronze_Sprint = 14.91; -- $14.99
+    SET @Bronze_Intermediate = 24.69; -- $24.99
+    SET @Bronze_Ultra = 34.1; -- $34.99
+    SET @Bronze_$0 = 0; -- $0
+    SET @Bronze_AO = 0; -- $0
+    SET @Bronze_Upgrade = 5.12; -- $7
+    SET @Club = 0; -- $0
+    SET @Unknown = 2.2; -- $4
+    SET @1_Year_50 = 68.59; -- $69.99
+    SET @Silver = 68.28; -- $69.99
+    SET @Gold = 97.6; -- $99.99
+    SET @3_Year = 174.42; -- $178.49
+    SET @Lifetime = 0; -- $0
+    SET @Platinum_Foundation = 429.33; -- $429.99
+    SET @Platinum_USA = 404.07; -- $429.99
+    SET @Young_Adult_36 = 0; -- $40
+    SET @Young_Adult_40 = 38.44; -- $40
+    SET @Youth_Premier_25 = 0; -- $25
+    SET @Youth_Premier_30 = 29.58; -- $30
+    SET @Youth_Annual = 9.38; -- $10
+    SET @Elite = 76.07; -- $79.99
 
 -- >>> UNIT GROWTH (ADDED): category-level unit growth pct variables (e.g., 0.05 = +5%) >>>
     SET @UG_One_Day_15 = 0.00;
@@ -129,10 +139,13 @@ USE usat_sales_db;
                 QUARTER(common_purchased_on_date_adjusted) AS quarter_actual,
                 YEAR(common_purchased_on_date_adjusted)    AS year_actual,
 
-                -- (kept as-is)
-                CASE WHEN MONTH(common_purchased_on_date_adjusted) <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
-                CASE WHEN MONTH(common_purchased_on_date_adjusted) =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
-                CASE WHEN MONTH(common_purchased_on_date_adjusted) <> MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
+                -- CASE WHEN MONTH(common_purchased_on_date_adjusted) <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
+                -- CASE WHEN MONTH(common_purchased_on_date_adjusted) =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
+                -- CASE WHEN MONTH(common_purchased_on_date_adjusted) <> MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                CASE WHEN MONTH(common_purchased_on_date_adjusted) =  9 THEN 1 ELSE 0 END AS is_current_month,
+                CASE WHEN MONTH(common_purchased_on_date_adjusted) <= 9 THEN 1 ELSE 0 END AS is_year_to_date,
+                CASE WHEN MONTH(common_purchased_on_date_adjusted) <  9 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
 
                 real_membership_types_sa AS type_actual,
                 new_member_category_6_sa AS category_actual,
@@ -183,8 +196,10 @@ USE usat_sales_db;
                 -- Splits - Bulk & NonBulk
                 SUM(CASE WHEN origin_flag_ma = 'ADMIN_BULK_UPLOADER' THEN revenue_current     ELSE 0 END) AS sales_rev_2025_actual_bulk,
                 SUM(CASE WHEN origin_flag_ma = 'ADMIN_BULK_UPLOADER' THEN units_current_year  ELSE 0 END) AS sales_units_2025_actual_bulk,
+
                 SUM(CASE WHEN origin_flag_ma <> 'ADMIN_BULK_UPLOADER' OR origin_flag_ma IS NULL THEN revenue_current     ELSE 0 END) AS sales_rev_2025_actual_nonbulk,
                 SUM(CASE WHEN origin_flag_ma <> 'ADMIN_BULK_UPLOADER' OR origin_flag_ma IS NULL THEN units_current_year  ELSE 0 END) AS sales_units_2025_actual_nonbulk,
+
                 MAX(origin_flag_ma = 'ADMIN_BULK_UPLOADER') AS has_bulk_upload,
                         
                 -- Bulk unit economics to reuse for 2026 bulk pricing
@@ -207,14 +222,19 @@ USE usat_sales_db;
                     ELSE 4
                 END as quarter_goal,
                 "2025" AS year_goal,
-                CASE WHEN purchased_on_month_adjusted_mp =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
-                CASE WHEN purchased_on_month_adjusted_mp <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
-                CASE WHEN purchased_on_month_adjusted_mp <  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+
+                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
+                -- CASE WHEN purchased_on_month_adjusted_mp =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
+                -- CASE WHEN purchased_on_month_adjusted_mp <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
+                -- CASE WHEN purchased_on_month_adjusted_mp <  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                CASE WHEN purchased_on_month_adjusted_mp =  9 THEN 1 ELSE 0 END AS is_current_month,
+                CASE WHEN purchased_on_month_adjusted_mp <= 9 THEN 1 ELSE 0 END AS is_year_to_date,
+                CASE WHEN purchased_on_month_adjusted_mp <  9 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
 
                 real_membership_types_sa AS type_goal, 
                 new_member_category_6_sa AS category_goal,
 
-                -- category sort order using both type_actual and category_actual
+                -- category SORT ORDER using both type_actual and category_actual
                 CASE
                     -- adult_annual
                     WHEN real_membership_types_sa = 'adult_annual' AND new_member_category_6_sa = '1-Year $50' THEN 1
@@ -639,7 +659,6 @@ USE usat_sales_db;
                 * ((COALESCE(NULLIF(e.sales_rev_2025_estimate,0)/NULLIF(e.sales_units_2025_estimate,0), 0)
                     + COALESCE(NULLIF(e.sales_rev_2026_goal,0)/NULLIF(e.sales_units_2026_goal,0), 0)) / 2)
             , 2) AS unit_impact_abs_total,
-
 
             -- NOTE [6]: optional reconciliation check (0.00 means perfect tie-out). Comment out if not needed.
             ROUND(ABS((e.sales_rev_2026_goal_nonbulk + e.sales_rev_2026_goal_bulk) - e.sales_rev_2026_goal), 6) AS recon_delta,

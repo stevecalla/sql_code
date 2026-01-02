@@ -65,12 +65,12 @@ WITH years AS (
         FORMAT(COUNT(DISTINCT s.member_number_members_sa), 0) AS total_unique_members_id_profiles_member_number_members_sa
     FROM sales_key_stats_2015 s
         JOIN years y ON y.y BETWEEN s.starts_year_mp AND s.ends_year_mp
+            AND purchased_on_date_adjusted_mp <= STR_TO_DATE(CONCAT(y.y, DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '-%m-%d')), '%Y-%m-%d') -- date yesterday
             -- and membership created at prior to today
             -- AND s.created_at_date_mp <= CONCAT(y.y, '-12-31') -- FOR FULL YEAR DON'T FILTER LIKE THIS B/C CREATED COULD BE IN A FUTURE YEAR
             -- NOTE: didn't use created on mp b/c some times the created on date can be greater than purchase on date
             -- AND s.created_at_date_mp <= STR_TO_DATE(CONCAT(y.y, DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '-%m-%d')), '%Y-%m-%d') -- date yesterday
             -- NOTE: used purchased on adjusted to reflect when the event/race date is before the purchase date
-            AND purchased_on_date_adjusted_mp <= STR_TO_DATE(CONCAT(y.y, DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '-%m-%d')), '%Y-%m-%d') -- date yesterday
     GROUP BY y.y
     ORDER BY y.y
 ;
@@ -92,11 +92,11 @@ WITH years AS (
 -- QUERY BLOCK DESCRIPTION
 -- ========================================================================
 WITH years AS (
-        SELECT 2022 AS y UNION ALL SELECT 2023 UNION ALL SELECT 2024 UNION ALL SELECT 2025
+        -- SELECT 2022 AS y UNION ALL SELECT 2023 UNION ALL SELECT 2024 UNION ALL SELECT 2025
 
-        -- SELECT 2015 AS y UNION ALL SELECT 2016 UNION ALL SELECT 2017 UNION ALL
-        -- SELECT 2018 UNION ALL SELECT 2019 UNION ALL SELECT 2020 UNION ALL
-        -- SELECT 2021 UNION ALL SELECT 2022 UNION ALL SELECT 2023 UNION ALL SELECT 2024
+        SELECT 2015 AS y UNION ALL SELECT 2016 UNION ALL SELECT 2017 UNION ALL
+        SELECT 2018 UNION ALL SELECT 2019 UNION ALL SELECT 2020 UNION ALL
+        SELECT 2021 UNION ALL SELECT 2022 UNION ALL SELECT 2023 UNION ALL SELECT 2024
     )
     , exploded_years AS (
         SELECT
@@ -115,7 +115,7 @@ WITH years AS (
             s.purchased_on_date_adjusted_mp,
             y.y AS year
         FROM sales_key_stats_2015 s
-            JOIN years y ON y.y BETWEEN s.starts_year_mp AND s.ends_year_mp
+            JOIN years AS y ON y.y BETWEEN s.starts_year_mp AND s.ends_year_mp
             -- and membership created at prior to today
             -- AND s.created_at_date_mp <= CONCAT(y.y, '-07-20') 
             -- AND s.created_at_date_mp <= STR_TO_DATE(CONCAT(y.y, DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '-%m-%d')), '%Y-%m-%d') -- date yesterday
@@ -131,8 +131,9 @@ WITH years AS (
         FROM exploded_years
         WHERE 1 = 1
             -- and membership created at prior to today
-            AND s.created_at_date_mp <= CONCAT(y.y, '-07-20') 
-            -- NOTE: didn't use created on mp b/c some times the created on date can be greater than purchase on date
+            AND created_at_date_mp <= CONCAT(year, '-07-20') 
+
+            -- NOTE: didn't use created on mp b/c sometimes the created on date can be greater than purchase on date
             -- AND created_at_date_mp <= STR_TO_DATE(CONCAT(year, DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '-%m-%d')), '%Y-%m-%d') 
             -- NOTE: used purchased on adjusted to reflect when the event/race date is before the purchase date
             -- AND purchased_on_date_adjusted_mp <= STR_TO_DATE(CONCAT(year, DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '-%m-%d')), '%Y-%m-%d') 
@@ -176,15 +177,15 @@ WITH years AS (
             mc.total_memberships_for_year
         FROM ranked_memberships rm
             JOIN membership_counts_by_profile_year mc ON rm.year = mc.year AND rm.id_profiles = mc.id_profiles
-        -- WHERE rm.membership_type_priority = 1
+        WHERE rm.membership_type_priority = 1
     )
 
     SELECT
         "query_with_member_type_category_detail",
         "valid if mp start year <= year and mp end year => year",
         year,
-        -- real_membership_types_sa AS membership_type,
-        -- new_member_category_6_sa AS new_member_category,
+        real_membership_types_sa AS membership_type,
+        new_member_category_6_sa AS new_member_category,
         -- starts_mp,
         -- starts_month_mp,
         -- starts_year_mp,
@@ -198,16 +199,18 @@ WITH years AS (
             WHEN purchased_on_date_adjusted_mp <= STR_TO_DATE(CONCAT(year, DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '-%m-%d')), '%Y-%m-%d') THEN 1   
             ELSE 0 
         END AS is_year_to_date,
+
         STR_TO_DATE(DATE_FORMAT(CURDATE(), '%Y-%m-%d'), '%Y-%m-%d') AS date_today,
 		STR_TO_DATE(DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '%Y-%m-%d'), '%Y-%m-%d') AS date_yesterday,
+        
         COUNT(DISTINCT id_profiles) AS unique_profiles,
         SUM(total_memberships_for_year) AS total_memberships_all_profiles_that_year
     FROM best_memberships
     WHERE membership_type_priority = 1
     GROUP BY 
         year,
-        -- real_membership_types_sa, 
-        -- new_member_category_6_sa, 
+        real_membership_types_sa, 
+        new_member_category_6_sa, 
         -- starts_mp,
         -- starts_month_mp,
         -- starts_year_mp,
@@ -223,6 +226,7 @@ WITH years AS (
         is_year_to_date,
         year
         -- real_membership_types_sa
+        -- new_member_category_6_sa, 
 ;
 
 -- ========================================================================

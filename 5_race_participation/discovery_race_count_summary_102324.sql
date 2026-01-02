@@ -56,8 +56,12 @@ participant_race_count_average AS (
 summarize_by_count AS (
         SELECT
                 count_rr AS number_of_races
-                , COUNT(*) AS count_of_participants
-                , AVG(avg_races_per_year) -- AVERAGE RACE COUNT
+                , COUNT(*) AS count_of_participants 				-- (a)
+                , SUM(count_rr) AS total_races						-- (b)		
+                , SUM(count_of_start_years) AS total_years_raced	-- (c)
+                , SUM(count_of_start_years) / COUNT(*) AS avg_years_raced					-- (c / d)
+                , SUM(count_rr) / SUM(count_of_start_years) AS average_races_per_year		-- (b / c)
+                -- , AVG(avg_races_per_year) -- AVERAGE RACE COUNT (12/19/25 bad calc)
                 , SUM(COUNT(*)) OVER (ORDER BY count_rr) AS running_total  -- Running total
                 , 100.0 * COUNT(*) / SUM(COUNT(*)) OVER () AS percent_of_total  -- Percentage of total
                 
@@ -80,8 +84,8 @@ summarize_by_count AS (
         ORDER BY CAST(count_rr AS UNSIGNED)
 )
 
-SELECT * FROM participant_race_count_average; 
--- SELECT * FROM summarize_by_count;
+-- SELECT * FROM participant_race_count_average; 
+SELECT * FROM summarize_by_count;
 
 -- finish_status
 -- pivot by year

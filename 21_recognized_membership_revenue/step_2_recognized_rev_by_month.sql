@@ -16,13 +16,12 @@ SELECT
 	"revenue_year_month",
     revenue_year_month,
 
-	SUM(sales_units),
-	SUM(monthly_sales_units),
-    AVG(monthly_revenue) AS avg_monthly_revenue,
-    SUM(monthly_revenue) AS total_monthly_revenue
+	SUM(sales_units) AS all_sales_units, -- SUM(sales_units) → counts the full original unit on every month row, so it overcounts once you aggregate.
+	SUM(monthly_sales_units) AS allocated_sales_units, -- SUM(monthly_sales_units) → counts the pro-rated fraction per month, so totals across the months = original sales units, and each month shows the right share of recognition.
+    AVG(monthly_revenue) AS average_rev_per_all_sales_units,
+    SUM(monthly_revenue) AS allocated_monthly_revenue
 FROM rev_recognition_allocation_data
 WHERE 1 = 1
-
     -- AND real_membership_types_sa = "one_day"
     -- AND real_membership_types_sa = "adult_annual"
     -- AND real_membership_types_sa = "elite_annual"
@@ -45,13 +44,14 @@ SELECT
     months_mp_allocation_recursive,
     real_membership_types_sa,
 
-	SUM(sales_units),
-	SUM(monthly_sales_units),
-    AVG(monthly_revenue) AS avg_monthly_revenue,
-    SUM(monthly_revenue) AS total_monthly_revenue
+	SUM(sales_units) AS all_sales_units, -- SUM(sales_units) → counts the full original unit on every month row, so it overcounts once you aggregate.
+	SUM(monthly_sales_units) AS allocated_sales_units, -- SUM(monthly_sales_units) → counts the pro-rated fraction per month, so totals across the months = original sales units, and each month shows the right share of recognition.
+    AVG(monthly_revenue) AS average_rev_per_all_sales_units,
+    SUM(monthly_revenue) AS allocated_monthly_revenue
+    
 FROM rev_recognition_allocation_data
 WHERE 1 = 1
-    AND revenue_year_month = '2025-03'
+    -- AND revenue_year_month = '2025-03'
 GROUP BY
     months_mp_allocation_recursive,
     real_membership_types_sa
@@ -67,13 +67,13 @@ SELECT
     real_membership_types_sa,
     new_member_category_6_sa,
 
-	SUM(sales_units),
-	SUM(monthly_sales_units),
-    AVG(monthly_revenue) AS avg_monthly_revenue,
-    SUM(monthly_revenue) AS total_monthly_revenue
+	SUM(sales_units) AS all_sales_units, -- SUM(sales_units) → counts the full original unit on every month row, so it overcounts once you aggregate.
+	SUM(monthly_sales_units) AS allocated_sales_units, -- SUM(monthly_sales_units) → counts the pro-rated fraction per month, so totals across the months = original sales units, and each month shows the right share of recognition.
+    AVG(monthly_revenue) AS average_rev_per_all_sales_units,
+    SUM(monthly_revenue) AS allocated_monthly_revenue
 FROM rev_recognition_allocation_data
 WHERE 1 = 1
-    AND revenue_year_month = '2025-03'
+    -- AND revenue_year_month = '2025-03'
 GROUP BY
     months_mp_allocation_recursive,
     real_membership_types_sa,
@@ -87,7 +87,7 @@ ORDER BY 3, 4, 2, 1
 SELECT
 	"revenue_year_month_by_purchased_month",
     revenue_year_month,
-    purchased_on_adjusted_month,
+    purchased_on_date_adjusted_mp_month,
 
 	SUM(sales_units),
 	SUM(monthly_sales_units),
@@ -96,10 +96,10 @@ SELECT
 
 FROM rev_recognition_allocation_data
 WHERE 1 = 1
-    and revenue_year_month = '2025-03'
+    -- and revenue_year_month = '2025-03'
 GROUP BY
 	revenue_year_month,
-    purchased_on_adjusted_month	
+    purchased_on_date_adjusted_mp_month
     WITH ROLLUP
 ORDER BY 2, 3
 ;

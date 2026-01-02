@@ -10,7 +10,7 @@ SELECT
     FORMAT(SUM(sales_rev_2026_goal_nonbulk), 0),
     FORMAT(SUM(sales_rev_2026_goal_bulk), 0),
     
-    -- -- 2025 Estimate
+    -- 2025 Estimate
     "2025" AS year_label_2025,
     FORMAT(SUM(sales_rev_2025_estimate), 0),
     FORMAT(SUM(sales_rev_2025_estimate_nonbulk), 0),

@@ -12,6 +12,11 @@
 
 -- ========= STEP 2 ========
 -- GET ALLOCATION ESTIMATE
+-- PURPOSE:
+-- Build an empirical revenue-recognition / allocation schedule from actual allocation data.
+-- For each (purchase_month, real_membership_type), compute the % of total revenue recognized in each revenue_month,
+-- plus months_from_purchase (0=same month, 1=next month, etc.).
+-- This schedule will be applied later to modeled sales estimates to spread revenue across future months.
 -- ========= STEP 2 ========
 DROP TABLE IF EXISTS sales_model_rec_rev_2_allocation_estimate;
 CREATE TABLE IF NOT EXISTS sales_model_rec_rev_2_allocation_estimate
@@ -86,5 +91,5 @@ CREATE TABLE IF NOT EXISTS sales_model_rec_rev_2_allocation_estimate
         SELECT * FROM limit_v2
 ;
 
-SELECT * FROM sales_model_rec_rev_2_allocation_estimate LIMIT 10;
+SELECT * FROM sales_model_rec_rev_2_allocation_estimate LIMIT 100;
 SELECT FORMAT(COUNT(*), 0) FROM sales_model_rec_rev_2_allocation_estimate;

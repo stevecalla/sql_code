@@ -1,10 +1,12 @@
+-- C:\Users\calla\development\usat\sql_code\6i_2026_model\step_0_discovery_actual_vs_goal_model_v1_no_post_race.sql
+-- SALES MODEL WITHOUT POST RACE
 USE usat_sales_db;
 
 -- CREATE BACKUP OR VERSION OF PRIOR MODELS
-    CREATE TABLE sales_model_2026_v2_111025 AS
-    SELECT *
-    FROM sales_model_2026
-    ;
+    -- CREATE TABLE sales_model_2026_v2_111025 AS
+    -- SELECT *
+    -- FROM sales_model_2026
+    -- ;
     -- RENAME TABLE sales_model_2026 TO sales_model_2026_v2_111025; -- save model_v2_111025
     -- RENAME TABLE sales_model_2026 TO sales_model_2026_v1_100125; -- save model_v1_100125
     -- RENAME TABLE sales_model_2026_v1_100125 TO sales_model_2026; -- rollback if needed

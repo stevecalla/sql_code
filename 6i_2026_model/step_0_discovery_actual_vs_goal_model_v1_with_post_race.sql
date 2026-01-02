@@ -1,3 +1,5 @@
+-- C:\Users\calla\development\usat\sql_code\6i_2026_model\step_0_discovery_actual_vs_goal_model_v1_with_post_race.sql
+-- SALES MODEL WITH POST RACE
 USE usat_sales_db;
 
 -- CREATE BACKUP OR VERSION OF PRIOR MODELS
@@ -139,13 +141,19 @@ USE usat_sales_db;
                 QUARTER(common_purchased_on_date_adjusted) AS quarter_actual,
                 YEAR(common_purchased_on_date_adjusted)    AS year_actual,
 
-                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
                 -- CASE WHEN MONTH(common_purchased_on_date_adjusted) <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
                 -- CASE WHEN MONTH(common_purchased_on_date_adjusted) =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
                 -- CASE WHEN MONTH(common_purchased_on_date_adjusted) <> MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+
+                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
                 CASE WHEN MONTH(common_purchased_on_date_adjusted) =  9 THEN 1 ELSE 0 END AS is_current_month,
                 CASE WHEN MONTH(common_purchased_on_date_adjusted) <= 9 THEN 1 ELSE 0 END AS is_year_to_date,
                 CASE WHEN MONTH(common_purchased_on_date_adjusted) <  9 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                
+                -- TODO: HARD CODE TO FULL YEAR TO UNDERSTAND WHAT THAT MIGHT LOOK LIKE
+                -- CASE WHEN MONTH(common_purchased_on_date_adjusted) =  12 THEN 1 ELSE 0 END AS is_current_month,
+                -- CASE WHEN MONTH(common_purchased_on_date_adjusted) <= 12 THEN 1 ELSE 0 END AS is_year_to_date,
+                -- CASE WHEN MONTH(common_purchased_on_date_adjusted) <  13 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
 
                 real_membership_types_sa AS type_actual,
                 new_member_category_6_sa AS category_actual,
@@ -223,13 +231,19 @@ USE usat_sales_db;
                 END as quarter_goal,
                 "2025" AS year_goal,
 
-                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
                 -- CASE WHEN purchased_on_month_adjusted_mp =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
                 -- CASE WHEN purchased_on_month_adjusted_mp <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
                 -- CASE WHEN purchased_on_month_adjusted_mp <  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                
+                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
                 CASE WHEN purchased_on_month_adjusted_mp =  9 THEN 1 ELSE 0 END AS is_current_month,
                 CASE WHEN purchased_on_month_adjusted_mp <= 9 THEN 1 ELSE 0 END AS is_year_to_date,
                 CASE WHEN purchased_on_month_adjusted_mp <  9 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                
+                -- TODO: HARD CODE TO FULL YEAR TO UNDERSTAND WHAT THAT MIGHT LOOK LIKE
+                -- CASE WHEN purchased_on_month_adjusted_mp =  12 THEN 1 ELSE 0 END AS is_current_month,
+                -- CASE WHEN purchased_on_month_adjusted_mp <= 12 THEN 1 ELSE 0 END AS is_year_to_date,
+                -- CASE WHEN purchased_on_month_adjusted_mp <  13 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
 
                 real_membership_types_sa AS type_goal, 
                 new_member_category_6_sa AS category_goal,
@@ -290,13 +304,19 @@ USE usat_sales_db;
                     ELSE 4
                 END AS quarter_goal,
                 "2025" AS year_goal,
-                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
                 -- CASE WHEN purchased_on_month_adjusted_mp =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
                 -- CASE WHEN purchased_on_month_adjusted_mp <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
                 -- CASE WHEN purchased_on_month_adjusted_mp <  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                
+                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
                 CASE WHEN purchased_on_month_adjusted_mp =  9 THEN 1 ELSE 0 END AS is_current_month,
                 CASE WHEN purchased_on_month_adjusted_mp <= 9 THEN 1 ELSE 0 END AS is_year_to_date,
                 CASE WHEN purchased_on_month_adjusted_mp <  9 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                
+                -- TODO: HARD CODE TO FULL YEAR TO UNDERSTAND WHAT THAT MIGHT LOOK LIKE
+                -- CASE WHEN purchased_on_month_adjusted_mp =  12 THEN 1 ELSE 0 END AS is_current_month,
+                -- CASE WHEN purchased_on_month_adjusted_mp <= 12 THEN 1 ELSE 0 END AS is_year_to_date,
+                -- CASE WHEN purchased_on_month_adjusted_mp <  13 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
 
                 real_membership_types_sa AS type_goal,
                 'Unknown' AS category_goal,

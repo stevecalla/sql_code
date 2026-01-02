@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS sales_model_rec_rev_1_sales_estimate
                     STR_TO_DATE(CONCAT(c.year,'-', LPAD(c.month_goal,2,'0'), '-01'), '%Y-%m-%d'),
                     INTERVAL m.months_out MONTH
                 )
-                ) AS projected_year,
+            ) AS projected_year,
             MONTH(
             DATE_ADD(STR_TO_DATE(CONCAT(c.year,'-', LPAD(c.month_goal,2,'0'), '-01'), '%Y-%m-%d'),
                     INTERVAL m.months_out MONTH)
@@ -225,9 +225,13 @@ WITH current_recognized_revenue AS (
 		revenue_month_date,
         real_membership_types_sa,
 		FORMAT(SUM(monthly_revenue), 0) AS total_revenue,
-        now() AS created_at_mtn
+        now() AS created_at_mt
 	FROM rev_recognition_allocation_data AS a
 	WHERE 1 = 1
+		AND STR_TO_DATE(
+          CONCAT(purchased_on_date_adjusted_mp_year, '-', LPAD(purchased_on_date_adjusted_mp_month, 2, '0'), '-01'),
+          '%Y-%m-%d'
+        ) < '2025-09-01'
 		AND revenue_year_date >= 2025
         AND revenue_year_date < 2027
 	GROUP BY 1, 2, 3, 4

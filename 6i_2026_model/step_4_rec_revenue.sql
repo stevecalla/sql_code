@@ -12,6 +12,11 @@ WITH current_recognized_revenue AS (
         now() AS created_at_mtn
 	FROM rev_recognition_allocation_data AS a
 	WHERE 1 = 1
+		AND STR_TO_DATE(
+          CONCAT(purchased_on_date_adjusted_mp_year, '-', LPAD(purchased_on_date_adjusted_mp_month, 2, '0'), '-01'),
+          '%Y-%m-%d'
+        ) < '2025-09-01'
+		-- AND revenue_year_month > "2025-09"
 		AND revenue_year_date >= 2025
         AND revenue_year_date < 2027
 	GROUP BY 2, 3, 4, 5

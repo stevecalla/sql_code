@@ -1,3 +1,5 @@
+SELECT * FROM sales_model_2026;
+
 SELECT
 	month_goal,
     -- FORMAT(SUM(sales_rev_2025_goal), 0),
@@ -17,12 +19,16 @@ SELECT
     FORMAT(SUM(sales_rev_2025_estimate_bulk), 0)
     
 FROM sales_model_2026
-GROUP BY 1, 2
+GROUP BY 1, 2 WITH ROLLUP
 ORDER BY 1, 2
 ;
 
 -- ========= STEP 1 ========
 -- GET REVENUE ESTIMATE
+--  “This table answers: For a sale made in month X, which future months does it exist in? — not how much revenue belongs in each month?”
+-- This table projects each base-month sales estimate forward across months_out.
+-- The sales_estimate value is repeated for every projected month (no allocation).
+-- This is a projection scaffold, not revenue recognition.
 -- ========= STEP 1 ========
 DROP TABLE IF EXISTS sales_model_rec_rev_1_sales_estimate;
 CREATE TABLE IF NOT EXISTS sales_model_rec_rev_1_sales_estimate
@@ -90,5 +96,5 @@ CREATE TABLE IF NOT EXISTS sales_model_rec_rev_1_sales_estimate
         ORDER BY c.year, c.month_goal, c.type_goal, m.months_out
 ;
 
-SELECT * FROM sales_model_rec_rev_1_sales_estimate LIMIT 10;
+SELECT * FROM sales_model_rec_rev_1_sales_estimate ORDER BY type_goal, month_goal, months_out LIMIT 1000;
 SELECT FORMAT(COUNT(*), 0) FROM sales_model_rec_rev_1_sales_estimate;

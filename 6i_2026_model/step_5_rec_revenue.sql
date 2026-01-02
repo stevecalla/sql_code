@@ -1,5 +1,13 @@
 -- ========= STEP 5 ========
 -- JOIN STEP 3 ALLOCATION ESTIMATE & STEP 4 CURRENT RECOGNIZED REVENUE
+-- PURPOSE (Step 5):
+-- Combine (A) forecast recognized revenue from modeled sales (allocation_estimate)
+-- with (B) currently-known recognized revenue from actual purchases (current_rec_revenue),
+-- producing total recognized revenue by recognized month (projected_year/month) and membership type.
+--
+-- NOTES:
+-- 1) Use COALESCE on current_revenue (and/or rec_revenue) to avoid NULL totals when no match exists.
+-- 2) Ensure modeled sales period does not overlap “current purchases” period to avoid double-counting.
 -- ========= STEP 5 ========
 WITH rec_rev_base AS (
     SELECT
@@ -33,6 +41,11 @@ WITH rec_rev_base AS (
             SUM(monthly_revenue) AS current_revenue
         FROM rev_recognition_allocation_data AS a
         WHERE 1 = 1
+            -- TODO: ALIGN WITH MEMBERSHIP SALES REVENUE PERIOD IN C:\Users\calla\development\usat\sql_code\6i_2026_model\step_0_discovery_actual_vs_goal_model_v1_with_post_race.sql
+            AND STR_TO_DATE(
+                CONCAT(purchased_on_date_adjusted_mp_year, '-', LPAD(purchased_on_date_adjusted_mp_month, 2, '0'), '-01'),
+                '%Y-%m-%d'
+            ) < '2025-09-01'
             AND revenue_year_date >= 2025
             AND revenue_year_date < 2027
         GROUP BY 1, 2, 3, 4

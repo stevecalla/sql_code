@@ -1,10 +1,10 @@
 USE usat_sales_db;
 
 -- CREATE BACKUP OR VERSION OF PRIOR MODELS
-    CREATE TABLE sales_model_2026_v2_111025 AS
-    SELECT *
-    FROM sales_model_2026
-    ;
+    -- CREATE TABLE sales_model_2026_v2_111025 AS
+    -- SELECT *
+    -- FROM sales_model_2026
+    -- ;
     -- RENAME TABLE sales_model_2026 TO sales_model_2026_v2_111025; -- save model_v2_111025
     -- RENAME TABLE sales_model_2026 TO sales_model_2026_v1_100125; -- save model_v1_100125
     -- RENAME TABLE sales_model_2026_v1_100125 TO sales_model_2026; -- rollback if needed
@@ -290,9 +290,13 @@ USE usat_sales_db;
                     ELSE 4
                 END AS quarter_goal,
                 "2025" AS year_goal,
-                CASE WHEN purchased_on_month_adjusted_mp =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
-                CASE WHEN purchased_on_month_adjusted_mp <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
-                CASE WHEN purchased_on_month_adjusted_mp <  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                -- TODO: HARD CODE TO SEPTEMBER GIVEN THAT'S WHEN THE ORIGINAL MODEL WAS GENERATED
+                -- CASE WHEN purchased_on_month_adjusted_mp =  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_current_month,
+                -- CASE WHEN purchased_on_month_adjusted_mp <= MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_year_to_date,
+                -- CASE WHEN purchased_on_month_adjusted_mp <  MONTH(CURRENT_DATE) THEN 1 ELSE 0 END AS is_ytd_before_current_month,
+                CASE WHEN purchased_on_month_adjusted_mp =  9 THEN 1 ELSE 0 END AS is_current_month,
+                CASE WHEN purchased_on_month_adjusted_mp <= 9 THEN 1 ELSE 0 END AS is_year_to_date,
+                CASE WHEN purchased_on_month_adjusted_mp <  9 THEN 1 ELSE 0 END AS is_ytd_before_current_month,
 
                 real_membership_types_sa AS type_goal,
                 'Unknown' AS category_goal,
@@ -305,6 +309,18 @@ USE usat_sales_db;
 
             FROM sales_goal_data
             GROUP BY 1, 2, 3, 4, 5, 6, 7, 8
+        ),
+        post_race AS (
+            SELECT
+                pr.month  AS month_post_race,
+                pr.type   AS type_post_race,
+                pr.category AS category_post_race,
+
+				SUM(COALESCE(pr.sales_units, 0))   AS sales_units_2026_goal_post_race,
+				SUM(COALESCE(pr.sales_revenue, 0)) AS sales_rev_2026_goal_post_race -- overstated b/c it's not effective price
+            
+            FROM sales_model_2026_post_race_data pr
+            GROUP BY 1, 2, 3
         ),
         sales_base AS (
             SELECT
@@ -343,14 +359,23 @@ USE usat_sales_db;
                 sa.sales_units_2025_actual_bulk AS sales_units_2025_estimate_bulk,
 
                 -- 2025 estimate NON-BULK (NOTE [5]: keep denominator consistent for period=0)
+                -- did not add in post race revenue b/c post race typically is zero
                 CASE 
                     WHEN sg.is_ytd_before_current_month = 1 THEN sa.sales_rev_2025_actual_nonbulk
                     WHEN sg.is_ytd_before_current_month = 0 THEN sg.sales_rev_2025_goal  -- total revenue available only at goal level
                     ELSE 0
                 END AS sales_rev_2025_estimate_nonbulk,
-                CASE 
-                    WHEN sg.is_ytd_before_current_month = 1 THEN sa.sales_units_2025_actual_nonbulk
-                    WHEN sg.is_ytd_before_current_month = 0 THEN sg.sales_units_2025_goal
+
+                -- adjust to include 2025 post race
+                -- CASE 
+                --     WHEN sg.is_ytd_before_current_month = 1 THEN sa.sales_units_2025_actual_nonbulk
+                --     WHEN sg.is_ytd_before_current_month = 0 THEN sg.sales_units_2025_goal
+                --     ELSE 0
+                -- END AS sales_units_2025_estimate_nonbulk
+
+                CASE
+                    WHEN sg.is_ytd_before_current_month = 1 THEN sa.sales_units_2025_actual_nonbulk + COALESCE(pr.sales_units_2026_goal_post_race, 0)
+                    WHEN sg.is_ytd_before_current_month = 0 THEN sg.sales_units_2025_goal + COALESCE(pr.sales_units_2026_goal_post_race, 0)
                     ELSE 0
                 END AS sales_units_2025_estimate_nonbulk
 
@@ -358,6 +383,10 @@ USE usat_sales_db;
                 LEFT JOIN sales_actuals AS sa ON sg.month_goal = sa.month_actual
                     AND sg.type_goal      = sa.type_actual
                     AND sg.category_goal  = sa.category_actual
+            
+                LEFT JOIN post_race AS pr ON pr.month_post_race = sg.month_goal
+                    AND sg.type_goal = pr.type_post_race
+                    AND sg.category_goal = pr.category_post_race
 
             -- This clause preserves everything except when: (a) The goal is "Unknown", and (b) The actual data shows no meaningful performance (0 revenue and 0 units).
             WHERE NOT (
@@ -508,10 +537,12 @@ USE usat_sales_db;
                 -- >>> UNIT GROWTH (ADDED): apply category growth pct to derived units >>>
                 -- Derived 2026 units for total/nonbulk; bulk = total - nonbulk
                 CAST(
-                    CASE 
-                        WHEN b.is_ytd_before_current_month = 1 THEN b.sales_units_2025_actual
-                        ELSE b.sales_units_2025_estimate
-                    END * (1 + 
+                    -- CASE 
+                    --     WHEN b.is_ytd_before_current_month = 1 THEN b.sales_units_2025_actual
+                    --     ELSE b.sales_units_2025_estimate
+                    -- END * 
+                    b.sales_units_2025_estimate * 
+                    (1 + 
                             CASE b.category_goal
                                 WHEN 'One Day - $15'              THEN @UG_One_Day_15
                                 WHEN 'Bronze - Relay'             THEN @UG_Bronze_Relay
@@ -541,10 +572,14 @@ USE usat_sales_db;
                 AS DECIMAL(10,2)) units_total_2026,
 
                 CAST(
-                    CASE    
-                        WHEN b.is_ytd_before_current_month = 1 THEN b.sales_units_2025_actual_nonbulk
-                        ELSE b.sales_units_2025_estimate_nonbulk
-                    END * (1 + 
+                    -- CASE    
+                    --     WHEN b.is_ytd_before_current_month = 1 THEN b.sales_units_2025_actual_nonbulk
+                    --     ELSE b.sales_units_2025_estimate_nonbulk
+                    -- END * 
+                    
+                    -- already calc in "sales_base" CTE
+                    b.sales_units_2025_estimate_nonbulk *
+                    (1 + 
                             CASE b.category_goal
                                 WHEN 'One Day - $15'              THEN @UG_One_Day_15
                                 WHEN 'Bronze - Relay'             THEN @UG_Bronze_Relay
@@ -583,14 +618,19 @@ USE usat_sales_db;
             SELECT
                 p.*,
 
+                -- POST RACE UNITS & REVENUE
+                COALESCE(pr.sales_units_2026_goal_post_race, 0) AS sales_units_2026_goal_post_race,
+                COALESCE(pr.sales_units_2026_goal_post_race, 0) * COALESCE(p.price_2026_nonbulk, 0)  AS sales_rev_2026_goal_post_race, -- did not include b/c sales rev doesn't include post race revenue
+
                 -- bulk units = total - nonbulk (never mix splits from different bases)
                 -- (p.units_total_2026 - p.units_nonbulk_2026)                       AS units_bulk_2026,
 
                 -- Revenues: units × price_2026 (consistent for total/nonbulk/bulk)
                 -- Bulk Units + Non-bulk Units
                 CAST(
-                    ROUND(((p.units_total_2026 - p.units_nonbulk_2026) * p.price_2026_bulk) + 
-                    (p.units_nonbulk_2026 * p.price_2026_nonbulk)
+                    ROUND((
+                        (p.units_total_2026 - p.units_nonbulk_2026) * p.price_2026_bulk) + 
+                        (p.units_nonbulk_2026 * p.price_2026_nonbulk)
                     , 2) 
                 AS  DECIMAL(10,2)) sales_rev_2026_goal,
                 -- FORMULA ABOVE WAS NOT DISPLAYING VALUES FOR Q4 2026 REV GOAL; FIXED BUT KEEIPNG FORMULA IF NECESSARY
@@ -599,16 +639,26 @@ USE usat_sales_db;
                 --         + COALESCE(p.units_nonbulk_2026,0) * COALESCE(p.price_2026_nonbulk,0)
                 --         , 2) AS sales_rev_2026_goal,
 
-                -- Revenues (price each split with its own price)
-                CAST((p.units_nonbulk_2026 * p.price_2026_nonbulk)                      AS DECIMAL(10,2)) sales_rev_2026_goal_nonbulk,
+                -- REVENUE CALCULATIONS (price each split with its own price)
+                -- CAST((p.units_nonbulk_2026 * p.price_2026_nonbulk)                      AS DECIMAL(10,2)) sales_rev_2026_goal_nonbulk,
+                CAST(
+                    (
+                        COALESCE(p.units_nonbulk_2026, 0)
+                        - COALESCE(pr.sales_units_2026_goal_post_race, 0) -- did not include b/c sales rev doesn't include post race revenue
+                    ) 
+                        * COALESCE(p.price_2026_nonbulk, 0)
+                AS DECIMAL(10,2)) AS sales_rev_2026_goal_nonbulk,
                 CAST(((p.units_total_2026 - p.units_nonbulk_2026) * p.price_2026_bulk)  AS DECIMAL(10,2)) sales_rev_2026_goal_bulk,
 
-                -- Units outputs (for parity with your original names)
+                -- UNITS (for parity with your original names)
                 CAST(p.units_total_2026   AS DECIMAL(10,2)) sales_units_2026_goal,
                 CAST((p.units_total_2026 - p.units_nonbulk_2026) AS  DECIMAL(10,2)) sales_units_2026_goal_bulk,
-                CAST(p.units_nonbulk_2026 AS DECIMAL(10,2)) sales_units_2026_goal_nonbulk
+                CAST(p.units_nonbulk_2026 AS DECIMAL(10,2)) sales_units_2026_goal_nonbulk -- includes post race; added in the sales base cte above
 
             FROM priced p
+                LEFT JOIN post_race AS pr ON pr.month_post_race = p.month_goal
+                    AND p.type_goal = pr.type_post_race
+                    AND p.category_goal = pr.category_post_race
         )
         SELECT 
             e.*,
@@ -670,5 +720,24 @@ USE usat_sales_db;
         -- WHERE e.price_2026_bulk IS NULL
 ;
 
--- GENERAL QUERY
-    SELECT * FROM sales_model_2026;
+/* -----------------------------------------------------------------------------
+   2) View results
+----------------------------------------------------------------------------- */
+SELECT * FROM sales_model_2026 LIMIT 300;
+
+SELECT
+  "sales_model_2026" AS query_label,
+  month_goal,
+  COUNT(*) AS row_count,
+  FORMAT(SUM(sales_units_2025_estimate), 0),
+  FORMAT(SUM(sales_units_2025_estimate_nonbulk), 0),
+  FORMAT(SUM(sales_units_2026_goal_nonbulk), 0), 
+  FORMAT(SUM(sales_rev_2026_goal_nonbulk), 0), 
+  FORMAT(SUM(sales_units_2026_goal_post_race), 0), 
+  FORMAT(SUM(sales_rev_2026_goal_post_race), 0), 
+  MIN(month_goal) AS min_month,
+  MAX(month_goal) AS max_month
+FROM sales_model_2026
+GROUP BY month_goal WITH ROLLUP
+ORDER BY month_goal
+;

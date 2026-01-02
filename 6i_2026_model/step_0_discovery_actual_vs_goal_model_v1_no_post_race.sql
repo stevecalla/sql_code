@@ -474,8 +474,7 @@ USE usat_sales_db;
                     END
                 AS DECIMAL(10,2)) AS price_2026_actual,
 
-
-                -- 2026 ACTUAL PRICE LEVELS
+                -- 2026 UNIT PCT CHANGE
                 CAST(
                     CASE
                         b.category_goal

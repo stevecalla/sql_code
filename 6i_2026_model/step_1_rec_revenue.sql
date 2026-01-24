@@ -19,7 +19,7 @@ SELECT
     FORMAT(SUM(sales_rev_2025_estimate_bulk), 0)
     
 FROM sales_model_2026
-GROUP BY 1, 2 WITH ROLLUP
+GROUP BY 1, 2
 ORDER BY 1, 2
 ;
 

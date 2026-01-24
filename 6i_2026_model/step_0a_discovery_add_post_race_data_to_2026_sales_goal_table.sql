@@ -275,12 +275,6 @@ sales_goals AS (
             SELECT
                 pr.month  AS month_post_race,
                 pr.type   AS type_post_race,
-
-                -- IMPORTANT:
-                -- If pr.category already exactly matches your category_goal values, use:
-                -- pr.category AS category_goal
-                --
-                -- If it’s a prefix / partial, keep LIKE join later (below).
                 pr.category AS category_post_race,
 
 				SUM(COALESCE(pr.sales_units, 0))   AS sales_units_2026_goal_post_race,
@@ -479,9 +473,11 @@ sales_goals AS (
         AS DECIMAL(10,2)) AS unit_2026_pct_change,
 
         CAST(
-            (CASE WHEN b.is_ytd_before_current_month = 1 THEN b.sales_units_2025_actual
-                  ELSE b.sales_units_2025_estimate END)
-            * (1 + COALESCE(
+            -- (CASE WHEN b.is_ytd_before_current_month = 1 THEN b.sales_units_2025_actual
+            --       ELSE b.sales_units_2025_estimate END)
+            -- * 
+			b.sales_units_2025_estimate * 
+            (1 + COALESCE(
                 CASE b.category_goal
                     WHEN 'One Day - $15'              THEN @UG_One_Day_15
                     WHEN 'Bronze - Relay'             THEN @UG_Bronze_Relay
@@ -514,7 +510,7 @@ sales_goals AS (
 			-- CASE    
 				--     WHEN b.is_ytd_before_current_month = 1 THEN b.sales_units_2025_actual_nonbulk
 				--     ELSE b.sales_units_2025_estimate_nonbulk
-			sales_units_2025_estimate_nonbulk *
+			b.sales_units_2025_estimate_nonbulk *
 				-- END * 
 			(1 + 
                 CASE b.category_goal
@@ -556,16 +552,18 @@ sales_goals AS (
         CAST(
             ROUND(
                 (
-					(p.units_total_2026 - p.units_nonbulk_2026) * p.price_2026_bulk)
-					+ (p.units_nonbulk_2026 * p.price_2026_nonbulk)
-                    + (pr.sales_units_2026_goal_post_race * p.price_2026_nonbulk)
+					(
+						p.units_total_2026 - p.units_nonbulk_2026) * p.price_2026_bulk)
+						+ (p.units_nonbulk_2026 * p.price_2026_nonbulk)
+						- (pr.sales_units_2026_goal_post_race * p.price_2026_nonbulk)
             , 2)
         AS DECIMAL(10,2)) AS sales_rev_2026_goal,
 
         -- CAST((p.units_nonbulk_2026 * p.price_2026_nonbulk) AS DECIMAL(10,2)) AS sales_rev_2026_goal_nonbulk,
         CAST(
-			(COALESCE(p.units_nonbulk_2026, 0)
-			- COALESCE(pr.sales_units_2026_goal_post_race, 0) -- did not include b/c sales rev doesn't include post race revenue
+			(
+				COALESCE(p.units_nonbulk_2026, 0)
+				- COALESCE(pr.sales_units_2026_goal_post_race, 0) -- did not include b/c sales rev doesn't include post race revenue
             ) 
 			* COALESCE(p.price_2026_nonbulk, 0)
 		AS DECIMAL(10,2)) AS sales_rev_2026_goal_nonbulk,
@@ -647,6 +645,7 @@ SELECT
   "test" AS query_label,
   month_goal,
   COUNT(*) AS row_count,
+  FORMAT(SUM(sales_units_2025_estimate), 0),
   FORMAT(SUM(sales_units_2025_estimate_nonbulk), 0),
   FORMAT(SUM(sales_units_2026_goal_nonbulk), 0), 
   FORMAT(SUM(sales_rev_2026_goal_nonbulk), 0), 
@@ -667,8 +666,12 @@ SELECT
   "sales_model_2026" AS query_label,
   month_goal,
   COUNT(*) AS row_count,
+  FORMAT(SUM(sales_units_2025_estimate), 0),
+  FORMAT(SUM(sales_units_2025_estimate_nonbulk), 0),
   FORMAT(SUM(sales_units_2026_goal_nonbulk), 0), 
   FORMAT(SUM(sales_rev_2026_goal_nonbulk), 0), 
+  FORMAT(SUM(sales_units_2026_goal_post_race), 0), 
+  FORMAT(SUM(sales_rev_2026_goal_post_race), 0), 
   MIN(month_goal) AS min_month,
   MAX(month_goal) AS max_month
 FROM sales_model_2026

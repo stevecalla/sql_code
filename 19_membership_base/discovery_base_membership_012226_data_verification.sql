@@ -1,10 +1,10 @@
 SELECT * FROM membership_base_data LIMIT 10;
-SELECT FORMAT(COUNT(*), 0) FROM membership_base_data LIMIT 10;
+SELECT created_at_mtn, FORMAT(COUNT(*), 0) FROM membership_base_data GROUP BY 1 LIMIT 10;
 
 SELECT year, SUM(unique_profiles), SUM(total_memberships_all_profiles_that_year), SUM(unique_profiles_sales_through_day_of_year), SUM(total_memberships_all_profiles_sales_through_day_of_year), SUM(unique_profiles_sales_ytd), SUM(total_memberships_all_profiles_sales_ytd) FROM membership_base_data GROUP BY 1 ORDER BY 1;
 
 SELECT * FROM membership_detail_data LIMIT 10;
-SELECT FORMAT(COUNT(*), 0) FROM membership_detail_data LIMIT 10;
+SELECT created_at_mtn, FORMAT(COUNT(*), 0) FROM membership_detail_data GROUP BY 1 LIMIT 10;
 SELECT
 	year,
 	-- real_membership_types_sa,

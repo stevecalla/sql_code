@@ -577,4 +577,6 @@ JOIN p26 ON p26.id_profiles = prior.id_profiles
 GROUP BY 1,2,3,4,5
 ORDER BY profiles DESC;
 
+SELECT * FROM membership_detail_data WHERE id_profiles = 412 ORDER BY year DESC, id_profiles;
+
 

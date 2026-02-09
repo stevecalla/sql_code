@@ -99,8 +99,8 @@ ranked_memberships AS (
                     WHEN e.real_membership_types_sa = 'elite' THEN 4
                     ELSE 5
                 END,
-                e.ends_mp ASC,
-                e.purchased_on_adjusted_mp ASC
+                e.ends_mp DESC,
+                e.purchased_on_adjusted_mp DESC
         ) AS membership_type_priority
     FROM exploded_years e
 ),

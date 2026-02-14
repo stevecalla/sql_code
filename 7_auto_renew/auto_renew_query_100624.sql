@@ -1,5 +1,8 @@
 USE vapor;
 
+SELECT * FROM braintree_subscriptions AS b ORDER BY created_at DESC LIMIT 10;
+SELECT FORMAT(COUNT(*), 0) FROM braintree_subscriptions AS b;
+
 -- #1 VERIFICATION
     -- DISTINCT TOTAL = 27,510, GRAND TOTAL = 32,492
     SELECT 

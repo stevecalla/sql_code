@@ -1,30 +1,24 @@
  USE vapor;
 
-SELECT * FROM braintree_subscriptions LIMIT 10; -- 32,481 32,732
-SELECT COUNT(*) FROM braintree_subscriptions LIMIT 10; -- 32,481 32,732
+SELECT * FROM braintree_subscriptions LIMIT 10; -- 49,861
+SELECT "count_query" AS query_label, COUNT(*) FROM braintree_subscriptions LIMIT 10; -- 49,861
 
 SELECT 
     DISTINCT(status), 
+	"status_query" AS query_label,
     COUNT(DISTINCT customer_id) AS distinct_customer_count,
     COUNT(*) FROM braintree_subscriptions 
-GROUP BY status WITH ROLLUP;
+GROUP BY status WITH ROLLUP -- status: "active", "canceled", "fail", "past due", "pending", "success"
+;
 
 SELECT 
     COUNT(DISTINCT customer_id) AS distinct_customer_count, 
     COUNT(customer_id) 
-FROM braintree_subscriptions LIMIT 10; -- 27,505 & 32483
-
-SELECT 
-    COUNT(DISTINCT customer_id) AS distinct_customer_count, 
-    COUNT(customer_id) AS count 
-FROM braintree_subscriptions 
-GROUP BY customer_id WITH ROLLUP HAVING count > 0; -- 27,505
-SELECT * FROM braintree_subscriptions LIMIT 10; -- 32,481 32,732
+FROM braintree_subscriptions LIMIT 10; -- distinct = 38,676; total 49,861
 
 -- 1 - NEXT BILLING BY YEAR
     SELECT 
         YEAR(next_billing_date),
-
         SUM(CASE WHEN YEAR(next_billing_date) NOT IN (2024, 2025, 2026, 2027, 2028, 2029) THEN 1 ELSE 0 END) AS `other`,
         SUM(CASE WHEN YEAR(next_billing_date) = 2024 THEN 1 ELSE 0 END) AS `next_2024`,
         SUM(CASE WHEN YEAR(next_billing_date) = 2025 THEN 1 ELSE 0 END) AS `next_2025`,
@@ -33,9 +27,7 @@ SELECT * FROM braintree_subscriptions LIMIT 10; -- 32,481 32,732
         SUM(CASE WHEN YEAR(next_billing_date) = 2028 THEN 1 ELSE 0 END) AS `next_2028`,
         SUM(CASE WHEN YEAR(next_billing_date) = 2029 THEN 1 ELSE 0 END) AS `next_2029`,
         SUM(CASE WHEN YEAR(next_billing_date) > 2029 THEN 1 ELSE 0 END) AS `next_2030+`,
-
         FORMAT(COUNT(*), 0)
-
     FROM braintree_subscriptions bs
     WHERE  
         bs.deleted_at IS NULL 
@@ -68,16 +60,15 @@ SELECT * FROM braintree_subscriptions LIMIT 10; -- 32,481 32,732
 -- 3 - CREATED AT DATE
     SELECT 
         YEAR(created_at),
-
         SUM(CASE WHEN YEAR(created_at) < 2021 THEN 1 ELSE 0 END) AS `created_at_<2021`,
         SUM(CASE WHEN YEAR(created_at) = 2021 THEN 1 ELSE 0 END) AS `created_at_2021`,
         SUM(CASE WHEN YEAR(created_at) = 2022 THEN 1 ELSE 0 END) AS `created_at_2022`,
         SUM(CASE WHEN YEAR(created_at) = 2023 THEN 1 ELSE 0 END) AS `created_at_2023`,
         SUM(CASE WHEN YEAR(created_at) = 2024 THEN 1 ELSE 0 END) AS `created_at_2024`,
-        SUM(CASE WHEN YEAR(created_at) > 2024 THEN 1 ELSE 0 END) AS `created_at_2025+`,
-
+        SUM(CASE WHEN YEAR(created_at) = 2025 THEN 1 ELSE 0 END) AS `created_at_2025`,
+        SUM(CASE WHEN YEAR(created_at) = 2026 THEN 1 ELSE 0 END) AS `created_at_2026`,
+        SUM(CASE WHEN YEAR(created_at) >= 2027 THEN 1 ELSE 0 END) AS `created_at_2027+`,
         FORMAT(COUNT(*), 0)
-
     FROM braintree_subscriptions bs
     WHERE  
         bs.deleted_at IS NULL 
@@ -89,14 +80,11 @@ SELECT * FROM braintree_subscriptions LIMIT 10; -- 32,481 32,732
 -- 4 - BY PRICE GROUPING
     SELECT 
         price,
-
         SUM(CASE WHEN price < 50 THEN 1 ELSE 0 END) AS `<= 50`,
         SUM(CASE WHEN price >= 50 AND price < 70 THEN 1 ELSE 0 END) AS `> 50 & < 70`,
         SUM(CASE WHEN price > 70 AND price < 120 THEN 1 ELSE 0 END) AS `> 70 & < 120`,
         SUM(CASE WHEN price >= 120 THEN 1 ELSE 0 END) AS `>= 120`,
-
         FORMAT(COUNT(*), 0)
-
     FROM braintree_subscriptions bs
     WHERE  
         bs.deleted_at IS NULL 
@@ -108,14 +96,11 @@ SELECT * FROM braintree_subscriptions LIMIT 10; -- 32,481 32,732
 -- 5 - BY NEXT BILLING YEAR BY PRICE
     SELECT 
         YEAR(next_billing_date),
-
         SUM(CASE WHEN price < 50 THEN 1 ELSE 0 END) AS `<= 50`,
         SUM(CASE WHEN price >= 50 AND price < 70 THEN 1 ELSE 0 END) AS `> 50 & < 70`,
         SUM(CASE WHEN price > 70 AND price < 120 THEN 1 ELSE 0 END) AS `> 70 & < 120`,
         SUM(CASE WHEN price >= 120 THEN 1 ELSE 0 END) AS `>= 120`,
-
         FORMAT(COUNT(*), 0)
-
     FROM braintree_subscriptions bs
     WHERE  
         bs.deleted_at IS NULL 
@@ -128,14 +113,11 @@ SELECT * FROM braintree_subscriptions LIMIT 10; -- 32,481 32,732
     SELECT 
         YEAR(next_billing_date),
         status,
-
         SUM(CASE WHEN price < 50 THEN 1 ELSE 0 END) AS `<= 50`,
         SUM(CASE WHEN price >= 50 AND price < 70 THEN 1 ELSE 0 END) AS `> 50 & < 70`,
         SUM(CASE WHEN price > 70 AND price < 120 THEN 1 ELSE 0 END) AS `> 70 & < 120`,
         SUM(CASE WHEN price >= 120 THEN 1 ELSE 0 END) AS `>= 120`,
-
         FORMAT(COUNT(*), 0)
-
     FROM braintree_subscriptions bs
     WHERE  
         bs.deleted_at IS NULL 

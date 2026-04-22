@@ -1,3 +1,5 @@
+USE vapor;
+
 -- SELECT * FROM sales_key_stats_2015 LIMIT 10;	
 -- SELECT FORMAT(COUNT(*), 0) FROM sales_key_stats_2015 LIMIT 10;	
 -- SELECT DISTINCT(real_membership_types_sa), FORMAT(COUNT(*), 0) FROM sales_key_stats_2015 GROUP BY 1 LIMIT 10;	
@@ -76,8 +78,8 @@ WITH years AS (
     SELECT 2026
     
     -- SELECT 2022 AS y UNION ALL SELECT 2023 UNION ALL SELECT 2024		
-)
-, exploded_years AS (	
+),	
+exploded_years AS (	
     SELECT	
         s.id_profiles,	
         s.real_membership_types_sa,	
@@ -90,7 +92,7 @@ WITH years AS (
 	-- WHERE s.id_profiles IN (54, 57)
     -- WHERE s.id_profiles IN (57)	
 )	
-, membership_counts_by_profile_year AS (	
+,membership_counts_by_profile_year AS (	
     SELECT	
         year,	
         id_profiles,	
@@ -119,9 +121,9 @@ ranked_memberships AS (
                 ends_mp ASC -- row number breaks ties by using, ASC takes the earliest ends_mp date (in the given year)	
         ) AS membership_type_priority	
     FROM exploded_years e	
-)	
+),	
 	
-, best_memberships AS (	
+best_memberships AS (	
     SELECT 	
         rm.*, 	
         mc.total_memberships_for_year	
@@ -137,7 +139,6 @@ SELECT
     new_member_category_6_sa AS new_member_category,	
     COUNT(DISTINCT id_profiles) AS unique_profiles,	
     SUM(total_memberships_for_year) AS total_memberships_all_profiles_that_year	
-    
 FROM best_memberships	
 GROUP BY year, real_membership_types_sa, new_member_category_6_sa	
 ORDER BY year, real_membership_types_sa

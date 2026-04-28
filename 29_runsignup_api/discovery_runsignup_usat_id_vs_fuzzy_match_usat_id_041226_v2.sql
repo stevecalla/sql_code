@@ -48,15 +48,32 @@ WITH base_usat_internal AS (
         MAX(ed.registration_url) AS usat_registration_url,
 
         CASE
-            -- 'USA Triathlon Collegiate Club National Championships','Peasantman','Runner''s Edge - TOBAY Triathlon & Junior Triathlon','Cypress Sprint and Youth Triathlon', Splash & Dash - TRI Clear Lake Triathlon'
-            WHEN race_id IN ('169435', '80325', '131115', '139628', '143649') THEN "manual_match"
-            -- Columbia River Triathlon
-            -- Lightning Warriors Youth Clinic At Bethpage State Park
-            -- Rock N RollMan Olympic, Sprint, Duathlon and Aquabike
-            -- Stanford Draft Legal Treeathlon 2026
-            -- Littlefoot Triathlon - CDA
-            -- WinSprint Triathlon 
-            WHEN race_id IN ('353662', '204160', '137786', '41261', '177905', '49243') THEN "manual_exclude"
+            -- 1) Runner's Edge - TOBAY Triathlon & Junior Triathlon 131115 x
+            -- 2) Cypress Sprint and Youth Triathlon 139628 x
+            -- 3) Splash & Dash - TRI Clear Lake Triathlon 143649 x
+            -- 4) Peasantman 80325 x
+            -- 5) USA Triathlon Collegiate Club National Championships 169435 x
+            -- 6) EXCLUSIVE ONSITE REG! CLASH Endurance Daytona 2026 196250 x
+            -- 7) Toughman 2026 152896 x
+            -- 8) Jenny Lee Tri Cup presented by Get Fit Families, LLC & Beaver County Tourism 126993 x
+            -- 9) Latitude-Fall Triathlon 148084 x
+            -- 10) Pigman Triathlon + Duathlon + Aquabike + Open Water Swim 14601 x
+            -- 11) The Active Texan Triathlon 141220 x
+            -- 12) RipRoar Youth Triathlon | Des Moines, IA 127748 x
+            -- 13) 25th Annual Black Canyon Triathlon 143542 x
+            -- 14) Women's Open Water Swim Race 177339
+            WHEN race_id IN ('131115', '139628', '143649', '80325', '169435', '196250', '152896', '126993', '148084', '14601', '141220', '127748', '143542', '177339') THEN "manual_match"
+
+            -- 1) Columbia River Triathlon 132516
+            -- 2) Lightning Warriors Youth Clinic At Bethpage State Park 204160
+            -- 3) Rock N RollMan Olympic, Sprint, Duathlon and Aquabike 137786
+            -- 4) Stanford Draft Legal Treeathlon 2026 41261
+            -- 5) Omaha Triathlon - Nebraska State Championships 2026 68046
+            -- 6) Lago Mar MultiSport Festival 129393
+            -- 7) Littlefoot Triathlon - CDA 177905
+            -- 8) WinSprint Triathlon 49243
+            -- 9) Brick Endurance Summer Triathlon Series #2 174223
+            WHEN race_id IN ('132516', '204160', '137786', '41261', '68046', '129393', '177905', '49243', '174223') THEN "manual_exclude"
 
             WHEN ed.registration_url = rd.url THEN "runsignup_url = usat_url"
             WHEN TRIM(CAST(rd.usat_event_id_member_settings AS CHAR)) = LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6) THEN "runsignup_usat_sanction_id = usat_sanction_id"
@@ -66,8 +83,8 @@ WITH base_usat_internal AS (
         END AS registration_url_final_rule,
         
         CASE
-            WHEN race_id IN ('169435', '80325', '131115', '139628', '143649') THEN rd.url -- add the URL for manual_match
-            WHEN race_id IN ('353662', '204160', '137786', '41261', '177905', '49243') THEN 0
+            WHEN race_id IN ('131115', '139628', '143649', '80325', '169435', '196250', '152896', '126993', '148084', '14601', '141220', '127748', '143542', '177339') THEN rd.url -- add the URL for manual_match
+            WHEN race_id IN ('132516', '204160', '137786', '41261', '68046', '129393', '177905', '49243', '174223') THEN 0
 
             WHEN ed.registration_url = rd.url THEN rd.url
             WHEN TRIM(CAST(rd.usat_event_id_member_settings AS CHAR)) = LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6) THEN rd.url
@@ -77,6 +94,7 @@ WITH base_usat_internal AS (
 
             ELSE 0
         END AS registration_url_final,
+        
 
         -- CASE
         --     -- 'Race in the Clouds - Alma Dirt Festival 2026' 351149
@@ -86,8 +104,8 @@ WITH base_usat_internal AS (
         -- END AS registration_url_affiliate_final,
         
         CASE
-            WHEN race_id IN ('169435', '80325', '131115', '139628', '143649') THEN CONCAT(rd.url, '?aflt_token=01FyaaWPrCkItbiUqFusguggm9xpGVGX')
-            WHEN race_id IN ('353662', '204160', '137786', '41261', '177905', '49243') THEN 0
+            WHEN race_id IN ('131115', '139628', '143649', '80325', '169435', '196250', '152896', '126993', '148084', '14601', '141220', '127748', '143542', '177339') THEN CONCAT(rd.url, '?aflt_token=01FyaaWPrCkItbiUqFusguggm9xpGVGX')
+            WHEN race_id IN ('132516', '204160', '137786', '41261', '68046', '129393', '177905', '49243', '174223') THEN 0
 
             WHEN ed.registration_url = rd.url THEN CONCAT(rd.url, '?aflt_token=01FyaaWPrCkItbiUqFusguggm9xpGVGX')
             WHEN TRIM(CAST(rd.usat_event_id_member_settings AS CHAR)) = LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6) THEN CONCAT(rd.url, '?aflt_token=01FyaaWPrCkItbiUqFusguggm9xpGVGX')
@@ -106,8 +124,8 @@ WITH base_usat_internal AS (
         -- END AS registration_url_affiliate_final_char_count,
         
         CASE
-            WHEN race_id IN ('169435', '80325', '131115', '139628', '143649') THEN CHAR_LENGTH(CONCAT(rd.url, '?aflt_token=01FyaaWPrCkItbiUqFusguggm9xpGVGX'))
-            WHEN race_id IN ('353662', '204160', '137786', '41261', '177905', '49243')  THEN 0
+            WHEN race_id IN ('131115', '139628', '143649', '80325', '169435', '196250', '152896', '126993', '148084', '14601', '141220', '127748', '143542', '177339') THEN CHAR_LENGTH(CONCAT(rd.url, '?aflt_token=01FyaaWPrCkItbiUqFusguggm9xpGVGX'))
+            WHEN race_id IN ('132516', '204160', '137786', '41261', '68046', '129393', '177905', '49243', '174223') THEN 0
         
             WHEN ed.registration_url = rd.url THEN CHAR_LENGTH(CONCAT(rd.url, '?aflt_token=01FyaaWPrCkItbiUqFusguggm9xpGVGX'))
             WHEN TRIM(CAST(rd.usat_event_id_member_settings AS CHAR)) = LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6) THEN CHAR_LENGTH(CONCAT(rd.url, '?aflt_token=01FyaaWPrCkItbiUqFusguggm9xpGVGX'))
@@ -130,6 +148,19 @@ WITH base_usat_internal AS (
         
         MAX(rd.usat_event_id_member_settings) AS usat_event_id_member_settings,
         MAX(rd.usat_sanction_id_internal) AS usat_sanction_id_internal,
+
+        CASE
+            WHEN race_id IN ('131115', '139628', '143649', '80325', '169435', '196250', '152896', '126993', '148084', '14601', '141220', '127748', '143542', '177339') THEN LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6)
+
+            WHEN race_id IN ('132516', '204160', '137786', '41261', '68046', '129393', '177905', '49243', '174223') THEN NULL
+
+            WHEN ed.registration_url = rd.url THEN LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6)
+            WHEN TRIM(CAST(rd.usat_event_id_member_settings AS CHAR)) = LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6) THEN LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6)
+            WHEN TRIM(CAST(rd.usat_event_id_member_settings AS CHAR)) <> LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6) AND match_score_internal > 95 THEN LEFT(TRIM(CAST(rd.usat_sanction_id_internal AS CHAR)), 6)
+
+            ELSE NULL
+        END AS registration_url_final_sanction_id,
+
         MAX(rd.usat_match_name) AS usat_match_name,
         MAX(rd.usat_match_state) AS usat_match_state,
         MAX(rd.usat_match_city) AS usat_match_city,
@@ -187,7 +218,7 @@ WITH base_usat_internal AS (
 			-- AND rd.event_type NOT IN ('running_only') 
 			-- AND rd.race_id <> 6061 -- running event only
       
-	GROUP BY 1,2,3,4,5,9,10,11,12
+	GROUP BY 1,2,3,4,5,9,10,11,12,24
     ORDER BY 1,2,3
 )
 -- SELECT * FROM base_usat_internal ORDER BY is_possible_exception DESC;

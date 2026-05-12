@@ -57,7 +57,6 @@ WITH filtered_results AS (
 
     WHERE 1 = 1
         AND r.designation = 'Adult Race'
-        AND e.event_type_id = 1
         AND rr.created_at >= '2023-07-25 00:00:00'
         AND rr.finish_status NOT IN ('DNF', 'DNS', 'DQ')
         AND e.deleted_at IS NULL

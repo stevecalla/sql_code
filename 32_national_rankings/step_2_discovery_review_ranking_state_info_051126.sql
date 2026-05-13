@@ -9,13 +9,21 @@ SELECT * FROM events LIMIT 10; -- events.id
 -- ranking_list_period_entries.id to ranking_list_period_entry_race_result.ranking_list_period_entry_id
 -- ranking_list_period_entry_race_result.race_result_id joins race_results.id
 
-SELECT rlpe.*, rlperr.race_result_id, .id, e.name
+SELECT 
+	rlpe.*,
+	GROUP_CONCAT(rlperr.race_result_id ORDER BY rr.id SEPARATOR ' | ') AS race_result_ids,
+	GROUP_CONCAT(rr.id ORDER BY rr.id SEPARATOR ' | ') AS ids_race_results,
+	GROUP_CONCAT(e.name ORDER BY rr.id SEPARATOR ' | ') AS names_events,
+	COUNT(DISTINCT rr.id) AS count_race_results
 FROM ranking_list_period_entries AS rlpe
 	INNER JOIN ranking_list_period_entry_race_result AS rlperr ON rlperr.ranking_list_period_entry_id = rlpe.id
 	INNER JOIN race_results AS rr ON rr.id = rlperr.race_result_id
-	INNER JOIN races as r ON r.id = rr.race_id
-    
-        INNER JOIN events AS e ON e.id = r.event_id
-WHERE rlpe.profile_id = 2479506 
-ORDER BY profile_id DESC LIMIT 30;
+	INNER JOIN races AS r ON r.id = rr.race_id
+	INNER JOIN events AS e ON e.id = r.event_id
+WHERE 1 = 1
+	-- AND rlpe.profile_id = 2479506 
+	AND rlpe.profile_id = 2997
+GROUP BY rlpe.id
+ORDER BY rlpe.profile_id DESC
+LIMIT 100;
 

@@ -140,6 +140,8 @@ SELECT
     COUNT(fr.id_race_results) AS count_total_race_results
 
 FROM filtered_results AS fr
+WHERE 1 = 1
+    AND fr.id_profiles = 2997
 
 GROUP BY 1
 -- LIMIT 10

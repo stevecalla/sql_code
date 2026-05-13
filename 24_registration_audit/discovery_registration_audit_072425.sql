@@ -6,14 +6,15 @@ USE vapor;
 -- SELECT "registration_audit", ra.* FROM registration_audit AS ra WHERE ra.membership_period_id IN (5125396, 5124769, 5124776) LIMIT 10;
 -- SELECT "membership_periods", mp.* FROM membership_periods AS mp WHERE mp.id IN (5125396, 5124769) LIMIT 10;
 -- SELECT "registration_audit", ra.* FROM registration_audit AS ra WHERE DATE(ra.created_at) = "2025-08-05" LIMIT 10000;
-SELECT "membership_applications", ma.* FROM membership_applications AS ma LIMIT 10;
+-- SELECT "membersthip types", mt.* FROM membership_types AS mt LIMIT 100;
+-- SELECT "membersthip types", mt.group, mt.name FROM membership_types AS mt GROUP BY 2, 3 ORDER BY 2, 3 LIMIT 100;
+-- SELECT "membership_applications", ma.* FROM membership_applications AS ma LIMIT 10;
 
 -- reg audit counts
 SELECT 
 	"#2 counts by reg company" AS query_label,
 	ra.registration_company_id
 	, rc.name
-    , CASE WHEN rama.price_paid IS NULL THEN 0 ELSE 1 END AS has_price_paid_rama
     , FORMAT(COUNT(*), 0)
     , COUNT(*) AS count
 FROM registration_audit AS ra
@@ -28,28 +29,11 @@ ORDER BY ra.registration_company_id DESC
 
 -- reg audit counts
 SELECT 
-	"#2a detail by reg company" AS query_label,
-	ra.registration_company_id
-    , rc.name
-    , rama.price_paid
-    , ra.*
-FROM registration_audit AS ra
-	LEFT JOIN registration_companies AS rc ON ra.registration_company_id = rc.id
-    LEFT JOIN registration_audit_membership_application AS rama ON ra.id = rama.audit_id
-    LEFT JOIN membership_applications AS ma ON ma.id = rama.membership_application_id
-    LEFT JOIN membership_periods AS mp ON mp.id = ma.membership_period_id
-WHERE 1 = 1
-    AND ra.registration_company_id = 33 -- njuko
--- GROUP BY 1, 2
-ORDER BY ra.registration_company_id DESC
--- LIMIT 10
-;
-
--- reg audit counts
-SELECT 
-    "#2b counts by reg company" AS query_label,
+    "#2a validation & sales counts by reg company" AS query_label,
     ra.registration_company_id,
     rc.name,
+    mt.group,
+    mt.name,
     FORMAT(SUM(CASE WHEN rama.price_paid IS NULL THEN 1 ELSE 0 END), 0) AS ra_validation,
     FORMAT(SUM(CASE WHEN rama.price_paid IS NOT NULL THEN 1 ELSE 0 END), 0) AS ra_member_sale,
     FORMAT(COUNT(*), 0) AS total_count_formatted
@@ -58,8 +42,30 @@ FROM registration_audit AS ra
     LEFT JOIN registration_audit_membership_application AS rama ON ra.id = rama.audit_id
     LEFT JOIN membership_applications AS ma ON ma.id = rama.membership_application_id
     LEFT JOIN membership_periods AS mp ON mp.id = ma.membership_period_id
-GROUP BY 1, 2, 3
+    LEFT JOIN membership_types AS mt ON ma.membership_type_id = mt.id
+GROUP BY 1, 2, 3, 4, 5
 ORDER BY ra.registration_company_id DESC
+;
+-- reg audit counts
+SELECT 
+	"#2b detail by reg company" AS query_label,
+	ra.registration_company_id
+    , rc.name
+    , rama.price_paid
+    , mt.name
+    , mt.group
+    , ra.*
+FROM registration_audit AS ra
+	LEFT JOIN registration_companies AS rc ON ra.registration_company_id = rc.id
+    LEFT JOIN registration_audit_membership_application AS rama ON ra.id = rama.audit_id
+    LEFT JOIN membership_applications AS ma ON ma.id = rama.membership_application_id
+    LEFT JOIN membership_periods AS mp ON mp.id = ma.membership_period_id
+    LEFT JOIN membership_types AS mt ON ma.membership_type_id = mt.id
+WHERE 1 = 1
+    AND ra.registration_company_id = 33 -- njuko
+-- GROUP BY 1, 2
+ORDER BY ra.created_at DESC
+-- LIMIT 10
 ;
 
 -- UPDATED AT: Last two calendar days in local time (e.g., today + yesterday)

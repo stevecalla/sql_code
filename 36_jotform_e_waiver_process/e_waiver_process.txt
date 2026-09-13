@@ -1,0 +1,58 @@
+E-WAIVER
+
+event-waivers@usatriathlon.org
+password (see env file)
+======================
+Waiver Name: tradewind_traithlon_2026_usat_waiver_and_release
+Name: Tradewind Triathlon 2026
+Id: 360272
+Box: Changed from tradewind_triathlon_2026 to tradewind_triathlon_2026B
+Box Email Address: tradewi.tnq45gxzn9cu93hg@u.box.com
+==============================
+@channel Here are the basics (keeping it one stream) to setup this process:
+
+Step 0: Be sure you have access to (a) jotform, (b) event-waivers@usatriathlon.org, and (c) box = event_waivers_jotform.
+Step 1 Create JotForm: 
+	(a) Clone the Jotform "master_event_usat_waiver_and_release", 
+	(b) Change the form name ("macedonia_gravel_2026_usat_waiver_and_release"), 
+	(c) Change the event name & event id, 
+	(d) Determine if other changes are needed such as additional auto emails et al.
+Step 2 Box: 
+	(a) Create folder for the event. Name it using the pattern established for prior events ("macedonia_gravel_2026"), 
+	(b) Enable the emali address for that folder (in settings), 
+	(c) Copy the folder email address for next step
+Step 3 Outlook: 
+	(a) Create folder for the event ("macedonia_gravel_2026"), 
+	(b) Create rule to move emails from inbox to the specific event folder, 
+	(c) Create rule to forward emails to the event Box folder
+Step 4 Test It: 
+	(a) Fill out a form for an 18 plus - ensure the form populates all fields, ensure the form arrives in Outlook, Your Email & Box. 
+	(b) Repeat for under 18 version.
+Step 5 Remove Test Info: 
+	(a) Delete test info in the event outlook folder and 
+	(b) Delete test info from the JotForm Submission table.
+Step 6 Event Record: Record the event in the event spreadsheet - https://usatriathlon.box.com/s/o4bllv738ks6kwpkeepz2losa86vzwkl
+Step 7 Share with Race Folks: 
+	(a) Get Jotform URL to share. Ensure it is public, 
+	(b) Share Jotform Submission table with race folks. If the race team wants to download the submission form you'll need to make it private, give them the link, they'll need to signup for a free account then request access which you'll need to grant.
+
+Examples:
+Form Title: macedonia_gravel_2026_usat_waiver_and_release
+Event Name (In Form): Macedonia Gravel 2026
+Box Folder Email Address (example): macedon.r99qstf6i0v9owcf@u.box.com
+Outlook Folder Name: macedonia_gravel_2026
+
+Form Title: master_event_2026_usat_waiver_and_release
+Event Name (In Form): Master Event 2026
+Box Folder Email Address (example): master_.agsrdxalma48bsg5@u.box.com
+Outlook Folder Name: master_event_2026
+
+Outlook Rules - rules can be deleted over time as events occur:
+
+macedonia_gravel_forward_to_Box_storage_folder
+if from noreply@jotformsign.com and  subject or body contains "macedonia_gravel_2026" or "Macedonia Gravel 2026" then forward to macedon.r99qstf6i0v9owcf@u.box.com
+don't forget to click off the "stop processing rules" checkbox at the bottom otherwise it won't proceed to the next rule
+
+macedonia_gravel_2026_move_to_outlook_folder
+ subject or body contains "macedonia_gravel_2026" or "Macedonia Gravel 2026" then move to master_event_2026
+don't forget to click off the "stop processing rules" checkbox at the bottom otherwise it won't proceed to the next rule

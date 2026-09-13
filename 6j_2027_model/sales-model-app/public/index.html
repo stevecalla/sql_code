@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>USAT 2027 Sales Model</title>
+<style>
+*{box-sizing:border-box}body{font:14px Arial;margin:0;background:#f3f4f6;color:#222}.wrap{max-width:1450px;margin:auto;padding:22px}
+h1{margin:0 0 4px}small,.muted{color:#666}.card{background:#fff;border:1px solid #ddd;border-radius:8px;margin:12px 0;overflow:hidden}
+summary{padding:14px 18px;font-weight:bold;font-size:17px;cursor:pointer}.body{padding:0 18px 16px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.method,.toolbar{display:flex;gap:6px;flex-wrap:wrap}button,select,input{padding:7px 10px;border:1px solid #bbb;border-radius:5px}
+button{cursor:pointer;border:0;background:#e8e8e8}.active,.run{background:#222!important;color:#fff}.export{background:#16794b;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.field{display:flex;flex-direction:column;gap:4px}.field label{font-size:12px;color:#666}
+
+input{text-align:right;width:100%}.readonly{background:#eee}.hidden{display:none!important}.scroll{max-height:330px;overflow:auto;border:1px solid #ddd}.results_scroll{max-height:520px;overflow:auto;border:1px solid #ddd}
+
+<!-- table{border-collapse:collapse;width:100%;font-size:12px;background:#fff}th,td{padding:6px 8px;border:1px solid #ddd;text-align:right;white-space:nowrap}
+
+th{position:sticky;top:0;background:#eee;z-index:3}th:first-child,td:first-child{text-align:left}.edit{width:85px}tfoot td{position:sticky;bottom:0;background:#eee;font-weight:bold;z-index:2;border-top:2px solid #999} -->
+
+table{border-collapse:collapse;width:100%;font-size:12px;background:#fff}th,td{padding:6px 8px;border:1px solid #ddd;text-align:center;white-space:nowrap}
+
+th{position:sticky;top:0;background:#eee;z-index:3}th:first-child,td:first-child{text-align:left}.edit{width:85px;text-align:center}tfoot td{position:sticky;bottom:0;background:#eee;font-weight:bold;z-index:2;border-top:2px solid #999}
+
+.summary_grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{background:#f6f6f6;padding:12px;border-radius:6px}.value{font-size:21px;font-weight:bold;margin-top:4px}
+.period{display:flex;gap:20px;align-items:center;flex-wrap:wrap}.period_note{padding:9px 12px;background:#f5f5f5;border-radius:5px}.pos{color:#16794b}.neg{color:#b00020}
+[data-tip-key]{cursor:help;text-decoration:underline dotted #777;text-underline-offset:3px}
+
+.draggable_card>summary{cursor:grab;display:flex;align-items:center;gap:8px}.draggable_card>summary:before{content:"☰";color:#777;font-size:16px}.draggable_card.dragging{opacity:.45}.drag_over{border-top:3px solid #222}
+
+.assumption_columns{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.assumption_group{background:#f7f7f7;border:1px solid #ddd;border-radius:7px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.assumption_group h3{margin:0 0 3px;font-size:14px}
+
+.model_controls_grid{display:grid;grid-template-columns:220px 300px 240px;gap:12px;align-items:end}
+.checkbox_label{display:flex;align-items:center;gap:7px;height:34px}.checkbox_label input{width:auto}
+.versions_scroll{margin-top:14px;overflow:auto;border:1px solid #ddd}
+.versions_table{min-width:1350px}
+.versions_table button{padding:5px 8px;font-size:12px}
+.version_model{background:none;padding:0;font-weight:bold;text-decoration:underline;cursor:pointer}
+.version_detail{margin-top:12px;padding:14px;background:#f7f7f7;border:1px solid #ddd;border-radius:6px}
+.version_detail_grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.version_detail h4{margin:0 0 6px}
+
+@media(max-width:1000px){.assumption_columns{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.model_controls_grid,.version_detail_grid{grid-template-columns:1fr}}
+@media(max-width:900px){.model_controls_grid{grid-template-columns:1fr}}
+@media(max-width:800px){.summary_grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.assumption_columns{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body><div class="wrap">
+
+<h1>USAT 2027 Membership Sales Model</h1>
+<div id="status" class="muted">Loading...</div>
+
+<!-- MODEL CONTROLS -->
+<details class="card" open>
+<summary>Model Controls</summary>
+<div class="body">
+
+    <div class="model_controls_grid">
+        <div class="field">
+            <label for="version_user">User Name</label>
+            <input id="version_user" type="text" placeholder="e.g. steve" style="text-align:left">
+        </div>
+
+        <div class="field">
+            <label for="model_name">Model Name</label>
+            <input id="model_name" type="text" placeholder="e.g. no_yoy_change" style="text-align:left" onblur="normalize_model_name()">
+        </div>
+
+        <div class="field">
+            <label>Default</label>
+            <label class="checkbox_label">
+                <input id="version_default" type="checkbox">
+                Set new version as default
+            </label>
+        </div>
+    </div>
+
+    <div class="toolbar" style="margin-top:12px">
+        <button onclick="save_version()">Save Version</button>
+        <button class="run" onclick="run_model()">Run Current Model</button>
+        <span id="version_status" class="muted"></span>
+        <span id="run_status"></span>
+    </div>
+
+    <div id="default_version" class="muted" style="margin-top:10px"></div>
+
+    <div class="versions_scroll">
+        <table class="versions_table">
+            <thead><tr>
+                <th>Model</th>
+                <th>User</th>
+                <th>Default</th>
+                <th>Period</th>
+                <th>Volume</th>
+                <th>New %</th>
+                <th>Repeat %</th>
+                <th>Winback</th>
+                <th>Price</th>
+                <th>Price %</th>
+                <th>Redistribution</th>
+                <th>Product Changes</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr></thead>
+            <tbody id="versions_rows"></tbody>
+        </table>
+    </div>
+
+    <div id="version_detail" class="version_detail hidden"></div>
+
+</div>
+</details>
+
+<!-- VOLUME ASSUPTIONS CARD -->
+<details class="card draggable_card" data-card="volume">
+<summary draggable="true">Volume Assumptions</summary>
+<div class="body">
+    <div class="head">
+        <span class="muted">Choose top-level business levers or product-level growth.</span>
+        <div class="method">
+            <button onclick="reset_volume()">Reset</button>
+            <button id="volume_top_button" onclick="set_volume('TOP_LEVEL')">Top Level</button>
+            <button id="volume_product_button" onclick="set_volume('PRODUCT')">Product</button>
+        </div>
+    </div>
+    <div id="volume_top" class="grid"></div>
+    <div id="volume_product" class="scroll hidden">
+        <table>
+            <thead><tr>
+                <th data-tip-key="type_goal">Type</th>
+                <th data-tip-key="category_goal">Category</th>
+                <th data-tip-key="this_year_units">This Year Units</th>
+                <th data-tip-key="product_unit_pct_change">Growth %</th>
+                <th data-tip-key="projected_units">Projected Units</th>
+            </tr></thead>
+            <tbody id="volume_rows"></tbody>
+            <tfoot><tr><td colspan="2">Grand Total</td><td id="volume_total_this_year"></td><td id="volume_total_growth"></td><td id="volume_total_projected"></td></tr></tfoot>
+        </table>
+    </div>
+</div>
+</details>
+
+<!-- PRICE ASSUMPTIONS CARD -->
+<details class="card draggable_card" data-card="price">
+<summary draggable="true">Price Assumptions</summary>
+<div class="body">
+    <div class="head">
+        <span class="muted">Product mode carries forward this year's realization rate.</span>
+        <div class="method">
+            <button onclick="reset_price()">Reset</button>
+            <button id="price_top_button" onclick="set_price('TOP_LEVEL')">Top Level</button>
+            <button id="price_product_button" onclick="set_price('PRODUCT')">Product</button>
+        </div>
+    </div>
+    <div id="price_top" class="grid"></div>
+    <div id="price_product" class="scroll hidden">
+        <table>
+            <thead><tr>
+                <th data-tip-key="type_goal">Type</th>
+                <th data-tip-key="category_goal">Category</th>
+                <th data-tip-key="this_year_actual">This Year Price</th>
+                <th data-tip-key="this_year_effective">This Year Effective</th>
+                <th data-tip-key="next_year_actual">Next Year Price</th>
+                <th data-tip-key="price_change_pct">Price Change %</th>
+                <th data-tip-key="next_year_effective">Calculated Effective</th>
+            </tr></thead>
+            <tbody id="price_rows"></tbody>
+            <tfoot><tr><td colspan="2">Grand Total / Weighted Avg</td><td id="price_total_this_year"></td><td id="price_total_effective_this_year"></td><td id="price_total_next_year"></td><td id="price_total_change"></td><td id="price_total_effective_next_year"></td></tr></tfoot>
+        </table>
+    </div>
+</div>
+</details>
+
+<!-- PRODUCT RE-DISTRIBUTION CARD -->
+<details class="card draggable_card" data-card="redistribution">
+<summary draggable="true">Product Redistribution</summary>
+<div class="body">
+    <div class="head">
+        <span class="muted">Reallocate discontinued Platinum products.</span>
+        <button onclick="reset_redistribution()">Reset</button>
+    </div>
+
+    <div class="grid">
+        <div class="field"><label data-tip-key="discontinue_platinum_foundation">Discontinue / Reallocate Platinum - Foundation</label><input id="discontinue_platinum_foundation" type="checkbox" style="width:auto;text-align:left"></div>
+        <div class="field"><label data-tip-key="discontinue_platinum_usa">Discontinue / Reallocate Platinum - Team USA</label><input id="discontinue_platinum_usa" type="checkbox" style="width:auto;text-align:left"></div>
+        <div class="field"><label data-tip-key="redistribute_platinum_silver_pct">To Silver %</label><input id="redistribute_platinum_silver_pct" type="number" step=".1"></div>
+        <div class="field"><label data-tip-key="redistribute_platinum_gold_pct">To Gold %</label><input id="redistribute_platinum_gold_pct" type="number" step=".1"></div>
+        <div class="field"><label data-tip-key="redistribute_platinum_3_year_pct">To 3-Year %</label><input id="redistribute_platinum_3_year_pct" type="number" step=".1"></div>
+    </div>
+</div>
+</details>
+
+<!-- MODEL PERIOD CARD -->
+<details class="card draggable_card" data-card="period">
+    <!-- <details class="card draggable_card" data-card="period" open> -->
+<summary draggable="true">Model Period</summary>
+<div class="body period">
+    <div class="field"><label data-tip-key="actual_through_month">Use actual results through</label><select id="actual_month" onchange="update_period_note()"></select></div>
+    <div id="period_note" class="period_note"></div>
+</div>
+</details>
+
+<!-- SUMMARY CARD -->
+<details class="card draggable_card" data-card="summary" open>
+<summary draggable="true">Summary</summary>
+<div class="body summary_grid">
+    <div class="metric"><small data-tip-key="summary_this_year_revenue">This Year Revenue</small><div id="this_year_revenue" class="value">-</div></div>
+    <div class="metric"><small data-tip-key="summary_next_year_revenue">Next Year Revenue</small><div id="next_year_revenue" class="value">-</div><div id="revenue_change"></div></div>
+    <div class="metric"><small data-tip-key="summary_this_year_units">This Year Units</small><div id="this_year_units" class="value">-</div></div>
+    <div class="metric"><small data-tip-key="summary_next_year_units">Next Year Units</small><div id="next_year_units" class="value">-</div><div id="units_change"></div></div>
+</div>
+</details>
+
+<!-- REPORT CARD -->
+<details class="card draggable_card" data-card="reports" open>
+<summary draggable="true">Reports</summary>
+<div class="body">
+    <div class="toolbar" style="margin-bottom:10px"><select id="report_select" onchange="show_results(this.value)"></select><button onclick="show_results($('report_select').value)">Refresh</button><button class="export" onclick="location='/api/export'">Export All to Excel</button></div>
+    <div id="report_info" class="muted" style="margin-bottom:8px"></div>
+    <div id="results" class="results_scroll"></div>
+</div>
+</details>
+
+</div>
+
+<script>
+let config,volume_method="TOP_LEVEL",price_method="PRODUCT";
+const $=id=>document.getElementById(id);
+const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const money=v=>Number(v||0).toLocaleString("en-US",{style:"currency",currency:"USD"});
+const num=v=>Number(v||0).toLocaleString("en-US");
+const pct=v=>(Number(v||0)*100).toFixed(1);
+
+const code_tooltips={
+    actual_through_month:"SQL: @actual_through_month\nLast month treated as actual results. Later months use goal / forecast.",
+    new_members_base:"SQL: @lever_new_members_base\nBase new-member population.",
+    new_members_pct:"SQL: @lever_new_members_pct_change\nIncremental units = ROUND(base * change %,0).",
+    repeat_one_day_base:"SQL: @lever_repeat_one_day_base\nBase repeat one-day members.",
+    repeat_annual_base:"SQL: @lever_repeat_annual_base\nBase repeat annual members.",
+    repeat_members_base:"SQL: @lever_repeat_members_base\nReference total repeat-member base.",
+    repeat_members_pct:"SQL: @lever_repeat_members_pct_change\nApplied separately to one-day and annual bases.",
+    winback_units:"SQL: @lever_winback_units_incremental\nIncremental win-back units.",
+    winback_one_day_pct:"SQL: @lever_winback_one_day_pct\nWin-back share allocated to one-day.",
+    winback_annual_pct:"SQL: @lever_winback_annual_pct\nWin-back share allocated to annual.",
+    upgrades_base:"SQL: @lever_upgrades_base\nBase upgrades from one-day to annual.",
+    upgrades_pct:"SQL: @lever_upgrades_pct_change\nUpgrade impact = base * change %.",
+    downgrades_base:"SQL: @lever_downgrades_base\nBase annual-to-one-day downgrades.",
+    downgrades_pct:"SQL: @lever_downgrades_pct_change\nReduction in downgrades retains annual units.",
+    price_pct:"SQL: @lever_price_pct_change\nTOP_LEVEL effective price change.",
+    discontinue_platinum_foundation:"SQL: @discontinue_Platinum_Foundation\n1 = zero projected units and redistribute.",
+    discontinue_platinum_usa:"SQL: @discontinue_Platinum_USA\n1 = zero projected units and redistribute.",
+    redistribute_platinum_silver_pct:"SQL: @redistribute_Platinum_to_Silver_pct",
+    redistribute_platinum_gold_pct:"SQL: @redistribute_Platinum_to_Gold_pct",
+    redistribute_platinum_3_year_pct:"SQL: @redistribute_Platinum_to_3_Year_pct",
+    this_year_units:"SQL: SUM(sales_units_this_year_estimate_nonbulk)",
+    projected_units:"UI: this_year_units * (1 + growth_pct)",
+    product_unit_pct_change:"SQL: @UG_<product>\nProduct growth used in PRODUCT mode.",
+    this_year_actual:"SQL: price_this_year_actual",
+    this_year_effective:"SQL: price_this_year_effective_nonbulk",
+    next_year_actual:"SQL: price_next_year_actual",
+    next_year_effective:"SQL: price_next_year_effective_nonbulk",
+    price_change_pct:"UI: (next_year_price / this_year_price - 1) * 100",
+    summary_this_year_revenue:"SQL: SUM(sales_rev_this_year_estimate_nonbulk)",
+    summary_next_year_revenue:"SQL: SUM(sales_rev_next_year_goal_nonbulk)",
+    summary_this_year_units:"SQL: SUM(sales_units_this_year_estimate_nonbulk)",
+    summary_next_year_units:"SQL: SUM(sales_units_next_year_goal_nonbulk)",
+    query_label:"Report identifier generated by server.js.",
+    type_goal:"SQL: type_goal",
+    category_goal:"SQL: category_goal",
+    category_sort_order:"SQL: MIN(category_sort_order_goal)",
+    category_sort_order_goal:"SQL: category_sort_order_goal",
+    row_count:"SQL: COUNT(*)",
+    month_goal:"SQL: month_goal",
+    sales_units_this_year_estimate:"SQL: sales_units_this_year_estimate",
+    sales_rev_this_year_estimate:"SQL: sales_rev_this_year_estimate",
+    sales_units_this_year_estimate_nonbulk:"SQL: sales_units_this_year_estimate_nonbulk",
+    sales_rev_this_year_estimate_nonbulk:"SQL: sales_rev_this_year_estimate_nonbulk",
+    price_this_year_actual:"SQL: price_this_year_actual",
+    non_bulk_price_this_year_effective:"SQL: revenue / units",
+    sales_units_next_year_goal_nonbulk:"SQL: sales_units_next_year_goal_nonbulk",
+    sales_rev_next_year_goal_nonbulk:"SQL: sales_rev_next_year_goal_nonbulk",
+    price_next_year_actual:"SQL: price_next_year_actual",
+    non_bulk_price_next_year_effective:"SQL: next-year revenue / next-year units",
+    sales_units_next_year_goal_post_race:"SQL: sales_units_next_year_goal_post_race",
+    sales_rev_next_year_goal_post_race:"Post-race units × next-year effective price.",
+    this_year_revenue:"SQL: SUM(sales_rev_this_year_estimate_nonbulk)",
+    next_year_revenue:"SQL: SUM(sales_rev_next_year_goal_nonbulk)",
+    revenue_change:"SQL: next_year_revenue - this_year_revenue",
+    revenue_pct_change:"SQL: (next_year_revenue / this_year_revenue - 1) * 100",
+    next_year_units:"SQL: SUM(sales_units_next_year_goal_nonbulk)",
+    unit_change:"SQL: next_year_units - this_year_units",
+    unit_pct_change:"SQL: (next_year_units / this_year_units - 1) * 100",
+    volume_method:"SQL: @volume_method\nTOP_LEVEL or PRODUCT.",
+    price_method:"SQL: @price_method\nTOP_LEVEL or PRODUCT.",
+    lever_price_pct_change:"SQL: @lever_price_pct_change",
+    new_members:"SQL: SUM(lever_new_member_units_incremental)",
+    repeat_members:"SQL: SUM(lever_repeat_units_incremental)",
+    winback:"SQL: SUM(lever_winback_units_incremental)",
+    mix:"SQL: SUM(lever_mix_units_incremental)",
+    total:"SQL: SUM(lever_units_incremental)",
+    units_before_redistribution:"SQL: SUM(units_nonbulk_next_year_base)",
+    units_after_redistribution:"SQL: SUM(units_nonbulk_next_year)",
+    redistribution_unit_change:"SQL: after - before",
+    platinum_to_silver_pct:"SQL: @redistribute_Platinum_to_Silver_pct",
+    platinum_to_gold_pct:"SQL: @redistribute_Platinum_to_Gold_pct",
+    platinum_to_3_year_pct:"SQL: @redistribute_Platinum_to_3_Year_pct",
+    metric:"Revenue, Units or Effective Price.",
+    Grand_Total:"Total across January through December."
+};
+
+const tooltip_for=key=>code_tooltips[key]||(/^(1|2|3|4|5|6|7|8|9|10|11|12)$/.test(key)?`Month ${key}: ${months[Number(key)-1]}`:"");
+const apply_tooltips=()=>document.querySelectorAll("[data-tip-key]").forEach(el=>{const tip=tooltip_for(el.dataset.tipKey);if(tip) el.title=tip;});
+const field=(label,id,value,readonly=false,step=".1")=>`<div class="field"><label data-tip-key="${id}">${label}</label><input id="${id}" type="number" step="${step}" value="${value}" ${readonly?'readonly class="readonly"':''}></div>`;
+
+const changed=(a,b)=>Math.abs(Number(a||0)-Number(b||0))>.000001;
+
+function volume_top_dirty(){
+    const v=config.top_level_volume;
+    return changed($("new_members_pct").value/100,v.new_members_pct_change)||
+        changed($("repeat_members_pct").value/100,v.repeat_members_pct_change)||
+        changed($("winback_units").value,v.winback_units_incremental)||
+        changed($("upgrades_pct").value/100,v.upgrades_pct_change)||
+        changed($("downgrades_pct").value/100,v.downgrades_pct_change);
+}
+
+function volume_product_dirty(){
+    return config.products.some((product,index)=>
+        changed($(`growth_${index}`).value/100,product.growth_pct)
+    );
+}
+
+function price_top_dirty(){
+    return changed($("price_pct").value/100,config.lever_price_pct_change);
+}
+
+function price_product_dirty(){
+    return config.products.some((product,index)=>
+        changed($(`price_${index}`).value,product.actual_next_year)
+    );
+}
+
+function set_volume(method,force=false){
+    if(!force&&method==="PRODUCT"&&volume_method==="TOP_LEVEL"&&volume_top_dirty()){
+        alert("Top Level volume assumptions have been changed. Reset Volume before switching to Product.");
+        return;
+    }
+    if(!force&&method==="TOP_LEVEL"&&volume_method==="PRODUCT"&&volume_product_dirty()){
+        alert("Product volume assumptions have been changed. Reset Volume before switching to Top Level.");
+        return;
+    }
+
+    volume_method=method;
+    const top=method==="TOP_LEVEL";
+    $("volume_top").classList.toggle("hidden",!top);
+    $("volume_product").classList.toggle("hidden",top);
+    $("volume_top_button").classList.toggle("active",top);
+    $("volume_product_button").classList.toggle("active",!top);
+    $("volume_top").querySelectorAll("input").forEach(input=>input.disabled=!top);
+    $("volume_product").querySelectorAll("input").forEach(input=>input.disabled=top);
+}
+
+function set_price(method,force=false){
+    if(!force&&method==="PRODUCT"&&price_method==="TOP_LEVEL"&&price_top_dirty()){
+        alert("Top Level price assumptions have been changed. Reset Price before switching to Product.");
+        return;
+    }
+    if(!force&&method==="TOP_LEVEL"&&price_method==="PRODUCT"&&price_product_dirty()){
+        alert("Product price assumptions have been changed. Reset Price before switching to Top Level.");
+        return;
+    }
+
+    price_method=method;
+    const top=method==="TOP_LEVEL";
+    $("price_top").classList.toggle("hidden",!top);
+    $("price_product").classList.toggle("hidden",top);
+    $("price_top_button").classList.toggle("active",top);
+    $("price_product_button").classList.toggle("active",!top);
+    $("price_top").querySelectorAll("input").forEach(input=>input.disabled=!top);
+    $("price_product").querySelectorAll("input").forEach(input=>input.disabled=top);
+}
+
+function update_period_note(){
+    const month=Number($("actual_month").value),next_month=month<12?months[month]:"none";
+    $("period_note").innerHTML=`<b>2026 estimate:</b> actual January–${months[month-1]}. ${month<12?`Goal/forecast ${next_month}–December.`:"Full year actual."}`;
+}
+
+function build_top_level(){
+    const v=config.top_level_volume;
+    $("volume_top").classList.add("assumption_columns");
+    $("volume_top").innerHTML=`
+        <div class="assumption_group">
+            <h3>New Members</h3>
+            ${field("Base","new_members_base",v.new_members_base,true)}
+            ${field("Change %","new_members_pct",pct(v.new_members_pct_change))}
+        </div>
+
+        <div class="assumption_group">
+            <h3>Repeat Members</h3>
+            ${field("One-day Base","repeat_one_day_base",v.repeat_one_day_base,true)}
+            ${field("Annual Base","repeat_annual_base",v.repeat_annual_base,true)}
+            ${field("Total Base","repeat_members_base",v.repeat_members_base,true)}
+            ${field("Change %","repeat_members_pct",pct(v.repeat_members_pct_change))}
+        </div>
+
+        <div class="assumption_group">
+            <h3>Win-back</h3>
+            ${field("Incremental Units","winback_units",v.winback_units_incremental,false,"1")}
+            ${field("One-day %","winback_one_day_pct",pct(v.winback_one_day_pct),true)}
+            ${field("Annual %","winback_annual_pct",pct(v.winback_annual_pct),true)}
+        </div>
+
+        <div class="assumption_group">
+            <h3>Upgrades / Downgrades</h3>
+            ${field("Upgrades Base","upgrades_base",v.upgrades_base,true)}
+            ${field("Upgrades Change %","upgrades_pct",pct(v.upgrades_pct_change))}
+            ${field("Downgrades Base","downgrades_base",v.downgrades_base,true)}
+            ${field("Downgrades Change %","downgrades_pct",pct(v.downgrades_pct_change))}
+        </div>
+    `;
+    $("price_top").innerHTML=field("Effective Price Change %","price_pct",pct(config.lever_price_pct_change));
+    apply_tooltips();
+}
+
+function build_price_table(){
+    $("price_rows").innerHTML=config.products.map((product,index)=>`<tr>
+        <td>${product.type}</td><td>${product.name}</td><td>${money(product.actual_this_year)}</td><td>${money(product.effective_this_year)}</td>
+        <td><input class="edit" id="price_${index}" type="number" step=".01" value="${product.actual_next_year}" oninput="update_price(${index})"></td>
+        <td id="price_change_${index}"></td><td id="effective_${index}"></td>
+    </tr>`).join("");
+    config.products.forEach((_,index)=>update_price(index));
+    update_price_totals();
+}
+
+function update_price(index){
+    const product=config.products[index],next_price=Number($(`price_${index}`).value);
+    const price_change=product.actual_this_year?(next_price/product.actual_this_year-1)*100:null;
+    const effective_price=product.actual_this_year?next_price*(product.effective_this_year/product.actual_this_year):0;
+    $(`price_change_${index}`).innerHTML=price_change===null?"-":`<span class="${price_change>0?'pos':price_change<0?'neg':''}">${price_change.toFixed(1)}%</span>`;
+    $(`effective_${index}`).innerText=money(effective_price);
+    update_price_totals();
+}
+
+function update_price_totals(){
+    let units=0,this_year_price=0,this_year_effective=0,next_year_price=0,next_year_effective=0;
+    config.products.forEach((product,index)=>{
+        const product_units=Number(product.this_year_units||0),next_price=Number($(`price_${index}`).value||0);
+        const calculated_effective=product.actual_this_year?next_price*(product.effective_this_year/product.actual_this_year):0;
+        units+=product_units;
+        this_year_price+=product_units*Number(product.actual_this_year||0);
+        this_year_effective+=product_units*Number(product.effective_this_year||0);
+        next_year_price+=product_units*next_price;
+        next_year_effective+=product_units*calculated_effective;
+    });
+    const ty=units?this_year_price/units:0,tye=units?this_year_effective/units:0,ny=units?next_year_price/units:0,nye=units?next_year_effective/units:0;
+    $("price_total_this_year").innerText=money(ty);
+    $("price_total_effective_this_year").innerText=money(tye);
+    $("price_total_next_year").innerText=money(ny);
+    $("price_total_change").innerText=ty?((ny/ty-1)*100).toFixed(1)+"%":"-";
+    $("price_total_effective_next_year").innerText=money(nye);
+}
+
+function build_volume_table(){
+    $("volume_rows").innerHTML=config.products.map((product,index)=>`<tr>
+        <td>${product.type}</td><td>${product.name}</td><td>${num(product.this_year_units)}</td>
+        <td><input class="edit" id="growth_${index}" type="number" step=".1" value="${pct(product.growth_pct)}" oninput="update_units(${index})"></td>
+        <td id="units_${index}"></td>
+    </tr>`).join("");
+    config.products.forEach((_,index)=>update_units(index));
+    update_volume_totals();
+}
+
+function update_units(index){
+    const product=config.products[index],growth_pct=Number($(`growth_${index}`).value)/100;
+    $(`units_${index}`).innerText=num(Math.round(product.this_year_units*(1+growth_pct)));
+    update_volume_totals();
+}
+
+function update_volume_totals(){
+    let this_year=0,projected=0;
+    config.products.forEach((product,index)=>{
+        const units=Number(product.this_year_units||0),growth=Number($(`growth_${index}`).value||0)/100;
+        this_year+=units;projected+=units*(1+growth);
+    });
+    $("volume_total_this_year").innerText=num(Math.round(this_year));
+    $("volume_total_projected").innerText=num(Math.round(projected));
+    $("volume_total_growth").innerText=this_year?((projected/this_year-1)*100).toFixed(1)+"%":"-";
+}
+
+function reset_volume(){
+    const v=config.top_level_volume;
+    $("new_members_pct").value=pct(v.new_members_pct_change);
+    $("repeat_members_pct").value=pct(v.repeat_members_pct_change);
+    $("winback_units").value=v.winback_units_incremental;
+    $("upgrades_pct").value=pct(v.upgrades_pct_change);
+    $("downgrades_pct").value=pct(v.downgrades_pct_change);
+
+    config.products.forEach((product,index)=>{
+        $(`growth_${index}`).value=pct(product.growth_pct);
+        update_units(index);
+    });
+
+    volume_method=config.volume_method;
+    set_volume(volume_method);
+}
+
+function reset_price(){
+    $("price_pct").value=pct(config.lever_price_pct_change);
+
+    config.products.forEach((product,index)=>{
+        $(`price_${index}`).value=product.actual_next_year;
+        update_price(index);
+    });
+
+    price_method=config.price_method;
+    set_price(price_method);
+}
+
+function reset_redistribution(){
+    const v=config.top_level_volume;
+    $("discontinue_platinum_foundation").checked=Number(v.discontinue_platinum_foundation)===1;
+    $("discontinue_platinum_usa").checked=Number(v.discontinue_platinum_usa)===1;
+    $("redistribute_platinum_silver_pct").value=pct(v.redistribute_platinum_silver_pct);
+    $("redistribute_platinum_gold_pct").value=pct(v.redistribute_platinum_gold_pct);
+    $("redistribute_platinum_3_year_pct").value=pct(v.redistribute_platinum_3_year_pct);
+}
+
+function normalize_model_name(){
+    const el=$("model_name");
+    el.value=el.value.trim().toLowerCase()
+        .replace(/%/g,"")
+        .replace(/[^a-z0-9]+/g,"_")
+        .replace(/^_+|_+$/g,"");
+    return el.value;
+}
+
+function collect_variables(){
+    const variables={
+        actual_through_month:Number($("actual_month").value),
+        volume_method,
+        price_method,
+        lever_new_members_pct_change:Number($("new_members_pct").value)/100,
+        lever_repeat_members_pct_change:Number($("repeat_members_pct").value)/100,
+        lever_winback_units_incremental:Number($("winback_units").value),
+        lever_upgrades_pct_change:Number($("upgrades_pct").value)/100,
+        lever_downgrades_pct_change:Number($("downgrades_pct").value)/100,
+        lever_price_pct_change:Number($("price_pct").value)/100,
+        discontinue_Platinum_Foundation:$("discontinue_platinum_foundation").checked?1:0,
+        discontinue_Platinum_USA:$("discontinue_platinum_usa").checked?1:0,
+        redistribute_Platinum_to_Silver_pct:Number($("redistribute_platinum_silver_pct").value)/100,
+        redistribute_Platinum_to_Gold_pct:Number($("redistribute_platinum_gold_pct").value)/100,
+        redistribute_Platinum_to_3_Year_pct:Number($("redistribute_platinum_3_year_pct").value)/100
+    };
+    config.products.forEach((product,index)=>{
+        variables[`${product.key}_actual_next_year`]=Number($(`price_${index}`).value);
+        variables[`UG_${product.key}`]=Number($(`growth_${index}`).value)/100;
+    });
+    return variables;
+}
+
+async function load_config(){
+    try{
+        config=await fetch("/api/config").then(response=>response.json());
+
+        if(config.error) throw Error(config.error);
+
+        volume_method=config.volume_method;price_method=config.price_method;
+
+        const max_actual_month=Math.max(1,new Date().getMonth());
+        $("actual_month").innerHTML=months.slice(0,max_actual_month).map((month,index)=>
+            `<option value="${index+1}" ${index+1===max_actual_month?'selected':''}>${month}</option>`
+        ).join("");
+
+        $("report_select").innerHTML=config.reports.map(report=>`<option value="${report.key}">${report.title}</option>`).join("");
+
+        build_top_level();build_price_table();build_volume_table();
+        set_volume(volume_method);set_price(price_method);
+        update_period_note();
+
+        $("redistribute_platinum_silver_pct").value=pct(config.top_level_volume.redistribute_platinum_silver_pct);
+        $("redistribute_platinum_gold_pct").value=pct(config.top_level_volume.redistribute_platinum_gold_pct);
+        $("redistribute_platinum_3_year_pct").value=pct(config.top_level_volume.redistribute_platinum_3_year_pct);
+        $("discontinue_platinum_foundation").checked=Number(config.top_level_volume.discontinue_platinum_foundation)===1;
+        $("discontinue_platinum_usa").checked=Number(config.top_level_volume.discontinue_platinum_usa)===1;
+        apply_tooltips();
+        $("status").innerText="Model configuration loaded.";
+    }catch(error){$("status").innerText="ERROR: "+error.message;}
+}
+
+async function run_model(){
+    const redistribution_total=Number($("redistribute_platinum_silver_pct").value||0)+Number($("redistribute_platinum_gold_pct").value||0)+Number($("redistribute_platinum_3_year_pct").value||0);
+    if(Math.abs(redistribution_total-100)>0.001){$("run_status").innerText=`ERROR: Platinum redistribution must total 100% (currently ${redistribution_total}%).`;return;}
+    $("run_status").innerText="Running...";
+    try{
+        const data=await fetch("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({variables:collect_variables()})}).then(response=>response.json());
+        if(!data.ok) throw Error(data.error);
+        const summary=data.summary;
+        $("this_year_revenue").innerText=money(summary.this_year_revenue);
+        $("next_year_revenue").innerText=money(summary.next_year_revenue);
+        $("this_year_units").innerText=num(summary.this_year_units);
+        $("next_year_units").innerText=num(summary.next_year_units);
+        $("revenue_change").innerText=Number(summary.revenue_pct_change).toFixed(1)+"%";
+        $("units_change").innerText=Number(summary.units_pct_change).toFixed(1)+"%";
+        $("run_status").innerText="Complete";
+        await show_results($("report_select").value);
+        // await load_config();
+    }catch(error){$("run_status").innerText="ERROR: "+error.message;}
+}
+
+async function show_results(type){
+    $("report_info").innerText=`Period: actual through ${months[Number($("actual_month").value)-1]} 2026`;
+    const rows=await fetch("/api/results/"+type).then(response=>response.json());
+    if(!Array.isArray(rows)){$("results").innerText=rows.error||"Error";return;}
+    if(!rows.length){$("results").innerText="No results";return;}
+    const all_columns=Object.keys(rows[0]),first_columns=["query_label","type_goal","metric"],month_columns=["1","2","3","4","5","6","7","8","9","10","11","12"],last_columns=["Grand_Total"];
+    const columns=[
+        ...first_columns.filter(column=>all_columns.includes(column)),
+        ...month_columns.filter(column=>all_columns.includes(column)),
+        ...all_columns.filter(column=>!first_columns.includes(column)&&!month_columns.includes(column)&&!last_columns.includes(column)),
+        ...last_columns.filter(column=>all_columns.includes(column))
+    ];
+    $("results").innerHTML=`<table><thead><tr>${columns.map(column=>`<th ${tooltip_for(column)?`data-tip-key="${column}"`:""}>${column}</th>`).join("")}</tr></thead><tbody>`+
+        rows.map(row=>`<tr>${columns.map(column=>`<td>${row[column]??""}</td>`).join("")}</tr>`).join("")+
+        `</tbody></table>`;
+    apply_tooltips();
+}
+
+let dragged_card=null;
+
+document.addEventListener("dragstart",e=>{
+    if(e.target.tagName!=="SUMMARY")return;
+    dragged_card=e.target.closest(".draggable_card");
+    if(dragged_card)dragged_card.classList.add("dragging");
+});
+
+document.addEventListener("dragover",e=>{
+    const card=e.target.closest(".draggable_card");
+    if(!dragged_card||!card||card===dragged_card)return;
+    e.preventDefault();
+    document.querySelectorAll(".draggable_card").forEach(c=>c.classList.remove("drag_over"));
+    card.classList.add("drag_over");
+});
+
+document.addEventListener("drop",e=>{
+    const card=e.target.closest(".draggable_card");
+    if(!dragged_card||!card||card===dragged_card)return;
+    e.preventDefault();
+
+    const rect=card.getBoundingClientRect();
+    card.parentNode.insertBefore(dragged_card,e.clientY<rect.top+rect.height/2?card:card.nextSibling);
+
+    document.querySelectorAll(".draggable_card").forEach(c=>c.classList.remove("drag_over"));
+    save_card_order();
+});
+
+document.addEventListener("dragend",()=>{
+    document.querySelectorAll(".draggable_card").forEach(c=>c.classList.remove("dragging","drag_over"));
+    dragged_card=null;
+});
+
+const default_card_order=["volume","price","redistribution","period", "summary","reports"];
+
+const save_card_order=()=>localStorage.setItem("sales_model_card_order_v2",JSON.stringify(
+    [...document.querySelectorAll(".draggable_card")].map(card=>card.dataset.card)
+));
+
+const load_card_order=()=>{
+    const saved=JSON.parse(localStorage.getItem("sales_model_card_order_v2")||"null");
+    const order=saved||default_card_order;
+    order.forEach(key=>{
+        const card=document.querySelector(`.draggable_card[data-card="${key}"]`);
+        if(card)card.parentNode.appendChild(card);
+    });
+};
+
+let saved_versions=[];
+
+const version_assumptions=version=>
+    typeof version.assumptions_json==="string"?JSON.parse(version.assumptions_json||"{}"):version.assumptions_json||{};
+
+function product_change_count(a){
+    const products=new Set();
+
+    config.products.forEach(product=>{
+        if(a.volume_method==="PRODUCT"&&a[`UG_${product.key}`]!==undefined&&
+            changed(a[`UG_${product.key}`],product.growth_pct))products.add(product.key);
+
+        if(a.price_method==="PRODUCT"&&a[`${product.key}_actual_next_year`]!==undefined&&
+            changed(a[`${product.key}_actual_next_year`],product.actual_next_year))products.add(product.key);
+    });
+
+    return products.size;
+}
+
+function redistribution_summary(a){
+    const items=[];
+    if(Number(a.discontinue_Platinum_Foundation)===1)items.push("Foundation");
+    if(Number(a.discontinue_Platinum_USA)===1)items.push("Team USA");
+    return items.length?items.join(" + "):"No";
+}
+
+async function refresh_versions(){
+    saved_versions=await fetch("/api/versions").then(r=>r.json());
+
+    $("versions_rows").innerHTML=saved_versions.map(version=>{
+        const a=version_assumptions(version);
+        const product_changes=product_change_count(a);
+
+        return `<tr>
+            <td><button class="version_model" onclick="show_version_details(${version.id})">${version.model_name||version.version_name}</button><br><small>${version.version_name}</small></td>
+            <td>${version.user_name}</td>
+            <td>${Number(version.is_default)===1?"★":""}</td>
+            <td>${months[Number(a.actual_through_month||1)-1]}</td>
+            <td>${a.volume_method||""}</td>
+            <td>${a.volume_method==="TOP_LEVEL"?(Number(a.lever_new_members_pct_change||0)*100).toFixed(1)+"%":"—"}</td>
+            <td>${a.volume_method==="TOP_LEVEL"?(Number(a.lever_repeat_members_pct_change||0)*100).toFixed(1)+"%":"—"}</td>
+            <td>${a.volume_method==="TOP_LEVEL"?num(a.lever_winback_units_incremental):"—"}</td>
+            <td>${a.price_method||""}</td>
+            <td>${a.price_method==="TOP_LEVEL"?(Number(a.lever_price_pct_change||0)*100).toFixed(1)+"%":"—"}</td>
+            <td>${redistribution_summary(a)}</td>
+            <td>${product_changes?product_changes+" product"+(product_changes===1?"":"s"):"None"}</td>
+            <td>${new Date(version.created_at).toLocaleString()}</td>
+            <td>
+                <button onclick="load_version(${version.id})">Load</button>
+                <button onclick="run_version(${version.id})">Run</button>
+                <button onclick="make_default(${version.id})">Default</button>
+                ${Number(version.is_default)===1?"":`<button onclick="delete_version(${version.id})">Delete</button>`}
+            </td>
+        </tr>`;
+    }).join("");
+
+    const default_version=saved_versions.find(v=>Number(v.is_default)===1);
+    $("default_version").innerText=default_version?`Default: ${default_version.version_name}`:"No default version set.";
+
+    return saved_versions;
+}
+
+function show_version_details(id){
+    const version=saved_versions.find(v=>Number(v.id)===Number(id));
+    if(!version)return;
+
+    const a=version_assumptions(version),volume_changes=[],price_changes=[];
+
+    config.products.forEach(product=>{
+        const growth=a[`UG_${product.key}`],price=a[`${product.key}_actual_next_year`];
+
+        if(a.volume_method==="PRODUCT"&&growth!==undefined&&changed(growth,product.growth_pct))
+            volume_changes.push(`${product.name}: ${(Number(growth)*100).toFixed(1)}%`);
+
+        if(a.price_method==="PRODUCT"&&price!==undefined&&changed(price,product.actual_next_year))
+            price_changes.push(`${product.name}: ${money(product.actual_next_year)} → ${money(price)}`);
+    });
+
+    $("version_detail").classList.remove("hidden");
+    $("version_detail").innerHTML=`
+        <div class="head">
+            <strong>${version.version_name}</strong>
+            <button onclick="$('version_detail').classList.add('hidden')">Close</button>
+        </div>
+
+        <div class="version_detail_grid">
+            <div>
+                <h4>Volume</h4>
+                <div>Method: ${a.volume_method}</div>
+                ${a.volume_method==="TOP_LEVEL"?`
+                    <div>New Members: ${(Number(a.lever_new_members_pct_change||0)*100).toFixed(1)}%</div>
+                    <div>Repeat Members: ${(Number(a.lever_repeat_members_pct_change||0)*100).toFixed(1)}%</div>
+                    <div>Winback: ${num(a.lever_winback_units_incremental)}</div>
+                    <div>Upgrades: ${(Number(a.lever_upgrades_pct_change||0)*100).toFixed(1)}%</div>
+                    <div>Downgrades: ${(Number(a.lever_downgrades_pct_change||0)*100).toFixed(1)}%</div>
+                `:volume_changes.length?volume_changes.map(x=>`<div>${x}</div>`).join(""):"<div>No product changes</div>"}
+            </div>
+
+            <div>
+                <h4>Price</h4>
+                <div>Method: ${a.price_method}</div>
+                ${a.price_method==="TOP_LEVEL"?
+                    `<div>Change: ${(Number(a.lever_price_pct_change||0)*100).toFixed(1)}%</div>`:
+                    price_changes.length?price_changes.map(x=>`<div>${x}</div>`).join(""):"<div>No product changes</div>"}
+            </div>
+
+            <div>
+                <h4>Other</h4>
+                <div>Actual Through: ${months[Number(a.actual_through_month||1)-1]}</div>
+                <div>Redistribution: ${redistribution_summary(a)}</div>
+                ${Number(a.discontinue_Platinum_Foundation)===1||Number(a.discontinue_Platinum_USA)===1?`
+                    <div>Silver: ${(Number(a.redistribute_Platinum_to_Silver_pct||0)*100).toFixed(1)}%</div>
+                    <div>Gold: ${(Number(a.redistribute_Platinum_to_Gold_pct||0)*100).toFixed(1)}%</div>
+                    <div>3-Year: ${(Number(a.redistribute_Platinum_to_3_Year_pct||0)*100).toFixed(1)}%</div>
+                `:""}
+            </div>
+        </div>`;
+}
+
+async function save_version(){
+    const user_name=$("version_user").value.trim(),model_name=normalize_model_name();
+
+    if(!user_name){$("version_status").innerText="Enter a user name.";return;}
+    if(!model_name){$("version_status").innerText="Enter a model name.";return;}
+
+    const data=await fetch("/api/versions",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            user_name,
+            model_name,
+            assumptions:collect_variables(),
+            is_default:$("version_default").checked
+        })
+    }).then(r=>r.json());
+
+    if(!data.ok){$("version_status").innerText="ERROR: "+(data.error||"Unable to save.");return;}
+
+    $("version_status").innerText="Saved "+data.version_name;
+    $("version_default").checked=false;
+    await refresh_versions();
+    show_version_details(data.id);
+}
+
+async function make_default(id){
+    const data=await fetch(`/api/versions/${id}/default`,{method:"POST"}).then(r=>r.json());
+    if(!data.ok){$("version_status").innerText="ERROR: "+(data.error||"Unable to set default.");return;}
+
+    await refresh_versions();
+    $("version_status").innerText="Default version updated.";
+}
+
+function set_saved_value(id,value){
+    const el=$(id);
+    if(el&&value!==undefined&&value!==null)el.value=value;
+}
+
+async function load_version(id){
+    const data=await fetch("/api/versions/"+id).then(r=>r.json());
+    if(data.error){$("version_status").innerText="ERROR: "+data.error;return false;}
+
+    const a=version_assumptions(data);
+
+    set_saved_value("model_name",data.model_name);
+    set_saved_value("actual_month",a.actual_through_month);
+    set_saved_value("new_members_pct",Number(a.lever_new_members_pct_change||0)*100);
+    set_saved_value("repeat_members_pct",Number(a.lever_repeat_members_pct_change||0)*100);
+    set_saved_value("winback_units",a.lever_winback_units_incremental);
+    set_saved_value("upgrades_pct",Number(a.lever_upgrades_pct_change||0)*100);
+    set_saved_value("downgrades_pct",Number(a.lever_downgrades_pct_change||0)*100);
+    set_saved_value("price_pct",Number(a.lever_price_pct_change||0)*100);
+
+    $("discontinue_platinum_foundation").checked=Number(a.discontinue_Platinum_Foundation)===1;
+    $("discontinue_platinum_usa").checked=Number(a.discontinue_Platinum_USA)===1;
+    set_saved_value("redistribute_platinum_silver_pct",Number(a.redistribute_Platinum_to_Silver_pct||0)*100);
+    set_saved_value("redistribute_platinum_gold_pct",Number(a.redistribute_Platinum_to_Gold_pct||0)*100);
+    set_saved_value("redistribute_platinum_3_year_pct",Number(a.redistribute_Platinum_to_3_Year_pct||0)*100);
+
+    config.products.forEach((product,index)=>{
+        if(a[`UG_${product.key}`]!==undefined)$(`growth_${index}`).value=Number(a[`UG_${product.key}`])*100;
+        if(a[`${product.key}_actual_next_year`]!==undefined)$(`price_${index}`).value=a[`${product.key}_actual_next_year`];
+        update_units(index);update_price(index);
+    });
+
+    volume_method=a.volume_method||"TOP_LEVEL";
+    price_method=a.price_method||"PRODUCT";
+    set_volume(volume_method,true);
+    set_price(price_method,true);
+
+    update_period_note();
+    show_version_details(id);
+    $("version_status").innerText="Loaded "+data.version_name;
+    return true;
+}
+
+async function run_version(id){
+    if(await load_version(id))await run_model();
+}
+
+async function delete_version(id){
+    const version=saved_versions.find(v=>Number(v.id)===Number(id));
+    if(!version)return;
+
+    if(!confirm(`Delete ${version.version_name}? This cannot be undone.`))return;
+
+    const data=await fetch(`/api/versions/${id}`,{method:"DELETE"}).then(r=>r.json());
+    if(!data.ok){$("version_status").innerText="ERROR: "+(data.error||"Unable to delete.");return;}
+
+    $("version_detail").classList.add("hidden");
+    $("version_status").innerText="Deleted "+version.version_name;
+    await refresh_versions();
+}
+
+async function initialize_app(){
+    load_card_order();
+    await load_config();
+
+    const versions=await refresh_versions();
+    const default_version=versions.find(v=>Number(v.is_default)===1);
+
+    if(default_version)await load_version(default_version.id);
+}
+
+initialize_app();
+
+</script>
+</body>
+</html>

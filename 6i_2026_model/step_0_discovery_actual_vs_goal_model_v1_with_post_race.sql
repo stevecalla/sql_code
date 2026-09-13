@@ -289,6 +289,7 @@ USE usat_sales_db;
                 IF(SUM(sales_units) = 0, 0, SUM(sales_revenue) / SUM(sales_units)) AS rev_per_unit_2025_goal
 
             FROM sales_goal_data AS sg
+            WHERE purchased_on_year_adjusted_mp = 2025
             GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9
             -- ORDER BY 1
 
@@ -328,6 +329,7 @@ USE usat_sales_db;
                 0 AS rev_per_unit_2025_goal
 
             FROM sales_goal_data
+            WHERE purchased_on_year_adjusted_mp = 2025
             GROUP BY 1, 2, 3, 4, 5, 6, 7, 8
         ),
         post_race AS (
@@ -393,11 +395,11 @@ USE usat_sales_db;
                 --     ELSE 0
                 -- END AS sales_units_2025_estimate_nonbulk
 
-                CASE
-                    WHEN sg.is_ytd_before_current_month = 1 THEN sa.sales_units_2025_actual_nonbulk + COALESCE(pr.sales_units_2026_goal_post_race, 0)
-                    WHEN sg.is_ytd_before_current_month = 0 THEN sg.sales_units_2025_goal + COALESCE(pr.sales_units_2026_goal_post_race, 0)
-                    ELSE 0
-                END AS sales_units_2025_estimate_nonbulk
+                    CASE
+                        WHEN sg.is_ytd_before_current_month = 1 THEN sa.sales_units_2025_actual_nonbulk + COALESCE(pr.sales_units_2026_goal_post_race, 0)
+                        WHEN sg.is_ytd_before_current_month = 0 THEN sg.sales_units_2025_goal + COALESCE(pr.sales_units_2026_goal_post_race, 0)
+                        ELSE 0
+                    END AS sales_units_2025_estimate_nonbulk
 
             FROM sales_goals AS sg
                 LEFT JOIN sales_actuals AS sa ON sg.month_goal = sa.month_actual

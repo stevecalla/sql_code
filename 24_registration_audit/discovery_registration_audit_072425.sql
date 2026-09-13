@@ -1,7 +1,9 @@
 USE vapor;
--- SELECT "registration_audit", ra.* FROM registration_audit AS ra LIMIT 10;
+SELECT "registration_audit", ra.* FROM registration_audit AS ra LIMIT 10;
 -- SELECT "registration_companies", rc.* FROM registration_companies AS rc ORDER BY name ASC;
--- SELECT "registration_audit_membership_application", rama.* FROM registration_audit_membership_application AS rama LIMIT 10;
+SELECT "registration_audit_membership_application", rama.* FROM registration_audit_membership_application AS rama WHERE YEAR(rama.created_at) = 2026 LIMIT 10;
+SELECT "races table", r.* FROM races AS r WHERE YEAR(r.created_at) = 2026 LIMIT 10;
+SELECT "registration_audit_membership_application", rama.*, r.name FROM registration_audit_membership_application AS rama LEFT JOIN races AS r ON r.id = rama.race_id WHERE YEAR(rama.created_at) = 2026 LIMIT 10;
 -- SELECT "membership_periods", mp.* FROM membership_periods AS mp LIMIT 10;
 -- SELECT "registration_audit", ra.* FROM registration_audit AS ra WHERE ra.membership_period_id IN (5125396, 5124769, 5124776) LIMIT 10;
 -- SELECT "membership_periods", mp.* FROM membership_periods AS mp WHERE mp.id IN (5125396, 5124769) LIMIT 10;
@@ -103,6 +105,7 @@ FROM registration_audit AS ra
     LEFT JOIN registration_audit_membership_application AS rama ON ra.id = rama.audit_id
     LEFT JOIN membership_applications AS ma ON ma.id = rama.membership_application_id
     LEFT JOIN membership_periods AS mp ON mp.id = ma.membership_period_id
+    LEFT JOIN races AS r ON r.id = rama.race_id
 WHERE 1 = 1
     -- AND ra.created_at >= "2024-01-01" -- reviewing TS issue
     -- AND ra.created_at <= "2025-06-30" -- reviewing TS issue
@@ -131,6 +134,9 @@ WITH test AS (
         , mp.id
         , mp.created_at AS created_at_mp
         , mp.purchased_on AS purchased_on_mp
+        , r.id AS id_races
+        , r.name AS name_races
+        , r.start_date AS start_date_races
         , TIMEDIFF(ra.processed_at, ra.created_at) AS time_diff_hms
         , CASE WHEN mp.id IS NOT NULL THEN 1 ELSE 0 END AS has_membership_period_id
         , CASE WHEN TIMESTAMPDIFF(HOUR, ra.created_at, ra.processed_at) >= 1 THEN 1 ELSE 0 END AS is_processed_over_1_hour
@@ -140,6 +146,7 @@ WITH test AS (
         LEFT JOIN registration_audit_membership_application AS rama ON ra.id = rama.audit_id
 		LEFT JOIN membership_applications AS ma ON ma.id = rama.membership_application_id
         LEFT JOIN membership_periods AS mp ON mp.id = ma.membership_period_id
+        LEFT JOIN races AS r ON r.id = rama.race_id
 
         -- LEFT JOIN membership_periods AS mp ON mp.id = ra.membership_period_id -- can't use if registration audit membership id is blank
     WHERE 1 = 1
@@ -154,6 +161,9 @@ WITH test AS (
     -- LIMIT 500
     )
     -- SELECT * FROM test;
+    
+    -- SELECT * FROM test WHERE 1 = 1 AND registration_company_id_ra = 33 and DATE_FORMAT(created_at_ra, '%Y-%m-%d') = '2026-06-23';
+    -- SELECT id_races, name_races, start_date_races, COUNT(*) AS count FROM test WHERE 1 = 1 AND registration_company_id_ra = 33 and DATE_FORMAT(created_at_ra, '%Y-%m-%d') = '2026-06-23' GROUP BY 1 WITH ROLLUP ORDER BY count DESC;
 
     SELECT   
         "#5 PROCESSED OR NOT?" AS query_label,

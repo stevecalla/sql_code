@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     -- RENAME TABLE sales_model_2027 TO sales_model_2027_v1_100125; -- save model_v1_100125
     -- RENAME TABLE sales_model_2027_v1_100125 TO sales_model_2027; -- rollback if needed
 
-
 -- >>> BUSINESS GOAL LEVERS (MVP): annual goals allocated using this year non-bulk seasonality / mix >>>
     -- VOLUME METHOD
     -- TOP_LEVEL = use business levers: new, repeat, win-back, upgrades/downgrades
@@ -65,6 +64,13 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     SET @lever_downgrades_base = 11013;
     SET @lever_downgrades_pct_change = -0.0;
 
+    -- YOUTH — youth memberships. Standalone file (no UI to seed), so the base is this-year units; allocated
+    -- within each youth group by this-year seasonality/mix. Premier base = Youth Premier $25 + $30 combined.
+    SET @lever_youth_annual_base = 19192;
+    SET @lever_youth_annual_pct_change = 0.00;
+    SET @lever_youth_premier_base = 3717;
+    SET @lever_youth_premier_pct_change = 0.00;
+
     -- DERIVED BUSINESS GOAL UNIT IMPACTS
     -- new members = allocated across one_day + adult_annual using this year mix / seasonality
     SET @lever_new_member_units_incremental = ROUND(@lever_new_members_base * @lever_new_members_pct_change,0);
@@ -82,6 +88,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     SET @lever_upgrade_units_incremental = ROUND(@lever_upgrades_base * @lever_upgrades_pct_change,0);
     SET @lever_downgrade_units_saved = ROUND(@lever_downgrades_base * ABS(@lever_downgrades_pct_change),0);
     SET @lever_mix_units_incremental = @lever_upgrade_units_incremental + @lever_downgrade_units_saved;
+
+    -- youth = base × % change, allocated within each youth group by this-year unit mix
+    SET @lever_youth_annual_units_incremental = ROUND(@lever_youth_annual_base * @lever_youth_annual_pct_change,0);
+    SET @lever_youth_premier_units_incremental = ROUND(@lever_youth_premier_base * @lever_youth_premier_pct_change,0);
     
     -- NOTE:
     -- new members = allocated across one_day + adult_annual using this year mix / seasonality
@@ -644,8 +654,8 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                 sa.rev_per_unit_this_year_actual,
                 sa.rev_per_unit_this_year_actual_bulk,
 
-                -- sg.sales_rev_this_year_goal,
-                -- sg.sales_rev_this_year_goal
+                sg.sales_rev_this_year_goal,
+                sg.sales_units_this_year_goal,
                 -- pr.sales_rev_next_year_goal_post_race,
                 -- pr.sales_units_next_year_goal_post_race,
 
@@ -783,7 +793,29 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                             ) OVER ()
                         , 0)
                     ELSE 0
-                END AS lever_one_day_allocation_share
+                END AS lever_one_day_allocation_share,
+
+                -- YOUTH ANNUAL ALLOCATION SHARE (within 'Youth Annual' rows, by this-year unit mix)
+                CASE
+                    WHEN b.category_goal = 'Youth Annual' THEN
+                        GREATEST(COALESCE(b.sales_units_this_year_estimate_nonbulk, 0), 0)
+                        / NULLIF(
+                            SUM(CASE WHEN b.category_goal = 'Youth Annual'
+                                     THEN GREATEST(COALESCE(b.sales_units_this_year_estimate_nonbulk, 0), 0) ELSE 0 END) OVER ()
+                        , 0)
+                    ELSE 0
+                END AS lever_youth_annual_allocation_share,
+
+                -- YOUTH PREMIER ALLOCATION SHARE (within Youth Premier $25 + $30 rows, by this-year unit mix)
+                CASE
+                    WHEN b.category_goal IN ('Youth Premier - $25', 'Youth Premier - $30') THEN
+                        GREATEST(COALESCE(b.sales_units_this_year_estimate_nonbulk, 0), 0)
+                        / NULLIF(
+                            SUM(CASE WHEN b.category_goal IN ('Youth Premier - $25', 'Youth Premier - $30')
+                                     THEN GREATEST(COALESCE(b.sales_units_this_year_estimate_nonbulk, 0), 0) ELSE 0 END) OVER ()
+                        , 0)
+                    ELSE 0
+                END AS lever_youth_premier_allocation_share
 
             FROM sales_base b
         ),
@@ -829,6 +861,17 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                     ELSE 0
                 END AS lever_mix_units_incremental,
 
+                -- YOUTH — base × % allocated within each youth group by this-year unit mix
+                CASE
+                    WHEN bls.category_goal = 'Youth Annual' THEN
+                        @lever_youth_annual_units_incremental
+                            * COALESCE(bls.lever_youth_annual_allocation_share,0)
+                    WHEN bls.category_goal IN ('Youth Premier - $25', 'Youth Premier - $30') THEN
+                        @lever_youth_premier_units_incremental
+                            * COALESCE(bls.lever_youth_premier_allocation_share,0)
+                    ELSE 0
+                END AS lever_youth_units_incremental,
+
                 -- NET UNIT IMPACT AT THIS MONTH/CATEGORY ROW
                 (
                     @lever_new_member_units_incremental
@@ -861,6 +904,16 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                         WHEN bls.type_goal = 'one_day' THEN
                             -@lever_mix_units_incremental
                                 * COALESCE(bls.lever_one_day_allocation_share,0)
+                        ELSE 0
+                    END
+
+                    + CASE
+                        WHEN bls.category_goal = 'Youth Annual' THEN
+                            @lever_youth_annual_units_incremental
+                                * COALESCE(bls.lever_youth_annual_allocation_share,0)
+                        WHEN bls.category_goal IN ('Youth Premier - $25', 'Youth Premier - $30') THEN
+                            @lever_youth_premier_units_incremental
+                                * COALESCE(bls.lever_youth_premier_allocation_share,0)
                         ELSE 0
                     END
                 ) AS lever_units_incremental
@@ -1573,28 +1626,42 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
 /* -----------------------------------------------------------------------------
    2) View results
 ----------------------------------------------------------------------------- */
-SELECT "0_raw_data" AS query_label, s.* FROM sales_model_2027 AS s ORDER BY month_goal ASC LIMIT 500;
+SELECT "0_raw_data" AS query_label, s.* FROM sales_model_2027 AS s ORDER BY month_goal ASC, category_sort_order_goal LIMIT 500;
 
 -- 1) BY MONTH
 SELECT
     "1_by_month_sales_model_2027" AS query_label,
     month_goal,
     COUNT(*) AS row_count,
+
+    FORMAT(SUM(sales_units_this_year_actual), 0) AS sales_units_this_year_actual,
+    FORMAT(SUM(sales_rev_this_year_actual), 0) AS sales_rev_this_year_actual,
+
+    FORMAT(SUM(sales_units_this_year_goal), 0) AS sales_units_this_year_goal,
+    FORMAT(SUM(sales_rev_this_year_goal), 0) AS sales_rev_this_year_goal,
+
     FORMAT(SUM(sales_units_this_year_estimate),0) AS sales_units_this_year_estimate,
     FORMAT(SUM(sales_rev_this_year_estimate),0) AS sales_rev_this_year_estimate,
+
     FORMAT(SUM(sales_units_this_year_estimate_nonbulk),0) AS sales_units_this_year_estimate_nonbulk,
     FORMAT(SUM(sales_rev_this_year_estimate_nonbulk),0) AS sales_rev_this_year_estimate_nonbulk,
+
     FORMAT(SUM(sales_rev_this_year_estimate_nonbulk)/NULLIF(SUM(sales_units_this_year_estimate_nonbulk),0),2) AS non_bulk_price_this_year_effective,
+
     FORMAT(SUM(sales_units_next_year_goal_nonbulk),0) AS sales_units_next_year_goal_nonbulk,
     FORMAT(SUM(sales_rev_next_year_goal_nonbulk),0) AS sales_rev_next_year_goal_nonbulk,
+
     FORMAT(SUM(sales_rev_next_year_goal_nonbulk)/NULLIF(SUM(sales_units_next_year_goal_nonbulk),0),2) AS non_bulk_price_next_year_effective,
+
     FORMAT(SUM(sales_units_next_year_goal_post_race),0) AS sales_units_next_year_goal_post_race,
     FORMAT(SUM(sales_rev_next_year_goal_post_race),0) AS sales_rev_next_year_goal_post_race,
+
     MIN(month_goal) AS min_month,
     MAX(month_goal) AS max_month
 FROM sales_model_2027
 GROUP BY month_goal WITH ROLLUP
-ORDER BY month_goal;
+ORDER BY month_goal
+;
 
 -- 2) BY CATEGORY
 SELECT
@@ -1603,18 +1670,33 @@ SELECT
     category_goal,
     MIN(category_sort_order_goal) AS category_sort_order_goal,
     COUNT(*) AS row_count,
+
+    FORMAT(SUM(sales_units_this_year_actual), 0) AS sales_units_this_year_actual,
+    FORMAT(SUM(sales_rev_this_year_actual), 0) AS sales_rev_this_year_actual,
+
+    FORMAT(SUM(sales_units_this_year_goal), 0) AS sales_units_this_year_goal,
+    FORMAT(SUM(sales_rev_this_year_goal), 0) AS sales_rev_this_year_goal,
+
     FORMAT(SUM(sales_units_this_year_estimate),0) AS sales_units_this_year_estimate,
     FORMAT(SUM(sales_rev_this_year_estimate),0) AS sales_rev_this_year_estimate,
+
     FORMAT(SUM(sales_units_this_year_estimate_nonbulk),0) AS sales_units_this_year_estimate_nonbulk,
     FORMAT(SUM(sales_rev_this_year_estimate_nonbulk),0) AS sales_rev_this_year_estimate_nonbulk,
+
     MAX(price_this_year_actual) AS price_this_year_actual,
+
     FORMAT(SUM(sales_rev_this_year_estimate_nonbulk)/NULLIF(SUM(sales_units_this_year_estimate_nonbulk),0),2) AS non_bulk_price_this_year_effective,
+
     FORMAT(SUM(sales_units_next_year_goal_nonbulk),0) AS sales_units_next_year_goal_nonbulk,
     FORMAT(SUM(sales_rev_next_year_goal_nonbulk),0) AS sales_rev_next_year_goal_nonbulk,
+
     MAX(price_next_year_actual) AS price_next_year_actual,
+
     FORMAT(SUM(sales_rev_next_year_goal_nonbulk)/NULLIF(SUM(sales_units_next_year_goal_nonbulk),0),2) AS non_bulk_price_next_year_effective,
+
     FORMAT(SUM(sales_units_next_year_goal_post_race),0) AS sales_units_next_year_goal_post_race,
     FORMAT(SUM(sales_rev_next_year_goal_post_race),0) AS sales_rev_next_year_goal_post_race,
+
     MIN(month_goal) AS min_month,
     MAX(month_goal) AS max_month
 FROM sales_model_2027
@@ -1971,6 +2053,7 @@ SELECT
     FORMAT(SUM(lever_repeat_units_incremental),0) AS lever_repeat_units_incremental,
     FORMAT(SUM(lever_winback_units_incremental),0) AS lever_winback_units_incremental,
     FORMAT(SUM(lever_mix_units_incremental),0) AS lever_mix_units_incremental,
+    FORMAT(SUM(lever_youth_units_incremental),0) AS lever_youth_units_incremental,
     FORMAT(SUM(lever_units_incremental),0) AS lever_units_incremental
 FROM sales_model_2027
 GROUP BY month_goal WITH ROLLUP
@@ -1984,6 +2067,7 @@ SELECT
     FORMAT(SUM(lever_repeat_units_incremental),0) AS lever_repeat_units_incremental,
     FORMAT(SUM(lever_winback_units_incremental),0) AS lever_winback_units_incremental,
     FORMAT(SUM(lever_mix_units_incremental),0) AS lever_mix_units_incremental,
+    FORMAT(SUM(lever_youth_units_incremental),0) AS lever_youth_units_incremental,
     FORMAT(SUM(lever_units_incremental),0) AS lever_units_incremental
 FROM sales_model_2027
 GROUP BY type_goal WITH ROLLUP

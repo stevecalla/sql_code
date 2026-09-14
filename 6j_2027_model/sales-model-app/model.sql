@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     -- RENAME TABLE sales_model_2027 TO sales_model_2027_v1_100125; -- save model_v1_100125
     -- RENAME TABLE sales_model_2027_v1_100125 TO sales_model_2027; -- rollback if needed
 
-
 -- >>> BUSINESS GOAL LEVERS (MVP): annual goals allocated using this year non-bulk seasonality / mix >>>
     -- VOLUME METHOD
     -- TOP_LEVEL = use business levers: new, repeat, win-back, upgrades/downgrades
@@ -65,6 +64,13 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
         SET @lever_downgrades_base = 11013;
         SET @lever_downgrades_pct_change = -0.0;
 
+        -- YOUTH — youth memberships. Standalone file (no UI to seed), so the base is this-year units; allocated
+        -- within each youth group by this-year seasonality/mix. Premier base = Youth Premier $25 + $30 combined.
+        SET @lever_youth_annual_base = 19192;
+        SET @lever_youth_annual_pct_change = 0.00;
+        SET @lever_youth_premier_base = 3717;
+        SET @lever_youth_premier_pct_change = 0.00;
+
         -- DERIVED BUSINESS GOAL UNIT IMPACTS
         -- new members = allocated across one_day + adult_annual using this year mix / seasonality
         SET @lever_new_member_units_incremental = ROUND(@lever_new_members_base * @lever_new_members_pct_change,0);
@@ -82,6 +88,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
         SET @lever_upgrade_units_incremental = ROUND(@lever_upgrades_base * @lever_upgrades_pct_change,0);
         SET @lever_downgrade_units_saved = ROUND(@lever_downgrades_base * ABS(@lever_downgrades_pct_change),0);
         SET @lever_mix_units_incremental = @lever_upgrade_units_incremental + @lever_downgrade_units_saved;
+
+        -- youth = base × % change, allocated within each youth group by this-year unit mix
+        SET @lever_youth_annual_units_incremental = ROUND(@lever_youth_annual_base * @lever_youth_annual_pct_change,0);
+        SET @lever_youth_premier_units_incremental = ROUND(@lever_youth_premier_base * @lever_youth_premier_pct_change,0);
 
     -- NOTE:
     -- new members = allocated across one_day + adult_annual using this year mix / seasonality
@@ -800,7 +810,29 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                             ) OVER ()
                         , 0)
                     ELSE 0
-                END AS lever_one_day_allocation_share
+                END AS lever_one_day_allocation_share,
+
+                -- YOUTH ANNUAL ALLOCATION SHARE (within 'Youth Annual' rows, by this-year unit mix)
+                CASE
+                    WHEN b.category_goal = 'Youth Annual' THEN
+                        GREATEST(COALESCE(b.sales_units_this_year_estimate_nonbulk, 0), 0)
+                        / NULLIF(
+                            SUM(CASE WHEN b.category_goal = 'Youth Annual'
+                                     THEN GREATEST(COALESCE(b.sales_units_this_year_estimate_nonbulk, 0), 0) ELSE 0 END) OVER ()
+                        , 0)
+                    ELSE 0
+                END AS lever_youth_annual_allocation_share,
+
+                -- YOUTH PREMIER ALLOCATION SHARE (within Youth Premier $25 + $30 rows, by this-year unit mix)
+                CASE
+                    WHEN b.category_goal IN ('Youth Premier - $25', 'Youth Premier - $30') THEN
+                        GREATEST(COALESCE(b.sales_units_this_year_estimate_nonbulk, 0), 0)
+                        / NULLIF(
+                            SUM(CASE WHEN b.category_goal IN ('Youth Premier - $25', 'Youth Premier - $30')
+                                     THEN GREATEST(COALESCE(b.sales_units_this_year_estimate_nonbulk, 0), 0) ELSE 0 END) OVER ()
+                        , 0)
+                    ELSE 0
+                END AS lever_youth_premier_allocation_share
 
             FROM sales_base b
         ),
@@ -846,6 +878,17 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                     ELSE 0
                 END AS lever_mix_units_incremental,
 
+                -- YOUTH — base × % allocated within each youth group by this-year unit mix
+                CASE
+                    WHEN bls.category_goal = 'Youth Annual' THEN
+                        @lever_youth_annual_units_incremental
+                            * COALESCE(bls.lever_youth_annual_allocation_share,0)
+                    WHEN bls.category_goal IN ('Youth Premier - $25', 'Youth Premier - $30') THEN
+                        @lever_youth_premier_units_incremental
+                            * COALESCE(bls.lever_youth_premier_allocation_share,0)
+                    ELSE 0
+                END AS lever_youth_units_incremental,
+
                 -- NET UNIT IMPACT AT THIS MONTH/CATEGORY ROW
                 (
                     @lever_new_member_units_incremental
@@ -878,6 +921,16 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                         WHEN bls.type_goal = 'one_day' THEN
                             -@lever_mix_units_incremental
                                 * COALESCE(bls.lever_one_day_allocation_share,0)
+                        ELSE 0
+                    END
+
+                    + CASE
+                        WHEN bls.category_goal = 'Youth Annual' THEN
+                            @lever_youth_annual_units_incremental
+                                * COALESCE(bls.lever_youth_annual_allocation_share,0)
+                        WHEN bls.category_goal IN ('Youth Premier - $25', 'Youth Premier - $30') THEN
+                            @lever_youth_premier_units_incremental
+                                * COALESCE(bls.lever_youth_premier_allocation_share,0)
                         ELSE 0
                     END
                 ) AS lever_units_incremental

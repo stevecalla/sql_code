@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     -- win-back = allocated 50/50 between one_day + adult_annual
     -- upgrades + fewer downgrades = transfer units from one_day to adult_annual; total units do not increase
     -- price = applied to next year effective non-bulk price
-    -- existing @UG_... category variables remain available as a category-level tuning layer
+    -- @UG_... category variables are used only when @volume_method = 'PRODUCT'
 
     -- PRICE
     -- PRODUCT   = set next-year ACTUAL product price; effective price is calculated
@@ -139,10 +139,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     SET @Elite_actual_this_year = 79.99;
 
     -- NEW IN 2026
-    SET @bronze_bike_actual_this_year = 5.00;
-    SET @bronze_run_actual_this_year = 5.00;
-    SET @bronze_swim_actual_this_year = 5.00;
-    SET @bronze_community_actual_this_year = 0.00;
+    SET @Bronze_Bike_actual_this_year = 5.00;
+    SET @Bronze_Run_actual_this_year = 5.00;
+    SET @Bronze_Swim_actual_this_year = 5.00;
+    SET @Bronze_Community_actual_this_year = 0.00;
     SET @Elite_2_Year_actual_this_year = 150.00;
 
 -- NEXT YEAR ACTUAL PRICE LEVELS
@@ -171,10 +171,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     SET @Elite_actual_next_year = 79.99;
 
     -- NEW IN 2027
-    SET @bronze_bike_actual_next_year = 5.00;
-    SET @bronze_run_actual_next_year = 5.00;
-    SET @bronze_swim_actual_next_year = 5.00;
-    SET @bronze_community_actual_next_year = 0.00;
+    SET @Bronze_Bike_actual_next_year = 5.00;
+    SET @Bronze_Run_actual_next_year = 5.00;
+    SET @Bronze_Swim_actual_next_year = 5.00;
+    SET @Bronze_Community_actual_next_year = 0.00;
     SET @Elite_2_Year_actual_next_year = 150.00;
 
 -- TODO: Find calc for effective rate assumptions in "assumptions" sheet in the 2027 sales model
@@ -204,10 +204,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     SET @Elite_effective_this_year = 76.07; -- $79.99;
 
     -- NEW IN 2026
-    SET @bronze_bike_effective_this_year = 5.00;
-    SET @bronze_run_effective_this_year = 5.00;
-    SET @bronze_swim_effective_this_year = 5.00;
-    SET @bronze_community_effective_this_year = 0.00;
+    SET @Bronze_Bike_effective_this_year = 5.00;
+    SET @Bronze_Run_effective_this_year = 5.00;
+    SET @Bronze_Swim_effective_this_year = 5.00;
+    SET @Bronze_Community_effective_this_year = 0.00;
     SET @Elite_2_Year_effective_this_year = 150.00;
 
 -- NEXT YEAR EFFECTIVE PRICE LEVELS
@@ -236,10 +236,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     -- SET @Elite_effective_next_year = 76.07; -- $79.99
 
     -- -- NEW IN 2027
-    -- SET @bronze_bike_effective_next_year = 5.00;
-    -- SET @bronze_run_effective_next_year = 5.00;
-    -- SET @bronze_swim_effective_next_year = 5.00;
-    -- SET @bronze_community_effective_next_year = 0.00;
+    -- SET @Bronze_Bike_effective_next_year = 5.00;
+    -- SET @Bronze_Run_effective_next_year = 5.00;
+    -- SET @Bronze_Swim_effective_next_year = 5.00;
+    -- SET @Bronze_Community_effective_next_year = 0.00;
     -- SET @Elite_2_Year_effective_next_year = 150.00;
 
 -- >>> UNIT GROWTH (ADDED): category-level unit growth pct variables (e.g., 0.05 = +5%) >>>
@@ -268,10 +268,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
     SET @UG_Elite = 0.00;
 
     -- NEW 2026
-    SET @UG_bronze_bike = 0.00;
-    SET @UG_bronze_run = 0.00;
-    SET @UG_bronze_swim = 0.00;
-    SET @UG_bronze_community = 0.00;
+    SET @UG_Bronze_Bike = 0.00;
+    SET @UG_Bronze_Run = 0.00;
+    SET @UG_Bronze_Swim = 0.00;
+    SET @UG_Bronze_Community = 0.00;
     SET @UG_Elite_2_Year = 0.00;
 -- <<< UNIT GROWTH (ADDED) <<<
 
@@ -896,10 +896,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                 CAST(
                     CASE b.category_goal
                         WHEN 'One Day - $15'              THEN @One_Day_15_effective_this_year
-                        WHEN 'Bronze Community Membership'THEN @bronze_community_effective_this_year
-                        WHEN 'Bronze - Bike'              THEN @bronze_bike_effective_this_year
-                        WHEN 'Bronze - Swim'              THEN @bronze_swim_effective_this_year
-                        WHEN 'Bronze - Run'               THEN @bronze_run_effective_this_year
+                        WHEN 'Bronze Community Membership'THEN @Bronze_Community_effective_this_year
+                        WHEN 'Bronze - Bike'              THEN @Bronze_Bike_effective_this_year
+                        WHEN 'Bronze - Swim'              THEN @Bronze_Swim_effective_this_year
+                        WHEN 'Bronze - Run'               THEN @Bronze_Run_effective_this_year
                         WHEN 'Bronze - Relay'             THEN @Bronze_Relay_effective_this_year
                         WHEN 'Bronze - Sprint'            THEN @Bronze_Sprint_effective_this_year
                         WHEN 'Bronze - Intermediate'      THEN @Bronze_Intermediate_effective_this_year
@@ -945,33 +945,33 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                         WHEN 'Bronze Community Membership' THEN
                             CASE
                                 WHEN @price_method = 'TOP_LEVEL'
-                                    THEN @bronze_community_effective_this_year * (1 + @lever_price_pct_change)
-                                ELSE @bronze_community_actual_next_year
-                                    * COALESCE(@bronze_community_effective_this_year / NULLIF(@bronze_community_actual_this_year, 0), 0)
+                                    THEN @Bronze_Community_effective_this_year * (1 + @lever_price_pct_change)
+                                ELSE @Bronze_Community_actual_next_year
+                                    * COALESCE(@Bronze_Community_effective_this_year / NULLIF(@Bronze_Community_actual_this_year, 0), 0)
                             END
 
                         WHEN 'Bronze - Bike' THEN
                             CASE
                                 WHEN @price_method = 'TOP_LEVEL'
-                                    THEN @bronze_bike_effective_this_year * (1 + @lever_price_pct_change)
-                                ELSE @bronze_bike_actual_next_year
-                                    * COALESCE(@bronze_bike_effective_this_year / NULLIF(@bronze_bike_actual_this_year, 0), 0)
+                                    THEN @Bronze_Bike_effective_this_year * (1 + @lever_price_pct_change)
+                                ELSE @Bronze_Bike_actual_next_year
+                                    * COALESCE(@Bronze_Bike_effective_this_year / NULLIF(@Bronze_Bike_actual_this_year, 0), 0)
                             END
 
                         WHEN 'Bronze - Swim' THEN
                             CASE
                                 WHEN @price_method = 'TOP_LEVEL'
-                                    THEN @bronze_swim_effective_this_year * (1 + @lever_price_pct_change)
-                                ELSE @bronze_swim_actual_next_year
-                                    * COALESCE(@bronze_swim_effective_this_year / NULLIF(@bronze_swim_actual_this_year, 0), 0)
+                                    THEN @Bronze_Swim_effective_this_year * (1 + @lever_price_pct_change)
+                                ELSE @Bronze_Swim_actual_next_year
+                                    * COALESCE(@Bronze_Swim_effective_this_year / NULLIF(@Bronze_Swim_actual_this_year, 0), 0)
                             END
 
                         WHEN 'Bronze - Run' THEN
                             CASE
                                 WHEN @price_method = 'TOP_LEVEL'
-                                    THEN @bronze_run_effective_this_year * (1 + @lever_price_pct_change)
-                                ELSE @bronze_run_actual_next_year
-                                    * COALESCE(@bronze_run_effective_this_year / NULLIF(@bronze_run_actual_this_year, 0), 0)
+                                    THEN @Bronze_Run_effective_this_year * (1 + @lever_price_pct_change)
+                                ELSE @Bronze_Run_actual_next_year
+                                    * COALESCE(@Bronze_Run_effective_this_year / NULLIF(@Bronze_Run_actual_this_year, 0), 0)
                             END
 
                         WHEN 'Bronze - Relay' THEN
@@ -1149,7 +1149,7 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                 CAST(
                     CASE b.category_goal
                         WHEN 'One Day - $15'              THEN @One_Day_15_actual_this_year
-                        WHEN 'Bronze Community Membership'THEN @bronze_community_actual_this_year
+                        WHEN 'Bronze Community Membership'THEN @Bronze_Community_actual_this_year
                         WHEN 'Bronze - Bike'              THEN @Bronze_Bike_actual_this_year
                         WHEN 'Bronze - Swim'              THEN @Bronze_Swim_actual_this_year
                         WHEN 'Bronze - Run'               THEN @Bronze_Run_actual_this_year
@@ -1184,7 +1184,7 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                 CAST(
                     CASE b.category_goal
                         WHEN 'One Day - $15'              THEN @One_Day_15_actual_next_year
-                        WHEN 'Bronze Community Membership'THEN @bronze_community_actual_next_year
+                        WHEN 'Bronze Community Membership'THEN @Bronze_Community_actual_next_year
                         WHEN 'Bronze - Bike'              THEN @Bronze_Bike_actual_next_year
                         WHEN 'Bronze - Swim'              THEN @Bronze_Swim_actual_next_year
                         WHEN 'Bronze - Run'               THEN @Bronze_Run_actual_next_year
@@ -1218,82 +1218,91 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                 -- NEXT YEAR UNIT PCT CHANGE
                 CAST(
                     CASE
-                        b.category_goal
-                            WHEN 'One Day - $15'              THEN @UG_One_Day_15
-                            WHEN 'Bronze Community Membership'THEN @UG_bronze_community
-                            WHEN 'Bronze - Bike'              THEN @UG_Bronze_Bike
-                            WHEN 'Bronze - Swim'              THEN @UG_Bronze_Swim
-                            WHEN 'Bronze - Run'               THEN @UG_Bronze_Run
-                            WHEN 'Bronze - Relay'             THEN @UG_Bronze_Relay
-                            WHEN 'Bronze - Sprint'            THEN @UG_Bronze_Sprint
-                            WHEN 'Bronze - Intermediate'      THEN @UG_Bronze_Intermediate
-                            WHEN 'Bronze - Ultra'             THEN @UG_Bronze_Ultra
-                            WHEN 'Bronze - $0'                THEN @UG_Bronze_$0
-                            WHEN 'Bronze - AO'                THEN @UG_Bronze_AO
-                            WHEN 'Bronze - Distance Upgrade'  THEN @UG_Bronze_Upgrade
-                            WHEN 'Club'                       THEN @UG_Club
-                            WHEN 'Unknown'                    THEN @UG_Unknown
-                            WHEN '1-Year $50'                 THEN @UG_1_Year_50
-                            WHEN 'Silver'                     THEN @UG_Silver
-                            WHEN 'Gold'                       THEN @UG_Gold
-                            WHEN '3-Year'                     THEN @UG_3_Year
-                            WHEN 'Lifetime'                   THEN @UG_Lifetime
-                            WHEN 'Platinum - Foundation'      THEN @UG_Platinum_Foundation
-                            WHEN 'Platinum - Team USA'        THEN @UG_Platinum_USA
-                            WHEN 'Young Adult - $36'          THEN @UG_Young_Adult_36
-                            WHEN 'Young Adult - $40'          THEN @UG_Young_Adult_40
-                            WHEN 'Youth Annual'               THEN @UG_Youth_Annual
-                            WHEN 'Youth Premier - $25'        THEN @UG_Youth_Premier_25
-                            WHEN 'Youth Premier - $30'        THEN @UG_Youth_Premier_30
-                            WHEN 'Elite'                      THEN @UG_Elite
-                            WHEN 'Elite 2-Year membership'    THEN @UG_Elite_2_Year
-                            ELSE NULL
+                        WHEN @volume_method = 'PRODUCT' THEN
+                            CASE b.category_goal
+                                WHEN 'One Day - $15'               THEN @UG_One_Day_15
+                                WHEN 'Bronze Community Membership' THEN @UG_Bronze_Community
+                                WHEN 'Bronze - Bike'               THEN @UG_Bronze_Bike
+                                WHEN 'Bronze - Swim'               THEN @UG_Bronze_Swim
+                                WHEN 'Bronze - Run'                THEN @UG_Bronze_Run
+                                WHEN 'Bronze - Relay'              THEN @UG_Bronze_Relay
+                                WHEN 'Bronze - Sprint'             THEN @UG_Bronze_Sprint
+                                WHEN 'Bronze - Intermediate'       THEN @UG_Bronze_Intermediate
+                                WHEN 'Bronze - Ultra'              THEN @UG_Bronze_Ultra
+                                WHEN 'Bronze - $0'                 THEN @UG_Bronze_$0
+                                WHEN 'Bronze - AO'                 THEN @UG_Bronze_AO
+                                WHEN 'Bronze - Distance Upgrade'   THEN @UG_Bronze_Upgrade
+                                WHEN 'Club'                        THEN @UG_Club
+                                WHEN 'Unknown'                     THEN @UG_Unknown
+                                WHEN '1-Year $50'                  THEN @UG_1_Year_50
+                                WHEN 'Silver'                      THEN @UG_Silver
+                                WHEN 'Gold'                        THEN @UG_Gold
+                                WHEN '3-Year'                      THEN @UG_3_Year
+                                WHEN 'Lifetime'                    THEN @UG_Lifetime
+                                WHEN 'Platinum - Foundation'       THEN @UG_Platinum_Foundation
+                                WHEN 'Platinum - Team USA'         THEN @UG_Platinum_USA
+                                WHEN 'Young Adult - $36'           THEN @UG_Young_Adult_36
+                                WHEN 'Young Adult - $40'           THEN @UG_Young_Adult_40
+                                WHEN 'Youth Annual'                THEN @UG_Youth_Annual
+                                WHEN 'Youth Premier - $25'         THEN @UG_Youth_Premier_25
+                                WHEN 'Youth Premier - $30'         THEN @UG_Youth_Premier_30
+                                WHEN 'Elite'                       THEN @UG_Elite
+                                WHEN 'Elite 2-Year membership'     THEN @UG_Elite_2_Year
+                                ELSE NULL
+                            END
+                        ELSE 0
                     END
                 AS DECIMAL(10,2)) AS unit_next_year_pct_change,
 
                 -- >>> UNIT GROWTH (ADDED): apply category growth pct to derived units >>>
                 -- Derived next year units for total/nonbulk; bulk = total - nonbulk
                 CAST(
-                    -- CASE 
-                    --     WHEN b.is_ytd_before_current_month = 1 THEN b.sales_units_this_year_actual
-                    --     ELSE b.sales_units_this_year_estimate
-                    -- END * 
+                    b.sales_units_this_year_estimate
+                    *
                     (
-                        b.sales_units_this_year_estimate * 
-                        (1 + 
-                            CASE b.category_goal
-                                WHEN 'One Day - $15'              THEN @UG_One_Day_15
-                                WHEN 'Bronze Community Membership'THEN @UG_bronze_community
-                                WHEN 'Bronze - Bike'              THEN @UG_Bronze_Bike
-                                WHEN 'Bronze - Swim'              THEN @UG_Bronze_Swim
-                                WHEN 'Bronze - Run'               THEN @UG_Bronze_Run
-                                WHEN 'Bronze - Relay'             THEN @UG_Bronze_Relay
-                                WHEN 'Bronze - Sprint'            THEN @UG_Bronze_Sprint
-                                WHEN 'Bronze - Intermediate'      THEN @UG_Bronze_Intermediate
-                                WHEN 'Bronze - Ultra'             THEN @UG_Bronze_Ultra
-                                WHEN 'Bronze - $0'                THEN @UG_Bronze_$0
-                                WHEN 'Bronze - AO'                THEN @UG_Bronze_AO
-                                WHEN 'Bronze - Distance Upgrade'  THEN @UG_Bronze_Upgrade
-                                WHEN 'Club'                       THEN @UG_Club
-                                WHEN 'Unknown'                    THEN @UG_Unknown
-                                WHEN '1-Year $50'                 THEN @UG_1_Year_50
-                                WHEN 'Silver'                     THEN @UG_Silver
-                                WHEN 'Gold'                       THEN @UG_Gold
-                                WHEN '3-Year'                     THEN @UG_3_Year
-                                WHEN 'Lifetime'                   THEN @UG_Lifetime
-                                WHEN 'Platinum - Foundation'      THEN @UG_Platinum_Foundation
-                                WHEN 'Platinum - Team USA'        THEN @UG_Platinum_USA
-                                WHEN 'Young Adult - $36'          THEN @UG_Young_Adult_36
-                                WHEN 'Young Adult - $40'          THEN @UG_Young_Adult_40
-                                WHEN 'Youth Annual'               THEN @UG_Youth_Annual
-                                WHEN 'Youth Premier - $25'        THEN @UG_Youth_Premier_25
-                                WHEN 'Youth Premier - $30'        THEN @UG_Youth_Premier_30
-                                WHEN 'Elite'                      THEN @UG_Elite
-                                WHEN 'Elite 2-Year membership'    THEN @UG_Elite_2_Year
-                                ELSE 0
-                            END)
-                        + COALESCE(b.lever_units_incremental, 0)
-                    ) 
+                        1 +
+                        CASE
+                            WHEN @volume_method = 'PRODUCT' THEN
+                                CASE b.category_goal
+                                    WHEN 'One Day - $15'               THEN @UG_One_Day_15
+                                    WHEN 'Bronze Community Membership' THEN @UG_Bronze_Community
+                                    WHEN 'Bronze - Bike'               THEN @UG_Bronze_Bike
+                                    WHEN 'Bronze - Swim'               THEN @UG_Bronze_Swim
+                                    WHEN 'Bronze - Run'                THEN @UG_Bronze_Run
+                                    WHEN 'Bronze - Relay'              THEN @UG_Bronze_Relay
+                                    WHEN 'Bronze - Sprint'             THEN @UG_Bronze_Sprint
+                                    WHEN 'Bronze - Intermediate'       THEN @UG_Bronze_Intermediate
+                                    WHEN 'Bronze - Ultra'              THEN @UG_Bronze_Ultra
+                                    WHEN 'Bronze - $0'                 THEN @UG_Bronze_$0
+                                    WHEN 'Bronze - AO'                 THEN @UG_Bronze_AO
+                                    WHEN 'Bronze - Distance Upgrade'   THEN @UG_Bronze_Upgrade
+                                    WHEN 'Club'                        THEN @UG_Club
+                                    WHEN 'Unknown'                     THEN @UG_Unknown
+                                    WHEN '1-Year $50'                  THEN @UG_1_Year_50
+                                    WHEN 'Silver'                      THEN @UG_Silver
+                                    WHEN 'Gold'                        THEN @UG_Gold
+                                    WHEN '3-Year'                      THEN @UG_3_Year
+                                    WHEN 'Lifetime'                    THEN @UG_Lifetime
+                                    WHEN 'Platinum - Foundation'       THEN @UG_Platinum_Foundation
+                                    WHEN 'Platinum - Team USA'         THEN @UG_Platinum_USA
+                                    WHEN 'Young Adult - $36'           THEN @UG_Young_Adult_36
+                                    WHEN 'Young Adult - $40'           THEN @UG_Young_Adult_40
+                                    WHEN 'Youth Annual'                THEN @UG_Youth_Annual
+                                    WHEN 'Youth Premier - $25'         THEN @UG_Youth_Premier_25
+                                    WHEN 'Youth Premier - $30'         THEN @UG_Youth_Premier_30
+                                    WHEN 'Elite'                       THEN @UG_Elite
+                                    WHEN 'Elite 2-Year membership'     THEN @UG_Elite_2_Year
+                                    ELSE 0
+                                END
+                            ELSE 0
+                        END
+                    )
+                    +
+                    CASE
+                        WHEN @volume_method = 'TOP_LEVEL'
+                            THEN COALESCE(b.lever_units_incremental, 0)
+                        ELSE 0
+                    END
                 AS DECIMAL(10,2)) AS units_total_next_year_base,
 
                 CAST(
@@ -1305,10 +1314,10 @@ CREATE TABLE IF NOT EXISTS sales_model_2027_versions (
                             WHEN @volume_method = 'PRODUCT' THEN
                                 CASE b.category_goal
                                     WHEN 'One Day - $15'               THEN @UG_One_Day_15
-                                    WHEN 'Bronze Community Membership' THEN @UG_bronze_community
-                                    WHEN 'Bronze - Bike'               THEN @UG_bronze_bike
-                                    WHEN 'Bronze - Swim'               THEN @UG_bronze_swim
-                                    WHEN 'Bronze - Run'                THEN @UG_bronze_run
+                                    WHEN 'Bronze Community Membership' THEN @UG_Bronze_Community
+                                    WHEN 'Bronze - Bike'               THEN @UG_Bronze_Bike
+                                    WHEN 'Bronze - Swim'               THEN @UG_Bronze_Swim
+                                    WHEN 'Bronze - Run'                THEN @UG_Bronze_Run
                                     WHEN 'Bronze - Relay'              THEN @UG_Bronze_Relay
                                     WHEN 'Bronze - Sprint'             THEN @UG_Bronze_Sprint
                                     WHEN 'Bronze - Intermediate'       THEN @UG_Bronze_Intermediate
